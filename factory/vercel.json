@@ -1,7 +1,3 @@
 {
-  "buildCommand": "cd factory && npm install && npm run build",
-  "outputDirectory": "factory/.next",
-  "installCommand": "cd factory && npm install",
-  "framework": "nextjs",
-  "rootDirectory": "factory"
+  "framework": "nextjs"
 }
