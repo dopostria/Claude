@@ -2,10 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import type { SessionData, History, HistorySelection } from './types'
 
-const DATA_DIR = path.join(process.cwd(), 'data')
-const HISTORY_PATH = path.join(DATA_DIR, 'history.json')
-const SESSIONS_DIR = path.join(DATA_DIR, 'sessions')
-const BRAND_CONTEXT_PATH = path.join(DATA_DIR, 'brand_context.json')
+// On Vercel, cwd() is read-only — use /tmp for mutable data
+const IS_VERCEL = process.env.VERCEL === '1'
+const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data')
+const HISTORY_PATH = path.join(IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data'), 'history.json')
+const SESSIONS_DIR = path.join(IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data'), 'sessions')
+// Brand context is read-only — always read from the bundled source
+const BRAND_CONTEXT_PATH = path.join(process.cwd(), 'data', 'brand_context.json')
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
