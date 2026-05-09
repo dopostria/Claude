@@ -1,0 +1,54 @@
+{
+  "account": "@CantSleept",
+  "platforms": ["Instagram", "TikTok"],
+  "language": "Spanglish",
+  "tone": ["deadpan", "surreal", "unhinged"],
+  "humor_reference": "@elhijotuerto — el concepto ES el chiste, sin explicación necesaria",
+  "visual_reference": "Garbage Pail Kids — grotesco, hiper-detallado, saturado, personajes ligeramente rotos",
+  "core_paradox": "polished que parece roto",
+  "quality_filters": [
+    "¿Para el scroll en medio segundo? Si necesita contexto — no está listo",
+    "¿El punchline necesita explicación? Si sí — está roto",
+    "¿El humor viene del contraste, no del contenido cruel?",
+    "¿Funciona sin audio?"
+  ],
+  "concept_tags": {
+    "Bolivia": "Tiene un guiño cultural boliviano",
+    "POP_CULTURE": "Referencia un ícono global del pop",
+    "COTIDIANO": "Situación universal y cotidiana"
+  },
+  "reference_examples": [
+    {
+      "title": "Tom en terapia",
+      "setup": "Tom (de Tom & Jerry) en una sesión de terapia. El terapeuta es Jerry.",
+      "punchline": "Tom está llorando. Jerry toma notas y cobra por hora.",
+      "why_works": "Inversión total de poder, reconocible al instante, el chiste está en el visual"
+    },
+    {
+      "title": "Papa en el Mercado de las Brujas",
+      "setup": "El Papa Francisco bendiciendo papas (las verduras) en el Mercado de las Brujas de La Paz.",
+      "punchline": "Los ingredientes en los puestos de brujería son los Evangelios.",
+      "why_works": "Dos mundos que no deberían tocarse, se fusionan perfectamente. [Bolivia]"
+    },
+    {
+      "title": "Astronauta en Tiwanaku",
+      "setup": "Un astronauta de la NASA aterriza en las ruinas de Tiwanaku. Cree que llegó a Marte.",
+      "punchline": "Una cholita le vende api en traje espacial sin inmutarse.",
+      "why_works": "El contraste de reacciones. La cholita gana por default. [Bolivia]"
+    }
+  ],
+  "visual_style_rules": [
+    "Estilo Garbage Pail Kids: grotesco-gracioso, nunca cruel",
+    "Colores neon saturados, textura de sticker/tarjeta coleccionable",
+    "Proporciones ligeramente incorrectas (cabezas grandes, ojos desorbitados)",
+    "Hiper-detallado pero con punchline visual limpio",
+    "Paleta sucia pero vibrante"
+  ],
+  "what_to_avoid": [
+    "Chistes que requieren texto para funcionar",
+    "Referencias muy locales sin gancho visual universal",
+    "Humor cruel o punch-down",
+    "Conceptos que necesitan más de 2 segundos para entenderse",
+    "Explicaciones dentro del concepto"
+  ]
+}

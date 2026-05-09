@@ -1,0 +1,373 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-green: #00ff88;
+  --neon-red: #ff0040;
+  --neon-yellow: #ffdd00;
+  --neon-blue: #0088ff;
+  --space-bg: #0a0a0a;
+  --room-bg: #0d0d1a;
+  --room-border: #1a1a2e;
+}
+
+* {
+  image-rendering: pixelated;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: var(--space-bg);
+  color: var(--neon-green);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+/* Custom scrollbar — terminal style */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--neon-green); }
+::-webkit-scrollbar-thumb:hover { background: #00ffaa; }
+
+/* ─── ROBOT ANIMATIONS ──────────────────────────────────────────────── */
+
+.robot-idle .robot-eye {
+  animation: blink 3.5s ease-in-out infinite;
+}
+
+.robot-working {
+  animation: walk 0.4s ease-in-out infinite;
+}
+
+.robot-working .robot-eye {
+  background: var(--neon-yellow) !important;
+}
+
+.robot-working .arm-left {
+  animation: armSwingL 0.4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.robot-working .arm-right {
+  animation: armSwingR 0.4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.robot-done .arm-left {
+  transform: rotate(-70deg);
+  transform-origin: top center;
+  transition: transform 0.3s ease-out;
+}
+
+.robot-done .arm-right {
+  transform: rotate(70deg);
+  transform-origin: top center;
+  transition: transform 0.3s ease-out;
+}
+
+.robot-done .robot-eye {
+  background: var(--neon-green) !important;
+  animation: neonPulse 1s ease-in-out infinite;
+}
+
+.robot-error {
+  animation: glitchShake 0.15s linear infinite;
+  transform-origin: bottom center;
+}
+
+.robot-error .robot-eye {
+  background: var(--neon-red) !important;
+}
+
+@keyframes blink {
+  0%, 89%, 100% { transform: scaleY(1); }
+  92% { transform: scaleY(0.05); }
+}
+
+@keyframes walk {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes armSwingL {
+  0%, 100% { transform: rotate(-20deg); }
+  50% { transform: rotate(20deg); }
+}
+
+@keyframes armSwingR {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(-20deg); }
+}
+
+@keyframes neonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes glitchShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-2px) rotate(-2deg); }
+  75% { transform: translateX(2px) rotate(2deg); }
+}
+
+/* ─── PARTICLE EFFECTS ──────────────────────────────────────────────── */
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 0;
+  animation: particleFall 1s ease-out infinite;
+}
+
+@keyframes particleFall {
+  0% { transform: translateY(0px); opacity: 1; }
+  100% { transform: translateY(24px); opacity: 0; }
+}
+
+/* ─── SCANLINE ───────────────────────────────────────────────────────── */
+
+.room-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 255, 136, 0.04) 50%,
+    transparent 100%
+  );
+  animation: scanline 2s linear infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes scanline {
+  0% { top: -40px; }
+  100% { top: calc(100% + 40px); }
+}
+
+/* ─── PIXEL BORDER ───────────────────────────────────────────────────── */
+
+.pixel-border {
+  position: relative;
+  border: 2px solid currentColor;
+}
+
+.pixel-border::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: -4px; right: -4px; bottom: -4px;
+  border: 2px solid currentColor;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ─── NEON GLOW ──────────────────────────────────────────────────────── */
+
+.glow-green  { box-shadow: 0 0 8px var(--neon-green),  0 0 20px var(--neon-green)40; }
+.glow-red    { box-shadow: 0 0 8px var(--neon-red),    0 0 20px var(--neon-red)40; }
+.glow-yellow { box-shadow: 0 0 8px var(--neon-yellow), 0 0 20px var(--neon-yellow)40; }
+.glow-blue   { box-shadow: 0 0 8px var(--neon-blue),   0 0 20px var(--neon-blue)40; }
+
+/* ─── TERMINAL LOG ───────────────────────────────────────────────────── */
+
+.terminal-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.8;
+  color: var(--neon-green);
+}
+
+.terminal-error { color: var(--neon-red); }
+.terminal-working { color: var(--neon-yellow); }
+.terminal-success { color: var(--neon-green); }
+.terminal-info { color: #888; }
+
+/* ─── CONCEPT CARDS ──────────────────────────────────────────────────── */
+
+.concept-card {
+  border: 2px solid #333;
+  background: #080810;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.concept-card:hover {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 10px rgba(255, 221, 0, 0.2);
+}
+
+.concept-card.selected {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.3);
+  background: #080f10;
+}
+
+/* ─── BUTTONS ────────────────────────────────────────────────────────── */
+
+.btn-pixel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 10px 16px;
+  border: 2px solid currentColor;
+  background: transparent;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  transition: all 0.1s;
+  outline: none;
+}
+
+.btn-pixel:hover {
+  background: currentColor;
+  color: var(--space-bg);
+}
+
+.btn-pixel:active {
+  transform: translate(2px, 2px);
+}
+
+.btn-pixel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-pixel::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 100%;
+  height: 100%;
+  border: 2px solid currentColor;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ─── STARS ──────────────────────────────────────────────────────────── */
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 0;
+}
+
+/* ─── OVERLAY BACKDROP ───────────────────────────────────────────────── */
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.92);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.overlay-panel {
+  background: #080810;
+  border: 2px solid var(--neon-green);
+  width: 100%;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.overlay-panel::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: -4px; right: -4px; bottom: -4px;
+  border: 2px solid var(--neon-green);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/* ─── SCORE BARS ─────────────────────────────────────────────────────── */
+
+.score-bar {
+  height: 4px;
+  background: #111;
+  position: relative;
+}
+
+.score-fill {
+  height: 100%;
+  background: var(--neon-green);
+  transition: width 0.6s ease-out;
+}
+
+/* ─── TAG BADGES ─────────────────────────────────────────────────────── */
+
+.tag-bolivia     { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+.tag-pop_culture { color: var(--neon-blue);   border-color: var(--neon-blue); }
+.tag-cotidiano   { color: var(--neon-green);  border-color: var(--neon-green); }
+
+/* ─── SIGNAL ANIMATION ───────────────────────────────────────────────── */
+
+.signal-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--neon-green);
+  box-shadow: 0 0 6px var(--neon-green);
+  animation: signalMove 1.2s ease-in-out forwards;
+}
+
+@keyframes signalMove {
+  0% { opacity: 0; transform: scale(0); }
+  20% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+/* ─── CHECK MARK ─────────────────────────────────────────────────────── */
+
+.check-pop {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 14px;
+  color: var(--neon-green);
+  animation: checkBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s forwards;
+}
+
+@keyframes checkBounce {
+  0% { transform: translateX(-50%) scale(0); }
+  60% { transform: translateX(-50%) scale(1.4); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ─── LOADING DOTS ───────────────────────────────────────────────────── */
+
+.loading-dots span {
+  animation: loadDot 1s ease-in-out infinite;
+  opacity: 0;
+}
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.25s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes loadDot {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
