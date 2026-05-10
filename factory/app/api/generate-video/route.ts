@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const BASE = 'https://generativelanguage.googleapis.com/v1beta'
+const HEADERS = (apiKey: string) => ({ 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' })
+
+// veo-2.0-generate-001 is Vertex AI only — not available on AI Studio endpoint
+const MODELS = ['veo-3.1-generate-preview', 'veo-3.0-generate-preview']
+
 async function pollOperation(operationName: string, apiKey: string, maxAttempts = 40): Promise<string> {
   for (let i = 0; i < maxAttempts; i++) {
-    await new Promise(r => setTimeout(r, 5000))
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
-    )
+    await new Promise(r => setTimeout(r, 10000))
+    const res = await fetch(`${BASE}/${operationName}`, { headers: { 'x-goog-api-key': apiKey } })
     if (!res.ok) continue
     const data = await res.json()
-    if (data.done) {
-      // Try multiple response shapes
-      const uri =
-        data.response?.generatedSamples?.[0]?.video?.uri ??
-        data.response?.videos?.[0]?.uri ??
-        data.response?.video?.uri
-      if (uri) return uri
-      throw new Error(`Veo completed but no video URI. Response: ${JSON.stringify(data.response).slice(0, 200)}`)
-    }
     if (data.error) throw new Error(`Veo error: ${data.error.message}`)
+    if (data.done) {
+      const uri = data.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri
+      if (uri) return uri
+      throw new Error(`Veo done but no URI. Response: ${JSON.stringify(data.response).slice(0, 300)}`)
+    }
   }
-  throw new Error('Veo 3 timed out after ~3 minutes')
+  throw new Error('Veo timed out after ~7 minutes')
 }
 
 export async function POST(req: NextRequest) {
@@ -34,47 +34,44 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
-    // Build contents with optional reference image
-    const parts: object[] = []
+    // Build instance — image is optional reference frame
+    const instance: Record<string, unknown> = { prompt }
     if (imageBase64 && imageMime) {
-      parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } })
+      instance.image = { bytesBase64Encoded: imageBase64, mimeType: imageMime }
     }
-    parts.push({ text: prompt })
 
     const body = {
-      contents: [{ role: 'user', parts }],
-      generationConfig: { durationSeconds: 8 },
+      instances: [instance],
+      parameters: { sampleCount: 1, durationSeconds: 8, aspectRatio: '9:16' },
     }
 
-    // Try Veo 3.0 first, fall back to Veo 2.0
-    const models = ['veo-3.0-generate-preview', 'veo-2.0-generate-001']
-    let lastError = ''
+    const errors: string[] = []
 
-    for (const model of models) {
+    for (const model of MODELS) {
       try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateVideo?key=${apiKey}`,
-          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-        )
+        const res = await fetch(`${BASE}/models/${model}:predictLongRunning`, {
+          method: 'POST',
+          headers: HEADERS(apiKey),
+          body: JSON.stringify(body),
+        })
 
         if (!res.ok) {
           const err = await res.text()
-          lastError = `${model} ${res.status}: ${err.slice(0, 150)}`
+          errors.push(`${model} ${res.status}: ${err.slice(0, 200)}`)
           continue
         }
 
         const operation = await res.json()
-        if (!operation.name) { lastError = `${model}: no operation name`; continue }
+        if (!operation.name) { errors.push(`${model}: no operation name`); continue }
 
         const videoUri = await pollOperation(operation.name, apiKey)
         return NextResponse.json({ success: true, videoUri, model, timestamp: new Date().toISOString() })
       } catch (e) {
-        lastError = e instanceof Error ? e.message : String(e)
-        continue
+        errors.push(e instanceof Error ? e.message : String(e))
       }
     }
 
-    return NextResponse.json({ error: `Video generation failed: ${lastError}` }, { status: 500 })
+    return NextResponse.json({ error: `Video generation failed:\n${errors.join('\n')}` }, { status: 500 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[/api/generate-video]', err)
