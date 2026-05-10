@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import sharp from 'sharp'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -18,6 +17,7 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+      imageConfig: { aspectRatio: '9:16' },
     }),
   })
   if (!res.ok) throw new Error(`${modelId} ${res.status}: ${(await res.text()).slice(0, 300)}`)
@@ -78,48 +78,14 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
   throw new Error(errors.join(' | '))
 }
 
-// Crop to 9:16 portrait in memory. Always returns cropped base64 + buffer.
-async function cropTo916(
-  base64: string,
-  mime: string
-): Promise<{ buffer: Buffer; base64: string; ext: string }> {
-  const inputBuffer = Buffer.from(base64, 'base64')
-  const image = sharp(inputBuffer)
-  const meta = await image.metadata()
-  const w = meta.width ?? 1024
-  const h = meta.height ?? 1024
-
-  const targetRatio = 9 / 16
-
-  let left: number, top: number, cropW: number, cropH: number
-
-  if (w / h > targetRatio) {
-    // Wider than 9:16 — keep full height, crop sides
-    cropH = h
-    cropW = Math.round(h * targetRatio)
-    left = Math.round((w - cropW) / 2)
-    top = 0
-  } else {
-    // Taller than 9:16 — keep full width, crop top/bottom
-    cropW = w
-    cropH = Math.round(w / targetRatio)
-    left = 0
-    top = Math.round((h - cropH) / 2)
-  }
-
-  const ext = mime.includes('png') ? 'png' : 'jpg'
-  const cropped = image.extract({ left, top, width: cropW, height: cropH })
-  const buffer = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
-  return { buffer, base64: buffer.toString('base64'), ext }
-}
-
-// Try to save to public/generated/ — silently skips if filesystem is read-only.
-async function trySaveToDisk(buffer: Buffer, conceptId: string, ext: string): Promise<string> {
+// Best-effort save to public/generated/ — silently skips on read-only filesystems.
+async function trySaveToDisk(base64: string, mime: string, conceptId: string): Promise<string> {
   try {
+    const ext = mime.includes('png') ? 'png' : 'jpg'
+    const filename = `img-${conceptId}-${Date.now()}.${ext}`
     const outDir = join(process.cwd(), 'public', 'generated')
     await mkdir(outDir, { recursive: true })
-    const filename = `img-${conceptId}-${Date.now()}.${ext}`
-    await writeFile(join(outDir, filename), buffer)
+    await writeFile(join(outDir, filename), Buffer.from(base64, 'base64'))
     return `/generated/${filename}`
   } catch {
     return ''
@@ -135,33 +101,29 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
 
     const errors: string[] = []
-    let raw: { base64: string; mime: string; model: string } | null = null
+    let result: { base64: string; mime: string; model: string } | null = null
 
     for (const modelId of GEMINI_IMAGE_MODELS) {
-      try { raw = await tryGemini(modelId, prompt, apiKey); break }
+      try { result = await tryGemini(modelId, prompt, apiKey); break }
       catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
     }
 
-    if (!raw) {
-      try { raw = await tryImagen(prompt, apiKey) }
+    if (!result) {
+      try { result = await tryImagen(prompt, apiKey) }
       catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
     }
 
-    if (!raw) {
+    if (!result) {
       return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
     }
 
-    // Always crop to 9:16 in memory
-    const { buffer, base64, ext } = await cropTo916(raw.base64, raw.mime)
-
-    // Best-effort disk save — never blocks the response
-    const imagePath = await trySaveToDisk(buffer, conceptId, ext)
+    const imagePath = await trySaveToDisk(result.base64, result.mime, conceptId)
 
     return NextResponse.json({
       success: true,
-      base64,
-      mime: raw.mime,
-      model: raw.model,
+      base64: result.base64,
+      mime: result.mime,
+      model: result.model,
       imagePath,
       conceptId,
       timestamp: new Date().toISOString(),
