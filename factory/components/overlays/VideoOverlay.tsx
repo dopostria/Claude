@@ -186,16 +186,16 @@ export default function VideoOverlay({
                   {videoModel && <span style={{ color: '#333' }}>{videoModel}</span>}
                 </div>
                 <video
-                  src={videoUri}
+                  src={`/api/video-proxy?uri=${encodeURIComponent(videoUri)}`}
                   controls
                   autoPlay
                   loop
+                  playsInline
                   style={{ width: '100%', border: '2px solid #ff004044', background: '#000' }}
                 />
                 <a
-                  href={videoUri}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/api/video-proxy?uri=${encodeURIComponent(videoUri)}&download=1`}
+                  download="cantsleept-video.mp4"
                   className="btn-pixel"
                   style={{
                     display: 'block', marginTop: 12, textAlign: 'center',
