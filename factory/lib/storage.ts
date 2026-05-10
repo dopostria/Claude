@@ -1,35 +1,39 @@
 import fs from 'fs'
 import path from 'path'
 import type { SessionData, History, HistorySelection } from './types'
+import BRAND_CONTEXT from '../data/brand_context.json'
 
 // On Vercel, cwd() is read-only — use /tmp for mutable data
 const IS_VERCEL = process.env.VERCEL === '1'
-const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data')
-const HISTORY_PATH = path.join(IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data'), 'history.json')
-const SESSIONS_DIR = path.join(IS_VERCEL ? '/tmp/data' : path.join(process.cwd(), 'data'), 'sessions')
-// Brand context is read-only — always read from the bundled source
-const BRAND_CONTEXT_PATH = path.join(process.cwd(), 'data', 'brand_context.json')
+const MUTABLE_DIR = IS_VERCEL ? '/tmp/factory-data' : path.join(process.cwd(), 'data')
+const HISTORY_PATH = path.join(MUTABLE_DIR, 'history.json')
+const SESSIONS_DIR = path.join(MUTABLE_DIR, 'sessions')
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 }
 
 export function readBrandContext(): Record<string, unknown> {
-  const raw = fs.readFileSync(BRAND_CONTEXT_PATH, 'utf-8')
-  return JSON.parse(raw)
+  return BRAND_CONTEXT as Record<string, unknown>
 }
 
 export function readHistory(): History {
-  if (!fs.existsSync(HISTORY_PATH)) {
+  try {
+    if (!fs.existsSync(HISTORY_PATH)) {
+      return { selections: [], generated: [], lastUpdated: null }
+    }
+    const raw = fs.readFileSync(HISTORY_PATH, 'utf-8')
+    return JSON.parse(raw)
+  } catch {
     return { selections: [], generated: [], lastUpdated: null }
   }
-  const raw = fs.readFileSync(HISTORY_PATH, 'utf-8')
-  return JSON.parse(raw)
 }
 
 export function writeHistory(history: History): void {
-  ensureDir(DATA_DIR)
-  fs.writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2), 'utf-8')
+  try {
+    ensureDir(MUTABLE_DIR)
+    fs.writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2), 'utf-8')
+  } catch { /* silent on read-only fs */ }
 }
 
 export function addHistorySelection(selection: HistorySelection): void {
@@ -48,16 +52,22 @@ export function getRecentSelections(days = 7): HistorySelection[] {
 }
 
 export function readSession(date: string): SessionData | null {
-  const sessionPath = path.join(SESSIONS_DIR, `${date}.json`)
-  if (!fs.existsSync(sessionPath)) return null
-  const raw = fs.readFileSync(sessionPath, 'utf-8')
-  return JSON.parse(raw)
+  try {
+    const sessionPath = path.join(SESSIONS_DIR, `${date}.json`)
+    if (!fs.existsSync(sessionPath)) return null
+    const raw = fs.readFileSync(sessionPath, 'utf-8')
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
 }
 
 export function writeSession(session: SessionData): void {
-  ensureDir(SESSIONS_DIR)
-  const sessionPath = path.join(SESSIONS_DIR, `${session.date}.json`)
-  fs.writeFileSync(sessionPath, JSON.stringify(session, null, 2), 'utf-8')
+  try {
+    ensureDir(SESSIONS_DIR)
+    const sessionPath = path.join(SESSIONS_DIR, `${session.date}.json`)
+    fs.writeFileSync(sessionPath, JSON.stringify(session, null, 2), 'utf-8')
+  } catch { /* silent on read-only fs */ }
 }
 
 export function getTodayDate(): string {
@@ -89,8 +99,9 @@ export function getWeeklyStats(): { postsThisWeek: number; avgScore: number; las
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - 7)
   const thisWeek = history.selections.filter(s => new Date(s.date) >= cutoff)
-  const postsThisWeek = thisWeek.length
-  const avgScore = 0
-  const lastConceptTitle = history.selections[0]?.concept_title ?? null
-  return { postsThisWeek, avgScore, lastConceptTitle }
+  return {
+    postsThisWeek: thisWeek.length,
+    avgScore: 0,
+    lastConceptTitle: history.selections[0]?.concept_title ?? null,
+  }
 }

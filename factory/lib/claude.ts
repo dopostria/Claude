@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Concept, ImagePrompts, AnimationConcept, HistorySelection } from './types'
 
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-sonnet-4-5'
 
 function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
