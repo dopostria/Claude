@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import sharp from 'sharp'
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
 
 const H = (apiKey: string) => ({ 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' })
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 
-// Only models that actually support responseModalities IMAGE output
 const GEMINI_IMAGE_MODELS = [
   'gemini-2.5-flash-image',
   'gemini-2.0-flash-exp-image-generation',
@@ -16,7 +18,6 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-      // aspect ratio is already in the prompt text via ASPECT_SUFFIX
     }),
   })
   if (!res.ok) throw new Error(`${modelId} ${res.status}: ${(await res.text()).slice(0, 300)}`)
@@ -28,10 +29,8 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
   return { base64: img.inlineData.data, mime: img.inlineData.mimeType, model: modelId }
 }
 
-// Try multiple Imagen endpoints/model names — availability varies by key tier
 async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: string; mime: string; model: string }> {
   const candidates = [
-    // Imagen 3 via generateImages (Google AI Studio format)
     {
       url: `${BASE}/imagen-3.0-generate-002:generateImages`,
       body: { prompt, number_of_images: 1, aspect_ratio: '9:16', safety_filter_level: 'BLOCK_ONLY_HIGH' },
@@ -43,7 +42,6 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
       },
       model: 'imagen-3.0-generate-002',
     },
-    // Imagen 3 via predict (Vertex-style, sometimes works on AI Studio)
     {
       url: `${BASE}/imagen-3.0-generate-002:predict`,
       body: { instances: [{ prompt }], parameters: { sampleCount: 1, aspectRatio: '9:16' } },
@@ -53,7 +51,6 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
       },
       model: 'imagen-3.0-generate-002',
     },
-    // Imagen 3 v1 (non-beta)
     {
       url: 'https://generativelanguage.googleapis.com/v1/models/imagen-3.0-generate-002:predict',
       body: { instances: [{ prompt }], parameters: { sampleCount: 1, aspectRatio: '9:16' } },
@@ -73,12 +70,62 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
       const data = await res.json() as Record<string, unknown>
       const result = c.extract(data)
       if (result) return { ...result, model: c.model }
-      errors.push(`${c.model}: unexpected response shape: ${JSON.stringify(data).slice(0, 150)}`)
+      errors.push(`${c.model}: unexpected response shape`)
     } catch (e) {
       errors.push(e instanceof Error ? e.message : String(e))
     }
   }
   throw new Error(errors.join(' | '))
+}
+
+// Crop square (or any) image to 9:16 portrait and save to disk.
+// Returns { croppedBase64, imagePath } where imagePath is the public URL.
+async function cropTo916AndSave(
+  base64: string,
+  mime: string,
+  conceptId: string
+): Promise<{ croppedBase64: string; imagePath: string }> {
+  const inputBuffer = Buffer.from(base64, 'base64')
+  const image = sharp(inputBuffer)
+  const meta = await image.metadata()
+  const w = meta.width ?? 1024
+  const h = meta.height ?? 1024
+
+  // Target: 9:16 portrait. Preserve full height, crop width.
+  // If image is already taller than wide, preserve width, crop height instead.
+  let cropW: number
+  let cropH: number
+  let left: number
+  let top: number
+
+  const targetRatio = 9 / 16  // ~0.5625
+
+  if (w / h > targetRatio) {
+    // Image is wider than 9:16 — crop the sides
+    cropH = h
+    cropW = Math.round(h * targetRatio)
+    left = Math.round((w - cropW) / 2)
+    top = 0
+  } else {
+    // Image is taller than 9:16 (or already 9:16) — crop top/bottom
+    cropW = w
+    cropH = Math.round(w / targetRatio)
+    left = 0
+    top = Math.round((h - cropH) / 2)
+  }
+
+  const ext = mime.includes('png') ? 'png' : 'jpg'
+  const filename = `img-${conceptId}-${Date.now()}.${ext}`
+  const outDir = join(process.cwd(), 'public', 'generated')
+  await mkdir(outDir, { recursive: true })
+  const outPath = join(outDir, filename)
+
+  const cropped = image.extract({ left, top, width: cropW, height: cropH })
+  const croppedBuffer = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
+  await writeFile(outPath, croppedBuffer)
+
+  const croppedBase64 = croppedBuffer.toString('base64')
+  return { croppedBase64, imagePath: `/generated/${filename}` }
 }
 
 export async function POST(req: NextRequest) {
@@ -90,24 +137,41 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
 
     const errors: string[] = []
+    let result: { base64: string; mime: string; model: string } | null = null
 
     for (const modelId of GEMINI_IMAGE_MODELS) {
       try {
-        const result = await tryGemini(modelId, prompt, apiKey)
-        return NextResponse.json({ success: true, ...result, conceptId, timestamp: new Date().toISOString() })
+        result = await tryGemini(modelId, prompt, apiKey)
+        break
       } catch (e) {
         errors.push(e instanceof Error ? e.message : String(e))
       }
     }
 
-    try {
-      const result = await tryImagen(prompt, apiKey)
-      return NextResponse.json({ success: true, ...result, conceptId, timestamp: new Date().toISOString() })
-    } catch (e) {
-      errors.push(e instanceof Error ? e.message : String(e))
+    if (!result) {
+      try {
+        result = await tryImagen(prompt, apiKey)
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : String(e))
+      }
     }
 
-    return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
+    if (!result) {
+      return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
+    }
+
+    // Crop to 9:16 and save to disk
+    const { croppedBase64, imagePath } = await cropTo916AndSave(result.base64, result.mime, conceptId)
+
+    return NextResponse.json({
+      success: true,
+      base64: croppedBase64,
+      mime: result.mime,
+      model: result.model,
+      imagePath,
+      conceptId,
+      timestamp: new Date().toISOString(),
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[/api/generate-image]', err)

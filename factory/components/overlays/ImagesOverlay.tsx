@@ -8,6 +8,7 @@ interface GeneratedImage {
   conceptId: string
   base64: string
   mime: string
+  imagePath: string
   timestamp: string
 }
 
@@ -228,7 +229,7 @@ export default function ImagesOverlay({
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={`data:${img.mime};base64,${img.base64}`} alt=""
+                          src={img.imagePath || `data:${img.mime};base64,${img.base64}`} alt=""
                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         />
                         {isSelected && (
@@ -238,7 +239,7 @@ export default function ImagesOverlay({
                         )}
                       </div>
                       <a
-                        href={`data:${img.mime};base64,${img.base64}`}
+                        href={img.imagePath || `data:${img.mime};base64,${img.base64}`}
                         download={`cantsleept-${imgIdx + 1}.${ext}`}
                         onClick={e => e.stopPropagation()}
                         style={{
