@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import fs from 'fs'
-import path from 'path'
-
-const IS_VERCEL = process.env.VERCEL === '1'
-const OUTPUTS_DIR = IS_VERCEL ? '/tmp/outputs' : path.join(process.cwd(), 'public', 'outputs')
-
-function ensureOutputsDir() {
-  if (!fs.existsSync(OUTPUTS_DIR)) fs.mkdirSync(OUTPUTS_DIR, { recursive: true })
-}
-
-function timestamp() {
-  return Date.now().toString()
-}
 
 // ── Gemini 2.0 Flash — native image generation ────────────────────────
 async function generateWithGeminiFlash(prompt: string): Promise<{ base64: string; mime: string }> {
@@ -37,47 +24,72 @@ async function generateWithGeminiFlash(prompt: string): Promise<{ base64: string
     (p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData
   )
 
-  if (!imagePart?.inlineData) throw new Error('Gemini no devolvió imagen. Intenta otro prompt.')
+  if (!imagePart?.inlineData) throw new Error('Gemini no devolvió imagen. Intenta reformular el prompt.')
 
   return { base64: imagePart.inlineData.data, mime: imagePart.inlineData.mimeType }
 }
 
-// ── Imagen 3 via Google AI REST ───────────────────────────────────────
-async function generateWithImagen3(prompt: string): Promise<{ base64: string; mime: string }> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set')
+// ── Higgsfield Nano Banana Pro ────────────────────────────────────────
+async function generateWithHiggsfield(prompt: string, model = 'nano_banana_2'): Promise<{ base64: string; mime: string }> {
+  const apiKey = process.env.HIGGSFIELD_API_KEY
+  if (!apiKey) throw new Error('HIGGSFIELD_API_KEY not set')
 
-  // Try v1beta endpoint
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instances: [{ prompt }],
-        parameters: { sampleCount: 1 },
-      }),
-    }
-  )
+  const res = await fetch('https://api.higgsfield.ai/v1/images/generate', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      prompt,
+      width: 1024,
+      height: 1024,
+      num_inference_steps: 30,
+    }),
+  })
 
   if (!res.ok) {
-    const errText = await res.text()
-    // Imagen 3 requires special access — fall back to Gemini Flash
-    if (res.status === 403 || res.status === 404 || res.status === 400) {
-      console.warn('Imagen 3 not available, falling back to Gemini Flash')
-      return generateWithGeminiFlash(prompt)
-    }
-    throw new Error(`Imagen 3 error ${res.status}: ${errText.slice(0, 200)}`)
+    const err = await res.text()
+    throw new Error(`Higgsfield error ${res.status}: ${err.slice(0, 200)}`)
   }
 
   const data = await res.json()
-  const imageB64 = data.predictions?.[0]?.bytesBase64Encoded
-  if (!imageB64) {
-    console.warn('Imagen 3 returned no image, falling back to Gemini Flash')
-    return generateWithGeminiFlash(prompt)
+
+  // Handle async job
+  if (data.id && !data.image_url && !data.images) {
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => setTimeout(r, 3000))
+      const poll = await fetch(`https://api.higgsfield.ai/v1/images/${data.id}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+      })
+      if (poll.ok) {
+        const p = await poll.json()
+        if (p.image_url || p.images?.[0]?.url) {
+          const url = p.image_url ?? p.images?.[0]?.url
+          const imgRes = await fetch(url)
+          const buf = await imgRes.arrayBuffer()
+          return { base64: Buffer.from(buf).toString('base64'), mime: 'image/png' }
+        }
+        if (p.status === 'failed') throw new Error('Higgsfield generation failed')
+      }
+    }
+    throw new Error('Higgsfield image timed out')
   }
 
-  return { base64: imageB64, mime: 'image/png' }
+  // Sync response with URL
+  const url = data.image_url ?? data.images?.[0]?.url ?? data.url
+  if (url) {
+    const imgRes = await fetch(url)
+    const buf = await imgRes.arrayBuffer()
+    return { base64: Buffer.from(buf).toString('base64'), mime: 'image/png' }
+  }
+
+  // Direct base64
+  const b64 = data.image ?? data.images?.[0]?.b64_json ?? data.b64_json
+  if (b64) return { base64: b64, mime: 'image/png' }
+
+  throw new Error('No image data in Higgsfield response')
 }
 
 // ── Route handler ─────────────────────────────────────────────────────
@@ -85,7 +97,7 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, tool, conceptId } = await req.json() as {
       prompt: string
-      tool: 'gemini' | 'gemini-imagen3' | 'higgsfield'
+      tool: 'gemini' | 'higgsfield-nano-banana' | 'higgsfield'
       conceptId: string
     }
 
@@ -93,28 +105,14 @@ export async function POST(req: NextRequest) {
 
     let result: { base64: string; mime: string }
 
-    if (tool === 'gemini-imagen3') {
-      result = await generateWithImagen3(prompt)
-    } else if (tool === 'gemini') {
-      result = await generateWithGeminiFlash(prompt)
+    if (tool === 'higgsfield-nano-banana' || tool === 'higgsfield') {
+      result = await generateWithHiggsfield(prompt, 'nano_banana_2')
     } else {
-      return NextResponse.json({ error: 'Higgsfield not yet connected' }, { status: 501 })
+      result = await generateWithGeminiFlash(prompt)
     }
-
-    // Save to disk (best-effort — skip on Vercel if /tmp fills)
-    let imagePath = null
-    try {
-      ensureOutputsDir()
-      const ext = result.mime.includes('png') ? 'png' : 'jpg'
-      const filename = `${tool}-${timestamp()}.${ext}`
-      const filepath = path.join(OUTPUTS_DIR, filename)
-      fs.writeFileSync(filepath, Buffer.from(result.base64, 'base64'))
-      imagePath = IS_VERCEL ? null : `/outputs/${filename}`
-    } catch { /* non-critical */ }
 
     return NextResponse.json({
       success: true,
-      imagePath,
       base64: result.base64,
       mime: result.mime,
       conceptId,

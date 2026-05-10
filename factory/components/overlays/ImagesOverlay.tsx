@@ -20,7 +20,7 @@ interface ImagesOverlayProps {
   imagePrompts: Record<string, ImagePrompts>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
-  onGenerate: (conceptId: string, prompt: string, tool: 'gemini' | 'gemini-imagen3') => void
+  onGenerate: (conceptId: string, prompt: string, tool: 'gemini' | 'higgsfield-nano-banana' | 'higgsfield') => void
   onSelectImage: (id: string) => void
   onContinueToVideo: () => void
   onClose: () => void
@@ -29,8 +29,8 @@ interface ImagesOverlayProps {
 }
 
 const TOOLS = [
-  { id: 'gemini' as const, label: 'GEMINI FLASH', color: '#00ff88', desc: 'Rápido · recomendado' },
-  { id: 'gemini-imagen3' as const, label: 'IMAGEN 3', color: '#0088ff', desc: 'Alta calidad · fallback a Flash' },
+  { id: 'higgsfield-nano-banana' as const, label: 'NANO BANANA PRO', color: '#ff0040', desc: 'Higgsfield · recomendado' },
+  { id: 'gemini' as const, label: 'GEMINI FLASH', color: '#00ff88', desc: 'Google · rápido' },
 ]
 
 export default function ImagesOverlay({
@@ -45,7 +45,7 @@ export default function ImagesOverlay({
   generating,
   generatingFor,
 }: ImagesOverlayProps) {
-  const [selectedTool, setSelectedTool] = useState<'gemini' | 'gemini-imagen3'>('gemini')
+  const [selectedTool, setSelectedTool] = useState<'gemini' | 'higgsfield-nano-banana' | 'higgsfield'>('higgsfield-nano-banana')
   const [activeConcept, setActiveConcept] = useState<string>(selectedConcepts[0]?.id ?? '')
 
   const concept = selectedConcepts.find(c => c.id === activeConcept)
@@ -54,7 +54,7 @@ export default function ImagesOverlay({
   const selectedImage = generatedImages.find(img => img.id === selectedImageId)
 
   const prompt = prompts
-    ? (selectedTool === 'gemini' || selectedTool === 'gemini-imagen3' ? prompts.gemini : prompts.higgsfield)
+    ? (selectedTool === 'gemini' ? prompts.gemini : prompts.higgsfield)
     : ''
 
   return (

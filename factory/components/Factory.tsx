@@ -161,7 +161,7 @@ export default function Factory() {
   const handleGenerateImage = useCallback(async (
     conceptId: string,
     prompt: string,
-    tool: 'gemini' | 'gemini-imagen3'
+    tool: 'gemini' | 'gemini-imagen3' | 'higgsfield-nano-banana' | 'higgsfield'
   ) => {
     if (generatingImage) return
     setGeneratingImage(true)
