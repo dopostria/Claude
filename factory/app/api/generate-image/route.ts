@@ -15,7 +15,10 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
     headers: API_KEY_HEADER(apiKey),
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageGenerationConfig: { aspectRatio: '9:16' },
+      },
     }),
   })
   if (!res.ok) {
@@ -36,8 +39,8 @@ async function tryImagen3(prompt: string, apiKey: string): Promise<{ base64: str
     method: 'POST',
     headers: API_KEY_HEADER(apiKey),
     body: JSON.stringify({
-      instances: [{ prompt }],          // flat string, NOT {text: '...'}
-      parameters: { sampleCount: 1 },
+      instances: [{ prompt }],
+      parameters: { sampleCount: 1, aspectRatio: '9:16' },
     }),
   })
   if (!res.ok) {

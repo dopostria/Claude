@@ -17,6 +17,7 @@ interface VideoOverlayProps {
   videoUri: string | null
   videoModel: string | null
   onGenerateVideo: (prompt: string) => void
+  onBack: () => void
   onClose: () => void
   generating: boolean
 }
@@ -31,6 +32,7 @@ export default function VideoOverlay({
   videoUri,
   videoModel,
   onGenerateVideo,
+  onBack,
   onClose,
   generating,
 }: VideoOverlayProps) {
@@ -58,7 +60,15 @@ export default function VideoOverlay({
               {activeConcept?.title ?? 'Sin concepto'}
             </div>
           </div>
-          <button className="btn-pixel" onClick={onClose} style={{ color: '#555', borderColor: '#333', fontSize: 8 }}>✕</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {!generating && (
+              <button className="btn-pixel" onClick={onBack}
+                style={{ color: '#0088ff', borderColor: '#0088ff', fontSize: 8 }}>
+                ← IMÁGENES
+              </button>
+            )}
+            <button className="btn-pixel" onClick={onClose} style={{ color: '#555', borderColor: '#333', fontSize: 8 }}>✕</button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', minHeight: 480 }}>
@@ -133,7 +143,7 @@ export default function VideoOverlay({
               )}
               {!generating && (
                 <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#222', textAlign: 'center', marginTop: 8 }}>
-                  veo-3.0 · veo-2.0 fallback
+                  veo-3.1 · veo-3.0 fallback
                 </div>
               )}
             </div>

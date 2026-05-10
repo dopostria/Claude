@@ -385,6 +385,7 @@ export default function Factory() {
           videoUri={videoUri}
           videoModel={videoModel}
           onGenerateVideo={handleGenerateVideo}
+          onBack={() => setState(s => ({ ...s, activeOverlay: 'images' }))}
           onClose={handleCloseOverlay}
           generating={generatingVideo}
         />
