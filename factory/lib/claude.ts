@@ -94,17 +94,15 @@ Mix of tags required: at least 2 Bolivia, at least 3 POP_CULTURE, at least 3 COT
   return parsed.concepts as Concept[]
 }
 
-export async function generateImagePrompts(concept: Concept): Promise<string> {
+export async function generateDualPrompts(concept: Concept): Promise<{ imagePrompt: string; videoPrompt: string }> {
   const client = getClient()
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 800,
-    system: `You are the CantSleept Visual Prompt Engine. You generate a single, highly specific image prompt for each concept.
+    max_tokens: 1200,
+    system: `You are the CantSleept Visual Prompt Engine. For each concept you generate two production-ready prompts simultaneously.
 
-Your job: evaluate the concept and choose the MOST EFFECTIVE visual style for it. Do not default to one style.
-
-AVAILABLE STYLES (choose the best fit — or invent a better one):
+IMAGE PROMPT — choose the MOST EFFECTIVE visual style (do not default to one):
 1. GPK / Collectible sticker: grotesque, hyper-detailed, wrong proportions, sticker card border
 2. Hyperrealistic cartoon fusion: cartoon character in photorealistic environment, 4K textures, neon lighting
 3. Cinematic photorealistic: cinematic composition, dramatic lighting, slightly exaggerated but near-real
@@ -112,20 +110,28 @@ AVAILABLE STYLES (choose the best fit — or invent a better one):
 5. Dark surrealist: Dalí/Magritte meets pop culture, impossible backgrounds, broken physics
 6. Anime grotesque: anime style with exaggerated/grotesque proportions, Junji Ito meets pop
 
-ALL prompts MUST include:
+ALL image prompts MUST include:
 - Neon saturated colors (#ff0040, #00ff88, #ffdd00, #0088ff)
 - 9:16 vertical portrait format
 - Ultra-high detail (4K / 8K)
 - The visual contradiction that IS the concept
 
-REFERENCE EXAMPLES (match this level of specificity):
-EXAMPLE 1 (hyperrealistic cartoon fusion): "4K photorealistic grotesque detail, hyperrealistic cartoon fusion. Ultra-detailed chrome T-800 Terminator endoskeleton with oversized head, one bulging glowing crimson cybernetic eye with visible circuitry, sits defeated at wooden computer desk. Hyperrealistic metallic textures on skull, exposed servo motors in jaw. Computer LCD monitor shows crisp CAPTCHA interface 'Selecciona todas las imágenes con semáforos'. Bright red holographic scanning laser grid projects from eye socket onto screen. Vivid oversaturated lighting (#ff0040, #00ff88, #ffdd00), collectible sticker aesthetic, slightly exaggerated anatomy proportions. 9:16"
+REFERENCE IMAGE PROMPTS:
+"4K photorealistic grotesque detail, hyperrealistic cartoon fusion. Ultra-detailed chrome T-800 Terminator endoskeleton with oversized head, one bulging glowing crimson cybernetic eye with visible circuitry, sits defeated at wooden computer desk. Computer LCD monitor shows crisp CAPTCHA interface 'Selecciona todas las imágenes con semáforos'. Vivid oversaturated lighting (#ff0040, #00ff88, #ffdd00). 9:16"
+"Garbage Pail Kids style hyper-detailed illustration: Jesus with oversized glowing halo at Last Supper table, surrounded by 12 apostles all holding smartphones begging for WiFi password. Judas in corner with laptop showing torrent download at 99%. Speech bubbles: '¿CUÁL ES LA CONTRASEÑA?' Sticker card texture with ornate gold collectible border. 9:16"
 
-EXAMPLE 2 (GPK sticker): "Garbage Pail Kids style hyper-detailed illustration: Jesus with oversized glowing halo at Last Supper table, surrounded by 12 apostles all holding smartphones begging for WiFi password. Neon saturated colors. Judas in corner with laptop showing torrent download at 99%. Speech bubbles: '¿CUÁL ES LA CONTRASEÑA?' Sticker card texture with ornate gold collectible border. Grotesque-funny proportions, 9:16"
+VIDEO PROMPT — a Veo 3 animation prompt:
+- Lead with the action verb or movement
+- Describe WHAT MOVES and HOW, not what the image looks like
+- Max 3 sentences, max 60 words
+- PROHIBITED: "electric ZAP", "magical", "glowing effect", "transition", "particle burst"
+- Must work as an animation of the image prompt you just described
 
-EXAMPLE 3 (hyperrealistic fusion con contexto boliviano): "4K photorealistic Garbage Pail Kids fusion. Barbie figure with oversized proportions, unnaturally smooth plastic skin, wearing 7-layered pollera with individual pleats, vibrant magenta pollera, traditional aguayo manta, brown bowler hat. Ken: coal dust on skin, weathered miner helmet. Background: Bolivian market stall, steam from aluminum pots, tucumanas, wiphala flag. Vivid oversaturated color grading, slightly wrong proportions. 9:16"
-
-Return ONLY the prompt text — no JSON, no explanation, just the prompt.`,
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "image_prompt": "...",
+  "video_prompt": "..."
+}`,
     messages: [{
       role: 'user',
       content: `Concept:
@@ -134,13 +140,20 @@ Setup: ${concept.setup}
 Punchline: ${concept.punchline}
 Tags: ${concept.tags.join(', ')}
 
-Choose the most visually effective style for this specific concept and write one production-ready image prompt.`,
+Generate one image prompt + one video animation prompt for this concept.`,
     }],
   })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
-  if (!text) throw new Error('Empty prompt from Claude')
-  return text
+  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) throw new Error('No JSON in Claude response for dual prompts')
+
+  const parsed = JSON.parse(jsonMatch[0])
+  const imagePrompt = (parsed.image_prompt ?? '').trim()
+  const videoPrompt = (parsed.video_prompt ?? '').trim()
+  if (!imagePrompt) throw new Error('Empty image_prompt from Claude')
+  if (!videoPrompt) throw new Error('Empty video_prompt from Claude')
+  return { imagePrompt, videoPrompt }
 }
 
 export async function generateAnimationConcepts(

@@ -1,8 +1,9 @@
 'use client'
 
 import Robot from '../Robot'
-import PixelBorder from '../PixelBorder'
-import type { RoomState, Concept } from '@/lib/types'
+import type { RoomState } from '@/lib/types'
+
+// ─── 3AM THOUGHTS ─────────────────────────────────────────────────────────────
 
 interface IdeasRoomProps {
   state: RoomState
@@ -12,70 +13,27 @@ interface IdeasRoomProps {
 }
 
 export default function IdeasRoom({ state, conceptCount, selectedCount, onClick }: IdeasRoomProps) {
-  const color = '#ffdd00'
+  const color = '#00c4a0'
+  const canClick = conceptCount > 0 || state !== 'idle'
 
   return (
-    <PixelBorder
+    <RoomCard
+      state={state}
+      onClick={canClick ? onClick : undefined}
+      label="NODE_01"
+      title="3AM THOUGHTS"
       color={color}
-      active={state === 'working' || state === 'done'}
-      onClick={state !== 'idle' || conceptCount > 0 ? onClick : undefined}
-      className={state === 'working' ? 'room-active' : ''}
-      style={{
-        background: '#0d0d00',
-        padding: 0,
-        height: '100%',
-        cursor: state !== 'idle' || conceptCount > 0 ? 'pointer' : 'default',
-      }}
-    >
-      <div style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '14px 16px',
-        gap: 12,
-      }}>
-        {/* Room header */}
-        <RoomHeader color={color} title="SALA IDEAS" subtitle="NODO 1 + 2" />
-
-        {/* Robots */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'flex-end',
-          flex: 1,
-          paddingBottom: 8,
-        }}>
-          <Robot color={color} state={state} scale={0.9} delay={0} />
-          <Robot color={color} state={state} scale={0.9} delay={0.13} />
-          <Robot color={color} state={state} scale={0.9} delay={0.26} />
-        </div>
-
-        {/* Status bar */}
-        <RoomStatus
-          state={state}
-          color={color}
-          lines={[
-            conceptCount > 0 ? `${conceptCount} CONCEPTS READY` : 'AWAITING TRIGGER',
-            selectedCount > 0 ? `${selectedCount} SELECTED` : '',
-          ].filter(Boolean)}
-        />
-
-        {/* Click hint */}
-        {(conceptCount > 0 || state === 'done') && (
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 6,
-            color: `${color}88`,
-            textAlign: 'center',
-            animation: 'neonPulse 2s ease-in-out infinite',
-          }}>
-            CLICK TO EXPAND
-          </div>
-        )}
-      </div>
-    </PixelBorder>
+      robot={<Robot room="ideas" state={state} />}
+      statusLines={[
+        conceptCount > 0 ? `${conceptCount} CONCEPTS` : 'WAITING...',
+        selectedCount > 0 ? `${selectedCount} SELECTED` : '',
+      ]}
+      hint={canClick ? 'CLICK TO EXPAND' : undefined}
+    />
   )
 }
+
+// ─── PIXEL DAMAGE ─────────────────────────────────────────────────────────────
 
 interface ImagesRoomProps {
   state: RoomState
@@ -84,65 +42,26 @@ interface ImagesRoomProps {
 }
 
 export function ImagesRoom({ state, imageCount, onClick }: ImagesRoomProps) {
-  const color = '#0088ff'
+  const color = '#ff6b35'
+  const canClick = imageCount > 0 || state !== 'idle'
 
   return (
-    <PixelBorder
+    <RoomCard
+      state={state}
+      onClick={canClick ? onClick : undefined}
+      label="NODE_02"
+      title="PIXEL DAMAGE"
       color={color}
-      active={state === 'working' || state === 'done'}
-      onClick={imageCount > 0 || state !== 'idle' ? onClick : undefined}
-      className={state === 'working' ? 'room-active' : ''}
-      style={{
-        background: '#00050d',
-        padding: 0,
-        height: '100%',
-        cursor: imageCount > 0 || state !== 'idle' ? 'pointer' : 'default',
-      }}
-    >
-      <div style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '14px 16px',
-        gap: 12,
-      }}>
-        <RoomHeader color={color} title="SALA IMÁGENES" subtitle="NODO 3" />
-
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'flex-end',
-          flex: 1,
-          paddingBottom: 8,
-        }}>
-          <Robot color={color} state={state} scale={0.9} delay={0} />
-          <Robot color={color} state={state} scale={0.9} delay={0.13} />
-          <Robot color={color} state={state} scale={0.9} delay={0.26} />
-        </div>
-
-        <RoomStatus
-          state={state}
-          color={color}
-          lines={[
-            imageCount > 0 ? `${imageCount} IMAGES READY` : 'AWAITING PROMPT',
-          ]}
-        />
-
-        {imageCount > 0 && (
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 6,
-            color: `${color}88`,
-            textAlign: 'center',
-            animation: 'neonPulse 2s ease-in-out infinite',
-          }}>
-            CLICK TO EXPAND
-          </div>
-        )}
-      </div>
-    </PixelBorder>
+      robot={<Robot room="images" state={state} />}
+      statusLines={[
+        imageCount > 0 ? `${imageCount} IMAGES` : 'WAITING...',
+      ]}
+      hint={canClick ? 'CLICK TO EXPAND' : undefined}
+    />
   )
 }
+
+// ─── MOTION SICK ──────────────────────────────────────────────────────────────
 
 interface VideoRoomProps {
   state: RoomState
@@ -151,129 +70,164 @@ interface VideoRoomProps {
 }
 
 export function VideoRoom({ state, videoReady, onClick }: VideoRoomProps) {
-  const color = '#ff0040'
+  const color = '#48cae4'
+  const canClick = videoReady || state !== 'idle'
 
   return (
-    <PixelBorder
+    <RoomCard
+      state={state}
+      onClick={canClick ? onClick : undefined}
+      label="NODE_03"
+      title="MOTION SICK"
       color={color}
-      active={state === 'working' || state === 'done'}
-      onClick={videoReady || state !== 'idle' ? onClick : undefined}
-      className={state === 'working' ? 'room-active' : ''}
+      robot={<Robot room="video" state={state} />}
+      statusLines={[
+        videoReady ? 'VIDEO READY' : 'WAITING...',
+      ]}
+      hint={canClick ? 'CLICK TO EXPAND' : undefined}
+    />
+  )
+}
+
+// ─── Shared RoomCard ──────────────────────────────────────────────────────────
+
+interface RoomCardProps {
+  state: RoomState
+  onClick?: () => void
+  label: string
+  title: string
+  color: string
+  robot: React.ReactNode
+  statusLines: string[]
+  hint?: string
+}
+
+function RoomCard({ state, onClick, label, title, color, robot, statusLines, hint }: RoomCardProps) {
+  const stateColors: Record<RoomState, string> = {
+    idle:    '#0d3330',
+    working: '#ff6b35',
+    done:    '#00c4a0',
+    error:   '#ff3030',
+  }
+  const ledColor = stateColors[state]
+
+  return (
+    <div
+      className={`room-card ${state !== 'idle' ? state : ''}`}
+      onClick={onClick}
       style={{
-        background: '#0d0001',
-        padding: 0,
-        height: '100%',
-        cursor: videoReady || state !== 'idle' ? 'pointer' : 'default',
-      }}
-    >
-      <div style={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        padding: '14px 16px',
-        gap: 12,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'border-color 0.3s, box-shadow 0.3s',
+      }}
+      onMouseEnter={e => {
+        if (onClick) {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = '#ff6b35'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 14px rgba(255, 107, 53, 0.2)'
+        }
+      }}
+      onMouseLeave={e => {
+        const base = state !== 'idle' ? state : ''
+        if (base === 'working') {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = '#ff6b35'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 16px rgba(255, 107, 53, 0.2)'
+        } else if (base === 'done') {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = '#00c4a0'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 12px rgba(0, 196, 160, 0.2)'
+        } else if (base === 'error') {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = '#ff3030'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 12px rgba(255, 48, 48, 0.2)'
+        } else {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = '#0d3330'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
+        }
+      }}
+    >
+      {/* Pixel corners */}
+      <div className="px-corner px-tl" style={{ background: color }} />
+      <div className="px-corner px-tr" style={{ background: color }} />
+      <div className="px-corner px-bl" style={{ background: color }} />
+      <div className="px-corner px-br" style={{ background: color }} />
+
+      {/* ── Zone 1: label + title ── */}
+      <div style={{
+        padding: '12px 14px 10px',
+        borderBottom: `1px solid ${color}22`,
+        flexShrink: 0,
       }}>
-        <RoomHeader color={color} title="SALA VIDEO" subtitle="NODO 4 + 5" />
-
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'flex-end',
-          flex: 1,
-          paddingBottom: 8,
-        }}>
-          <Robot color={color} state={state} scale={0.9} delay={0} />
-          <Robot color={color} state={state} scale={0.9} delay={0.13} />
-          <Robot color={color} state={state} scale={0.9} delay={0.26} />
-        </div>
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 5,
+          color: '#004d3d',
+          letterSpacing: 3,
+          marginBottom: 5,
+        }}>{label}</div>
+        <div style={{
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 9,
+          color,
+          letterSpacing: 1,
+        }}>{title}</div>
+      </div>
 
-        <RoomStatus
-          state={state}
-          color={color}
-          lines={[
-            videoReady ? 'VIDEO READY' : 'AWAITING IMAGE',
-          ]}
-        />
+      {/* ── Zone 2: robot (centered, fills space) ── */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '12px 0',
+      }}>
+        {robot}
+      </div>
 
-        {videoReady && (
+      {/* ── Zone 3: status ── */}
+      <div style={{
+        padding: '10px 14px',
+        borderTop: `1px solid ${color}22`,
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <div style={{
+            width: 5,
+            height: 5,
+            background: ledColor,
+            flexShrink: 0,
+            boxShadow: state !== 'idle' ? `0 0 5px ${ledColor}` : 'none',
+            animation: state === 'working' ? 'neonPulse 0.8s ease-in-out infinite' : 'none',
+          }} />
           <div style={{
             fontFamily: '"Press Start 2P", monospace',
             fontSize: 6,
-            color: `${color}88`,
+            color: ledColor,
+          }}>{state.toUpperCase()}</div>
+        </div>
+
+        {statusLines.filter(Boolean).map((line, i) => (
+          <div key={i} style={{
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: 6,
+            color: `${color}99`,
+            paddingLeft: 11,
+            marginTop: 2,
+          }}>{line}</div>
+        ))}
+
+        {hint && (
+          <div style={{
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: 5,
+            color: `${color}55`,
             textAlign: 'center',
+            marginTop: 6,
             animation: 'neonPulse 2s ease-in-out infinite',
           }}>
-            CLICK TO EXPAND
+            {hint}
           </div>
         )}
       </div>
-    </PixelBorder>
-  )
-}
-
-// ── Shared sub-components ──────────────────────────────────────────────
-
-function RoomHeader({ color, title, subtitle }: { color: string; title: string; subtitle: string }) {
-  return (
-    <div style={{ borderBottom: `1px solid ${color}33`, paddingBottom: 10 }}>
-      <div style={{
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: 6,
-        color: `${color}66`,
-        letterSpacing: 2,
-        marginBottom: 4,
-      }}>{subtitle}</div>
-      <div style={{
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: 9,
-        color,
-        letterSpacing: 1,
-      }}>{title}</div>
-    </div>
-  )
-}
-
-function RoomStatus({ state, color, lines }: { state: RoomState; color: string; lines: string[] }) {
-  const stateColors: Record<RoomState, string> = {
-    idle: '#333',
-    working: '#ffdd00',
-    done: '#00ff88',
-    error: '#ff0040',
-  }
-
-  return (
-    <div style={{
-      borderTop: `1px solid ${color}22`,
-      paddingTop: 8,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div style={{
-          width: 6,
-          height: 6,
-          background: stateColors[state],
-          flexShrink: 0,
-          animation: state === 'working' ? 'neonPulse 0.8s ease-in-out infinite' : 'none',
-          boxShadow: state !== 'idle' ? `0 0 6px ${stateColors[state]}` : 'none',
-        }} />
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 7,
-          color: stateColors[state],
-        }}>
-          {state.toUpperCase()}
-        </div>
-      </div>
-      {lines.map((line, i) => (
-        <div key={i} style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 6,
-          color: `${color}88`,
-          paddingLeft: 12,
-        }}>{line}</div>
-      ))}
     </div>
   )
 }

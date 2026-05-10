@@ -13,13 +13,13 @@ interface Star {
 
 export default function StarBackground() {
   const stars = useMemo<Star[]>(() => {
-    return Array.from({ length: 180 }, (_, i) => ({
+    return Array.from({ length: 140 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      duration: 2 + Math.random() * 4,
-      delay: Math.random() * 5,
-      size: Math.random() < 0.85 ? 1 : 2,
+      duration: 2.5 + Math.random() * 4,
+      delay: Math.random() * 6,
+      size: Math.random() < 0.8 ? 1 : 2,
     }))
   }, [])
 

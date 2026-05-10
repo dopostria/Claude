@@ -1,125 +1,151 @@
 'use client'
 
-import { useState } from 'react'
-import PixelBorder from '../PixelBorder'
+import { useState, useEffect, useRef } from 'react'
 import type { Concept } from '@/lib/types'
 
 interface IdeasOverlayProps {
   concepts: Concept[]
   selectedIds: string[]
   imagePrompts: Record<string, string>
+  videoPrompts: Record<string, string>
   onSelectConcept: (id: string) => void
   onConfirmSelection: () => void
+  onOpenImages: (imagePrompts: Record<string, string>, videoPrompts: Record<string, string>) => void
   onClose: () => void
   processingPrompts: boolean
 }
 
 const TAG_COLORS: Record<string, string> = {
-  Bolivia: '#ffdd00',
-  POP_CULTURE: '#0088ff',
-  COTIDIANO: '#00ff88',
+  Bolivia:    '#ffdd00',
+  POP_CULTURE:'#48cae4',
+  COTIDIANO:  '#00c4a0',
 }
 
 const TAG_LABELS: Record<string, string> = {
-  Bolivia: '🇧🇴 BOLIVIA',
-  POP_CULTURE: '🎬 POP',
-  COTIDIANO: '🌐 COTIDIANO',
+  Bolivia:    '🇧🇴 BOLIVIA',
+  POP_CULTURE:'🎬 POP',
+  COTIDIANO:  '🌐 COTIDIANO',
 }
 
 export default function IdeasOverlay({
   concepts,
   selectedIds,
   imagePrompts,
+  videoPrompts,
   onSelectConcept,
   onConfirmSelection,
+  onOpenImages,
   onClose,
   processingPrompts,
 }: IdeasOverlayProps) {
-  const [expandedPrompts, setExpandedPrompts] = useState<string | null>(null)
+  // Local editable copies of the prompts
+  const [localImage, setLocalImage] = useState<Record<string, string>>(imagePrompts)
+  const [localVideo, setLocalVideo] = useState<Record<string, string>>(videoPrompts)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const prevImageRef = useRef(imagePrompts)
+  const prevVideoRef = useRef(videoPrompts)
+
+  useEffect(() => {
+    if (imagePrompts !== prevImageRef.current) {
+      setLocalImage(imagePrompts)
+      prevImageRef.current = imagePrompts
+      // Auto-expand first selected concept when prompts arrive
+      if (selectedIds.length > 0) setExpandedId(selectedIds[0])
+    }
+  }, [imagePrompts, selectedIds])
+
+  useEffect(() => {
+    if (videoPrompts !== prevVideoRef.current) {
+      setLocalVideo(videoPrompts)
+      prevVideoRef.current = videoPrompts
+    }
+  }, [videoPrompts])
+
+  const promptsReady = selectedIds.length > 0 && selectedIds.every(id => localImage[id] && localVideo[id])
 
   return (
     <div className="overlay-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="overlay-panel">
+
         {/* Header */}
         <div style={{
-          padding: '16px 24px',
-          borderBottom: '2px solid #1a1a2e',
+          padding: '14px 22px',
+          borderBottom: '2px solid #0d3330',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#080810',
+          background: '#050e0d',
           position: 'sticky',
           top: 0,
           zIndex: 10,
         }}>
           <div>
-            <div style={{
-              fontFamily: '"Press Start 2P", monospace',
-              fontSize: 6,
-              color: '#ffdd00',
-              letterSpacing: 2,
-              marginBottom: 6,
-            }}>NODO 1 — IDEA ENGINE</div>
-            <div style={{
-              fontFamily: '"Press Start 2P", monospace',
-              fontSize: 11,
-              color: '#00ff88',
-            }}>
-              {concepts.length} CONCEPTOS GENERADOS
+            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 3, marginBottom: 5 }}>
+              NODE_01 — 3AM THOUGHTS
+            </div>
+            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 11, color: '#00c4a0' }}>
+              {concepts.length} CONCEPTOS
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {selectedIds.length > 0 && (
-              <div style={{
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: 8,
-                color: '#00ff88',
-              }}>
-                {selectedIds.length} SELECTED
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {selectedIds.length > 0 && !promptsReady && (
+              <button
+                className="btn-pixel"
+                onClick={onConfirmSelection}
+                disabled={selectedIds.length === 0 || processingPrompts}
+                style={{
+                  color: selectedIds.length > 0 ? '#00ffcc' : '#0d3330',
+                  borderColor: selectedIds.length > 0 ? '#00c4a0' : '#0d3330',
+                  boxShadow: selectedIds.length > 0 ? '0 0 12px rgba(0,196,160,0.3)' : 'none',
+                  fontSize: 7,
+                }}
+              >
+                {processingPrompts ? (
+                  <span className="loading-dots">GENERANDO PROMPTS<span>.</span><span>.</span><span>.</span></span>
+                ) : (
+                  `▶ GENERAR PROMPTS (${selectedIds.length})`
+                )}
+              </button>
+            )}
+
+            {promptsReady && (
+              <button
+                className="btn-pixel"
+                onClick={() => onOpenImages(localImage, localVideo)}
+                style={{
+                  color: '#ff6b35',
+                  borderColor: '#ff6b35',
+                  fontSize: 7,
+                  boxShadow: '0 0 14px rgba(255,107,53,0.4)',
+                }}
+              >
+                ▶ ABRIR PIXEL DAMAGE
+              </button>
             )}
 
             <button
               className="btn-pixel"
-              onClick={onConfirmSelection}
-              disabled={selectedIds.length === 0 || processingPrompts}
-              style={{
-                color: selectedIds.length > 0 ? '#00ff88' : '#333',
-                borderColor: selectedIds.length > 0 ? '#00ff88' : '#333',
-                boxShadow: selectedIds.length > 0 ? '0 0 12px #00ff8844' : 'none',
-              }}
-            >
-              {processingPrompts ? (
-                <span className="loading-dots">
-                  GENERATING PROMPTS<span>.</span><span>.</span><span>.</span>
-                </span>
-              ) : (
-                `CONFIRM SELECTION (${selectedIds.length})`
-              )}
-            </button>
-
-            <button
-              className="btn-pixel"
               onClick={onClose}
-              style={{ color: '#555', borderColor: '#333', fontSize: 8 }}
+              style={{ color: '#004d3d', borderColor: '#0d3330', fontSize: 7 }}
             >
-              ✕ CLOSE
+              ✕
             </button>
           </div>
         </div>
 
         {/* Concepts grid */}
         <div style={{
-          padding: '20px 24px',
+          padding: '18px 22px',
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 16,
+          gap: 14,
         }}>
           {concepts.map((concept, idx) => {
-            const isSelected = selectedIds.includes(concept.id)
-            const hasPrompts = imagePrompts[concept.id] !== undefined
-            const isExpanded = expandedPrompts === concept.id
+            const isSelected  = selectedIds.includes(concept.id)
+            const hasPrompts  = !!(localImage[concept.id] && localVideo[concept.id])
+            const isExpanded  = expandedId === concept.id
 
             return (
               <div
@@ -129,115 +155,95 @@ export default function IdeasOverlay({
               >
                 {/* Card header */}
                 <div style={{
-                  padding: '12px 14px 10px',
-                  borderBottom: '1px solid #111',
+                  padding: '11px 13px 9px',
+                  borderBottom: '1px solid #0d3330',
                   display: 'flex',
                   alignItems: 'flex-start',
                   justifyContent: 'space-between',
                   gap: 8,
                 }}>
                   <div style={{ flex: 1 }}>
-                    {/* Index */}
                     <div style={{
                       fontFamily: '"Press Start 2P", monospace',
-                      fontSize: 6,
-                      color: '#333',
-                      marginBottom: 6,
+                      fontSize: 5,
+                      color: '#0d3330',
+                      marginBottom: 5,
                     }}>
                       #{String(idx + 1).padStart(2, '0')}
                       {concept.improved && (
-                        <span style={{ color: '#ffdd00', marginLeft: 8 }}>↑ IMPROVED</span>
+                        <span style={{ color: '#ff6b35', marginLeft: 8 }}>↑ IMPROVED</span>
                       )}
                     </div>
-
-                    {/* Title */}
                     <div style={{
                       fontFamily: '"Press Start 2P", monospace',
                       fontSize: 9,
-                      color: isSelected ? '#00ff88' : '#fff',
+                      color: isSelected ? '#00ffcc' : '#fff',
                       lineHeight: 1.5,
-                      marginBottom: 8,
+                      marginBottom: 7,
                     }}>
                       {concept.title}
                     </div>
-
-                    {/* Tags */}
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {concept.tags.map(tag => (
                         <span key={tag} style={{
                           fontFamily: '"Press Start 2P", monospace',
-                          fontSize: 6,
+                          fontSize: 5,
                           color: TAG_COLORS[tag] || '#fff',
                           border: `1px solid ${TAG_COLORS[tag] || '#fff'}44`,
-                          padding: '2px 6px',
+                          padding: '2px 5px',
                         }}>
                           {TAG_LABELS[tag] || tag}
                         </span>
                       ))}
                     </div>
                   </div>
-
-                  {/* Score badge */}
                   <ScoreBadge score={concept.scores.overall} />
                 </div>
 
                 {/* Concept content */}
-                <div style={{ padding: '12px 14px' }}>
-                  {/* Setup */}
-                  <div style={{ marginBottom: 10 }}>
+                <div style={{ padding: '11px 13px' }}>
+                  <div style={{ marginBottom: 9 }}>
                     <div style={{
                       fontFamily: '"Press Start 2P", monospace',
-                      fontSize: 6,
-                      color: '#444',
-                      marginBottom: 6,
+                      fontSize: 5,
+                      color: '#004d3d',
+                      marginBottom: 5,
                       letterSpacing: 2,
                     }}>SETUP VISUAL</div>
-                    <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
-                      fontSize: 7,
-                      color: '#aaa',
-                      lineHeight: 1.8,
-                    }}>
+                    <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00a882', lineHeight: 1.8 }}>
                       {concept.setup}
                     </div>
                   </div>
 
-                  {/* Punchline */}
-                  <div style={{ marginBottom: 12 }}>
+                  <div style={{ marginBottom: 10 }}>
                     <div style={{
                       fontFamily: '"Press Start 2P", monospace',
-                      fontSize: 6,
-                      color: '#ffdd0066',
-                      marginBottom: 6,
+                      fontSize: 5,
+                      color: '#ff6b3566',
+                      marginBottom: 5,
                       letterSpacing: 2,
                     }}>PUNCHLINE</div>
-                    <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
-                      fontSize: 7,
-                      color: '#ffdd00',
-                      lineHeight: 1.8,
-                    }}>
+                    <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#ff6b35', lineHeight: 1.8 }}>
                       {concept.punchline}
                     </div>
                   </div>
 
-                  {/* Quality scores mini-bars */}
-                  <div style={{ marginBottom: 12 }}>
+                  <div style={{ marginBottom: 10 }}>
                     <ScoreMini scores={concept.scores} />
                   </div>
 
                   {/* Action buttons */}
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                     <button
                       className="btn-pixel"
                       onClick={() => onSelectConcept(concept.id)}
                       style={{
                         flex: 1,
-                        color: isSelected ? '#00ff88' : '#666',
-                        borderColor: isSelected ? '#00ff88' : '#333',
-                        fontSize: 7,
-                        padding: '8px 12px',
-                        boxShadow: isSelected ? '0 0 10px #00ff8844' : 'none',
+                        color: isSelected ? '#00ffcc' : '#004d3d',
+                        borderColor: isSelected ? '#00c4a0' : '#0d3330',
+                        fontSize: 6,
+                        padding: '7px 10px',
+                        boxShadow: isSelected ? '0 0 10px rgba(0,196,160,0.3)' : 'none',
                       }}
                     >
                       {isSelected ? '✓ SELECTED' : '+ SELECT'}
@@ -246,12 +252,12 @@ export default function IdeasOverlay({
                     {hasPrompts && (
                       <button
                         className="btn-pixel"
-                        onClick={() => setExpandedPrompts(isExpanded ? null : concept.id)}
+                        onClick={() => setExpandedId(isExpanded ? null : concept.id)}
                         style={{
-                          color: '#0088ff',
-                          borderColor: '#0088ff44',
-                          fontSize: 7,
-                          padding: '8px 12px',
+                          color: '#48cae4',
+                          borderColor: '#48cae444',
+                          fontSize: 6,
+                          padding: '7px 10px',
                         }}
                       >
                         {isExpanded ? '▲ PROMPTS' : '▼ PROMPTS'}
@@ -259,9 +265,22 @@ export default function IdeasOverlay({
                     )}
                   </div>
 
-                  {/* Prompts expanded */}
+                  {/* Expanded editable prompts */}
                   {isExpanded && hasPrompts && (
-                    <PromptExpanded prompt={imagePrompts[concept.id] ?? ''} />
+                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <EditablePrompt
+                        label="IMAGE PROMPT"
+                        color="#00c4a0"
+                        value={localImage[concept.id] ?? ''}
+                        onChange={v => setLocalImage(prev => ({ ...prev, [concept.id]: v }))}
+                      />
+                      <EditablePrompt
+                        label="VIDEO PROMPT"
+                        color="#ff6b35"
+                        value={localVideo[concept.id] ?? ''}
+                        onChange={v => setLocalVideo(prev => ({ ...prev, [concept.id]: v }))}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
@@ -270,39 +289,32 @@ export default function IdeasOverlay({
         </div>
 
         {/* Footer */}
-        {selectedIds.length > 0 && (
+        {promptsReady && (
           <div style={{
-            padding: '14px 24px',
-            borderTop: '2px solid #1a1a2e',
-            background: '#080810',
+            padding: '12px 22px',
+            borderTop: '2px solid #0d3330',
+            background: '#050e0d',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             position: 'sticky',
             bottom: 0,
           }}>
-            <div style={{
-              fontFamily: '"Press Start 2P", monospace',
-              fontSize: 7,
-              color: '#00ff88',
-            }}>
-              {selectedIds.length} CONCEPT{selectedIds.length > 1 ? 'S' : ''} SELECTED → READY FOR IMAGE ENGINE
+            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00c4a0' }}>
+              {selectedIds.length} CONCEPTO{selectedIds.length > 1 ? 'S' : ''} — PROMPTS LISTOS
             </div>
             <button
               className="btn-pixel"
-              onClick={onConfirmSelection}
-              disabled={processingPrompts}
+              onClick={() => onOpenImages(localImage, localVideo)}
               style={{
-                color: '#00ff88',
-                borderColor: '#00ff88',
+                color: '#ff6b35',
+                borderColor: '#ff6b35',
                 fontSize: 8,
                 padding: '10px 20px',
-                boxShadow: '0 0 14px #00ff8855',
+                boxShadow: '0 0 16px rgba(255,107,53,0.4)',
               }}
             >
-              {processingPrompts ? (
-                <span className="loading-dots">WORKING<span>.</span><span>.</span><span>.</span></span>
-              ) : '▶ CONFIRM + GENERATE PROMPTS'}
+              ▶ ABRIR PIXEL DAMAGE
             </button>
           </div>
         )}
@@ -312,128 +324,103 @@ export default function IdeasOverlay({
 }
 
 function ScoreBadge({ score }: { score: number }) {
-  const color = score >= 9 ? '#00ff88' : score >= 7 ? '#ffdd00' : '#ff0040'
+  const color = score >= 9 ? '#00c4a0' : score >= 7 ? '#ff6b35' : '#ff3030'
   return (
     <div style={{
       flexShrink: 0,
-      width: 36,
-      height: 36,
+      width: 34,
+      height: 34,
       border: `2px solid ${color}`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       boxShadow: `0 0 8px ${color}44`,
     }}>
-      <div style={{
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: 11,
-        color,
-        lineHeight: 1,
-      }}>{score}</div>
+      <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 11, color, lineHeight: 1 }}>{score}</div>
     </div>
   )
 }
 
 function ScoreMini({ scores }: { scores: Concept['scores'] }) {
   const bars = [
-    { key: 'scroll_stop', label: '📱' },
-    { key: 'no_explanation', label: '💡' },
-    { key: 'contrast_not_cruelty', label: '⚖' },
-    { key: 'no_audio', label: '🔇' },
+    { key: 'scroll_stop',         label: '📱' },
+    { key: 'no_explanation',      label: '💡' },
+    { key: 'contrast_not_cruelty',label: '⚖' },
+    { key: 'no_audio',            label: '🔇' },
   ] as const
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {bars.map(({ key, label }) => (
-        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 8,
-            width: 16,
-            flexShrink: 0,
-          }}>{label}</div>
+        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 8, width: 14, flexShrink: 0 }}>{label}</div>
           <div className="score-bar" style={{ flex: 1 }}>
             <div
               className="score-fill"
               style={{
                 width: `${scores[key] * 10}%`,
-                background: scores[key] >= 8 ? '#00ff88'
-                  : scores[key] >= 6 ? '#ffdd00'
-                  : '#ff0040',
+                background: scores[key] >= 8 ? '#00c4a0' : scores[key] >= 6 ? '#ff6b35' : '#ff3030',
               }}
             />
           </div>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 7,
-            color: '#555',
-            width: 12,
-            textAlign: 'right',
-            flexShrink: 0,
-          }}>{scores[key]}</div>
+          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#0d3330', width: 10, textAlign: 'right', flexShrink: 0 }}>
+            {scores[key]}
+          </div>
         </div>
       ))}
     </div>
   )
 }
 
-function PromptExpanded({ prompt }: { prompt: string }) {
-  return (
-    <div style={{ marginTop: 12 }}>
-      <PromptBox label="IMAGE PROMPT" color="#00ff88" text={prompt} />
-    </div>
-  )
-}
-
-function PromptBox({ label, color, text }: { label: string; color: string; text: string }) {
+function EditablePrompt({
+  label, color, value, onChange,
+}: {
+  label: string
+  color: string
+  value: string
+  onChange: (v: string) => void
+}) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard.writeText(value)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
   return (
-    <div style={{
-      border: `1px solid ${color}33`,
-      background: '#050508',
-      padding: '10px 12px',
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-      }}>
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 6,
-          color,
-          letterSpacing: 1,
-        }}>{label}</div>
+    <div style={{ border: `1px solid ${color}33`, background: '#050e0d', padding: '9px 11px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color, letterSpacing: 1 }}>{label}</div>
         <button
           onClick={handleCopy}
           style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 6,
-            color: copied ? '#00ff88' : '#555',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
+            fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+            color: copied ? '#00ffcc' : '#004d3d',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
           }}
         >
           {copied ? '✓ COPIED' : 'COPY'}
         </button>
       </div>
-      <div style={{
-        fontFamily: 'monospace',
-        fontSize: 9,
-        color: '#888',
-        lineHeight: 1.5,
-        wordBreak: 'break-word',
-      }}>{text}</div>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={3}
+        style={{
+          width: '100%',
+          background: '#060f0e',
+          border: `1px solid ${color}22`,
+          color: '#00a882',
+          fontFamily: 'monospace',
+          fontSize: 8,
+          lineHeight: 1.6,
+          padding: '6px 8px',
+          resize: 'vertical',
+          outline: 'none',
+          boxSizing: 'border-box',
+        }}
+      />
     </div>
   )
 }

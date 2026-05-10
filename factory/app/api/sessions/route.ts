@@ -8,7 +8,7 @@ import {
   addHistorySelection,
   getTodayDate,
 } from '@/lib/storage'
-import { generateImagePrompts } from '@/lib/claude'
+import { generateDualPrompts } from '@/lib/claude'
 import type { Concept, HistorySelection } from '@/lib/types'
 
 export async function GET() {
@@ -34,12 +34,15 @@ export async function POST(req: NextRequest) {
         concepts: Concept[]
       }
 
-      // Generate single image prompt per concept (Claude chooses style)
-      const prompts: Record<string, string> = {}
+      // Generate image + video prompt per concept simultaneously
+      const imagePrompts: Record<string, string> = {}
+      const videoPrompts: Record<string, string> = {}
       for (const id of concept_ids) {
         const concept = inlineConcepts?.find((c: Concept) => c.id === id)
         if (concept) {
-          prompts[id] = await generateImagePrompts(concept)
+          const { imagePrompt, videoPrompt } = await generateDualPrompts(concept)
+          imagePrompts[id] = imagePrompt
+          videoPrompts[id] = videoPrompt
         }
       }
 
@@ -63,7 +66,7 @@ export async function POST(req: NextRequest) {
         }
       } catch { /* non-critical */ }
 
-      return NextResponse.json({ success: true, prompts })
+      return NextResponse.json({ success: true, imagePrompts, videoPrompts })
     }
 
     if (action === 'get_session') {

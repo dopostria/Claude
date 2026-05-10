@@ -13,7 +13,6 @@ import type {
   FactoryState,
   Concept,
   AnimationConcept,
-  RoomState,
 } from '@/lib/types'
 
 interface GeneratedImage {
@@ -39,6 +38,7 @@ const INITIAL_STATE: FactoryState = {
   concepts: [],
   selectedConceptIds: [],
   imagePrompts: {},
+  videoPrompts: {},
   generatedImages: [],
   selectedImageId: null,
   animationConcepts: [],
@@ -82,7 +82,7 @@ export default function Factory() {
     setState(s => ({
       ...s,
       rooms: { ...s.rooms, boss: 'working', ideas: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando conceptos de hoy...', type: 'working' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando conceptos...', type: 'working' }],
     }))
     fireSignal('boss', 'ideas')
 
@@ -122,7 +122,7 @@ export default function Factory() {
     })
   }, [])
 
-  // ── NODO 2 ───────────────────────────────────────────────────────────
+  // ── NODO 2 — generate both image + video prompts, stay in ideas overlay ──
   const handleConfirmSelection = useCallback(async () => {
     const ids = state.selectedConceptIds
     if (ids.length === 0 || processingPrompts) return
@@ -131,7 +131,7 @@ export default function Factory() {
     setState(s => ({
       ...s,
       rooms: { ...s.rooms, ideas: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: `Generando prompts para ${ids.length} conceptos...`, type: 'working' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: `Generando prompts para ${ids.length} concepto(s)...`, type: 'working' }],
     }))
 
     try {
@@ -141,16 +141,15 @@ export default function Factory() {
         body: JSON.stringify({ action: 'select_concepts', concept_ids: ids, concepts: state.concepts }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const { prompts }: { prompts: Record<string, string> } = await res.json()
+      const { imagePrompts, videoPrompts }: { imagePrompts: Record<string, string>; videoPrompts: Record<string, string> } = await res.json()
 
       setState(s => ({
         ...s,
-        imagePrompts: { ...s.imagePrompts, ...prompts },
-        rooms: { ...s.rooms, ideas: 'done', images: 'idle' },
-        activeOverlay: 'images',
-        sessionLog: [...s.sessionLog, { time: now(), message: 'Prompts listos! Abriendo Image Engine.', type: 'success' }],
+        imagePrompts: { ...s.imagePrompts, ...imagePrompts },
+        videoPrompts: { ...s.videoPrompts, ...videoPrompts },
+        rooms: { ...s.rooms, ideas: 'done' },
+        sessionLog: [...s.sessionLog, { time: now(), message: 'Prompts listos! Revisa y edita.', type: 'success' }],
       }))
-      fireSignal('ideas', 'images')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setState(s => ({
@@ -161,7 +160,20 @@ export default function Factory() {
     } finally {
       setProcessingPrompts(false)
     }
-  }, [state.selectedConceptIds, processingPrompts, state.concepts, fireSignal])
+  }, [state.selectedConceptIds, processingPrompts, state.concepts])
+
+  // ── Open PIXEL DAMAGE with (possibly edited) prompts ────────────────
+  const handleOpenImages = useCallback((editedImagePrompts: Record<string, string>, editedVideoPrompts: Record<string, string>) => {
+    setState(s => ({
+      ...s,
+      imagePrompts: editedImagePrompts,
+      videoPrompts: editedVideoPrompts,
+      activeOverlay: 'images',
+      rooms: { ...s.rooms, images: 'idle' },
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo PIXEL DAMAGE...', type: 'info' }],
+    }))
+    fireSignal('ideas', 'images')
+  }, [fireSignal])
 
   // ── NODO 3 ───────────────────────────────────────────────────────────
   const handleGenerateImage = useCallback(async (conceptId: string, prompt: string) => {
@@ -232,7 +244,7 @@ export default function Factory() {
       ...s,
       activeOverlay: 'video',
       rooms: { ...s.rooms, video: 'idle' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo Video Engine...', type: 'info' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo MOTION SICK...', type: 'info' }],
     }))
     fireSignal('images', 'video')
 
@@ -321,11 +333,17 @@ export default function Factory() {
     if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' }))
   }, [state.concepts.length])
 
-  const handleOpenImages = useCallback(() => {
+  const handleOpenImagesOverlay = useCallback(() => {
     if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' }))
   }, [state.selectedConceptIds.length])
 
   const selectedConcepts = state.concepts.filter(c => state.selectedConceptIds.includes(c.id))
+
+  // Derive videoPrompt for the selected concept (first selected that has an image)
+  const selectedImg = generatedImages.find(img => img.id === selectedImageId)
+  const videoPromptForSelected = selectedImg
+    ? state.videoPrompts[selectedImg.conceptId] ?? ''
+    : state.videoPrompts[state.selectedConceptIds[0]] ?? ''
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
@@ -333,13 +351,15 @@ export default function Factory() {
 
       {state.signal && <SignalLine signal={state.signal} />}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: 12, overflow: 'hidden', minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#222', letterSpacing: 3 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: 10, overflow: 'hidden', minWidth: 0 }}>
+        {/* Title */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 0 }}>
+          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#004d3d', letterSpacing: 4 }}>
             ✦ CANTSLEEPT CONTENT FACTORY ✦
           </div>
         </div>
 
+        {/* Dr. Adderall — horizontal bar */}
         <BossRoom
           state={state.rooms.boss}
           postsThisWeek={stats.postsThisWeek}
@@ -348,6 +368,7 @@ export default function Factory() {
           generating={generating}
         />
 
+        {/* 3 rooms */}
         <div style={{ display: 'grid', gridTemplateColumns: '5fr 4fr 3fr', gap: 6, flex: 1, minHeight: 0 }}>
           <IdeasRoom
             state={state.rooms.ideas}
@@ -358,7 +379,7 @@ export default function Factory() {
           <ImagesRoom
             state={state.rooms.images}
             imageCount={generatedImages.length}
-            onClick={handleOpenImages}
+            onClick={handleOpenImagesOverlay}
           />
           <VideoRoom
             state={state.rooms.video}
@@ -367,9 +388,10 @@ export default function Factory() {
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, paddingBottom: 4 }}>
-          {(['SALA IDEAS', 'SALA IMÁGENES', 'SALA VIDEO'] as const).map(label => (
-            <div key={label} style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#1a1a2e', letterSpacing: 2 }}>
+        {/* Room labels */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, paddingBottom: 2 }}>
+          {(['3AM THOUGHTS', 'PIXEL DAMAGE', 'MOTION SICK'] as const).map(label => (
+            <div key={label} style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', letterSpacing: 2 }}>
               {label}
             </div>
           ))}
@@ -383,8 +405,10 @@ export default function Factory() {
           concepts={state.concepts}
           selectedIds={state.selectedConceptIds}
           imagePrompts={state.imagePrompts}
+          videoPrompts={state.videoPrompts}
           onSelectConcept={handleSelectConcept}
           onConfirmSelection={handleConfirmSelection}
+          onOpenImages={handleOpenImages}
           onClose={handleCloseOverlay}
           processingPrompts={processingPrompts}
         />
@@ -413,6 +437,7 @@ export default function Factory() {
           loadingAnimations={loadingAnimations}
           videoUri={videoUri}
           videoModel={videoModel}
+          defaultVideoPrompt={videoPromptForSelected}
           onGenerateVideo={handleGenerateVideo}
           onBack={() => setState(s => ({ ...s, activeOverlay: 'images' }))}
           onClose={handleCloseOverlay}
@@ -425,20 +450,22 @@ export default function Factory() {
 
 function SignalLine({ signal }: { signal: { from: string; to: string } }) {
   const positions: Record<string, { x: string; y: string }> = {
-    boss: { x: '30%', y: '18%' },
-    ideas: { x: '20%', y: '65%' },
+    boss:   { x: '30%', y: '18%' },
+    ideas:  { x: '20%', y: '65%' },
     images: { x: '55%', y: '65%' },
-    video: { x: '78%', y: '65%' },
+    video:  { x: '78%', y: '65%' },
   }
   const from = positions[signal.from]
-  const to = positions[signal.to]
+  const to   = positions[signal.to]
   if (!from || !to) return null
 
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 20 }}>
       <svg style={{ width: '100%', height: '100%', position: 'absolute' }} viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line x1={from.x} y1={from.y} x2={to.x} y2={to.y}
-          stroke="#00ff88" strokeWidth="0.3" strokeDasharray="1,1" opacity="0.6" />
+        <line
+          x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+          stroke="#00c4a0" strokeWidth="0.3" strokeDasharray="1,1" opacity="0.5"
+        />
       </svg>
       <div className="signal-dot" style={{ left: to.x, top: to.y, transform: 'translate(-50%, -50%)' }} />
     </div>

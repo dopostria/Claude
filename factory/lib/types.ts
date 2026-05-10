@@ -109,6 +109,7 @@ export interface FactoryState {
   concepts: Concept[]
   selectedConceptIds: string[]
   imagePrompts: Record<string, string>
+  videoPrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
   animationConcepts: AnimationConcept[]
