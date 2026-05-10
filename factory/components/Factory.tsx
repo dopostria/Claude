@@ -132,7 +132,7 @@ export default function Factory() {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'select_concepts', concept_ids: ids }),
+        body: JSON.stringify({ action: 'select_concepts', concept_ids: ids, concepts: state.concepts }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const { prompts }: { prompts: Record<string, ImagePrompts> } = await res.json()
