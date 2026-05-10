@@ -8,6 +8,7 @@ import IdeasRoom from './rooms/IdeasRoom'
 import { ImagesRoom, VideoRoom } from './rooms/IdeasRoom'
 import IdeasOverlay from './overlays/IdeasOverlay'
 import ImagesOverlay from './overlays/ImagesOverlay'
+import VideoOverlay from './overlays/VideoOverlay'
 import type {
   FactoryState,
   Concept,
@@ -54,6 +55,9 @@ export default function Factory() {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatingFor, setGeneratingFor] = useState<string | null>(null)
+  const [generatingVideo, setGeneratingVideo] = useState(false)
+  const [videoUri, setVideoUri] = useState<string | null>(null)
+  const [videoModel, setVideoModel] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -158,11 +162,7 @@ export default function Factory() {
   }, [state.selectedConceptIds, processingPrompts, fireSignal])
 
   // ── NODO 3: Generate image ───────────────────────────────────────────
-  const handleGenerateImage = useCallback(async (
-    conceptId: string,
-    prompt: string,
-    tool: 'gemini' | 'gemini-imagen3' | 'higgsfield-nano-banana' | 'higgsfield'
-  ) => {
+  const handleGenerateImage = useCallback(async (conceptId: string, prompt: string) => {
     if (generatingImage) return
     setGeneratingImage(true)
     setGeneratingFor(conceptId)
@@ -170,14 +170,14 @@ export default function Factory() {
     setState(s => ({
       ...s,
       rooms: { ...s.rooms, images: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: `Generando imagen con ${tool}...`, type: 'working' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando imagen con Gemini Flash...', type: 'working' }],
     }))
 
     try {
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, tool, conceptId }),
+        body: JSON.stringify({ prompt, conceptId }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -186,10 +186,10 @@ export default function Factory() {
       const data = await res.json()
 
       const newImage: GeneratedImage = {
-        id: `${conceptId}-${tool}-${Date.now()}`,
+        id: `${conceptId}-gemini-${Date.now()}`,
         conceptId,
-        tool,
-        imagePath: data.imagePath,
+        tool: 'gemini',
+        imagePath: data.imagePath ?? '',
         base64: data.base64,
         mime: data.mime,
         prompt,
@@ -200,7 +200,7 @@ export default function Factory() {
       setState(s => ({
         ...s,
         rooms: { ...s.rooms, images: 'done' },
-        sessionLog: [...s.sessionLog, { time: now(), message: `Imagen generada con ${tool}!`, type: 'success' }],
+        sessionLog: [...s.sessionLog, { time: now(), message: 'Imagen generada con Gemini Flash!', type: 'success' }],
       }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -227,12 +227,60 @@ export default function Factory() {
   const handleContinueToVideo = useCallback(() => {
     setState(s => ({
       ...s,
-      activeOverlay: 'none',
+      activeOverlay: 'video',
       rooms: { ...s.rooms, video: 'idle' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Video Engine — coming soon!', type: 'info' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo Video Engine con Veo 3...', type: 'info' }],
     }))
     fireSignal('images', 'video')
   }, [fireSignal])
+
+  // ── NODO 5: Generate video ───────────────────────────────────────────
+  const handleGenerateVideo = useCallback(async (prompt: string) => {
+    if (generatingVideo) return
+    const selectedImg = generatedImages.find(img => img.id === selectedImageId)
+    setGeneratingVideo(true)
+    setVideoUri(null)
+    setVideoModel(null)
+
+    setState(s => ({
+      ...s,
+      rooms: { ...s.rooms, video: 'working' },
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando video con Veo 3...', type: 'working' }],
+    }))
+
+    try {
+      const res = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          imageBase64: selectedImg?.base64,
+          imageMime: selectedImg?.mime,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      setVideoUri(data.videoUri)
+      setVideoModel(data.model)
+      setState(s => ({
+        ...s,
+        rooms: { ...s.rooms, video: 'done' },
+        sessionLog: [...s.sessionLog, { time: now(), message: `Video listo con ${data.model}!`, type: 'success' }],
+      }))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setState(s => ({
+        ...s,
+        rooms: { ...s.rooms, video: 'error' },
+        sessionLog: [...s.sessionLog, { time: now(), message: `Video error: ${msg}`, type: 'error' }],
+      }))
+    } finally {
+      setGeneratingVideo(false)
+    }
+  }, [generatingVideo, generatedImages, selectedImageId])
 
   const handleCloseOverlay = useCallback(() => {
     setState(s => ({ ...s, activeOverlay: 'none' }))
@@ -326,6 +374,19 @@ export default function Factory() {
           onClose={handleCloseOverlay}
           generating={generatingImage}
           generatingFor={generatingFor}
+        />
+      )}
+
+      {/* Video Engine overlay */}
+      {state.activeOverlay === 'video' && (
+        <VideoOverlay
+          selectedConcepts={selectedConcepts}
+          selectedImage={generatedImages.find(img => img.id === selectedImageId) ?? null}
+          videoUri={videoUri}
+          videoModel={videoModel}
+          onGenerateVideo={handleGenerateVideo}
+          onClose={handleCloseOverlay}
+          generating={generatingVideo}
         />
       )}
     </div>
