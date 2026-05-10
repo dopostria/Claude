@@ -78,36 +78,29 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
   throw new Error(errors.join(' | '))
 }
 
-// Crop square (or any) image to 9:16 portrait and save to disk.
-// Returns { croppedBase64, imagePath } where imagePath is the public URL.
-async function cropTo916AndSave(
+// Crop to 9:16 portrait in memory. Always returns cropped base64 + buffer.
+async function cropTo916(
   base64: string,
-  mime: string,
-  conceptId: string
-): Promise<{ croppedBase64: string; imagePath: string }> {
+  mime: string
+): Promise<{ buffer: Buffer; base64: string; ext: string }> {
   const inputBuffer = Buffer.from(base64, 'base64')
   const image = sharp(inputBuffer)
   const meta = await image.metadata()
   const w = meta.width ?? 1024
   const h = meta.height ?? 1024
 
-  // Target: 9:16 portrait. Preserve full height, crop width.
-  // If image is already taller than wide, preserve width, crop height instead.
-  let cropW: number
-  let cropH: number
-  let left: number
-  let top: number
+  const targetRatio = 9 / 16
 
-  const targetRatio = 9 / 16  // ~0.5625
+  let left: number, top: number, cropW: number, cropH: number
 
   if (w / h > targetRatio) {
-    // Image is wider than 9:16 — crop the sides
+    // Wider than 9:16 — keep full height, crop sides
     cropH = h
     cropW = Math.round(h * targetRatio)
     left = Math.round((w - cropW) / 2)
     top = 0
   } else {
-    // Image is taller than 9:16 (or already 9:16) — crop top/bottom
+    // Taller than 9:16 — keep full width, crop top/bottom
     cropW = w
     cropH = Math.round(w / targetRatio)
     left = 0
@@ -115,17 +108,22 @@ async function cropTo916AndSave(
   }
 
   const ext = mime.includes('png') ? 'png' : 'jpg'
-  const filename = `img-${conceptId}-${Date.now()}.${ext}`
-  const outDir = join(process.cwd(), 'public', 'generated')
-  await mkdir(outDir, { recursive: true })
-  const outPath = join(outDir, filename)
-
   const cropped = image.extract({ left, top, width: cropW, height: cropH })
-  const croppedBuffer = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
-  await writeFile(outPath, croppedBuffer)
+  const buffer = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
+  return { buffer, base64: buffer.toString('base64'), ext }
+}
 
-  const croppedBase64 = croppedBuffer.toString('base64')
-  return { croppedBase64, imagePath: `/generated/${filename}` }
+// Try to save to public/generated/ — silently skips if filesystem is read-only.
+async function trySaveToDisk(buffer: Buffer, conceptId: string, ext: string): Promise<string> {
+  try {
+    const outDir = join(process.cwd(), 'public', 'generated')
+    await mkdir(outDir, { recursive: true })
+    const filename = `img-${conceptId}-${Date.now()}.${ext}`
+    await writeFile(join(outDir, filename), buffer)
+    return `/generated/${filename}`
+  } catch {
+    return ''
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -137,37 +135,33 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
 
     const errors: string[] = []
-    let result: { base64: string; mime: string; model: string } | null = null
+    let raw: { base64: string; mime: string; model: string } | null = null
 
     for (const modelId of GEMINI_IMAGE_MODELS) {
-      try {
-        result = await tryGemini(modelId, prompt, apiKey)
-        break
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : String(e))
-      }
+      try { raw = await tryGemini(modelId, prompt, apiKey); break }
+      catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
     }
 
-    if (!result) {
-      try {
-        result = await tryImagen(prompt, apiKey)
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : String(e))
-      }
+    if (!raw) {
+      try { raw = await tryImagen(prompt, apiKey) }
+      catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
     }
 
-    if (!result) {
+    if (!raw) {
       return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
     }
 
-    // Crop to 9:16 and save to disk
-    const { croppedBase64, imagePath } = await cropTo916AndSave(result.base64, result.mime, conceptId)
+    // Always crop to 9:16 in memory
+    const { buffer, base64, ext } = await cropTo916(raw.base64, raw.mime)
+
+    // Best-effort disk save — never blocks the response
+    const imagePath = await trySaveToDisk(buffer, conceptId, ext)
 
     return NextResponse.json({
       success: true,
-      base64: croppedBase64,
-      mime: result.mime,
-      model: result.model,
+      base64,
+      mime: raw.mime,
+      model: raw.model,
       imagePath,
       conceptId,
       timestamp: new Date().toISOString(),
