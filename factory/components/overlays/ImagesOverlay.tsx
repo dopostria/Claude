@@ -29,8 +29,8 @@ interface ImagesOverlayProps {
 }
 
 const TOOLS = [
-  { id: 'gemini' as const, label: 'GEMINI FLASH', color: '#00ff88', desc: 'Fast · native image gen' },
-  { id: 'gemini-imagen3' as const, label: 'IMAGEN 3', color: '#0088ff', desc: 'High quality · slower' },
+  { id: 'gemini' as const, label: 'GEMINI FLASH', color: '#00ff88', desc: 'Rápido · recomendado' },
+  { id: 'gemini-imagen3' as const, label: 'IMAGEN 3', color: '#0088ff', desc: 'Alta calidad · fallback a Flash' },
 ]
 
 export default function ImagesOverlay({

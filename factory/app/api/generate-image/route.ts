@@ -3,7 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import fs from 'fs'
 import path from 'path'
 
-const OUTPUTS_DIR = path.join(process.cwd(), 'public', 'outputs')
+const IS_VERCEL = process.env.VERCEL === '1'
+const OUTPUTS_DIR = IS_VERCEL ? '/tmp/outputs' : path.join(process.cwd(), 'public', 'outputs')
 
 function ensureOutputsDir() {
   if (!fs.existsSync(OUTPUTS_DIR)) fs.mkdirSync(OUTPUTS_DIR, { recursive: true })
@@ -13,8 +14,8 @@ function timestamp() {
   return Date.now().toString()
 }
 
-// ── Gemini image generation via gemini-2.0-flash (native image output) ──
-async function generateWithGemini(prompt: string): Promise<{ path: string; base64: string; mime: string }> {
+// ── Gemini 2.0 Flash — native image generation ────────────────────────
+async function generateWithGeminiFlash(prompt: string): Promise<{ base64: string; mime: string }> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not set')
 
@@ -26,66 +27,57 @@ async function generateWithGemini(prompt: string): Promise<{ path: string; base6
   const result = await model.generateContent({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
-      // @ts-expect-error: responseModalities is valid but not in types yet
-      responseModalities: ['IMAGE'],
+      // @ts-expect-error: responseModalities valid but not typed yet
+      responseModalities: ['IMAGE', 'TEXT'],
     },
   })
 
   const parts = result.response.candidates?.[0]?.content?.parts ?? []
-  const imagePart = parts.find((p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData)
+  const imagePart = parts.find(
+    (p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData
+  )
 
-  if (!imagePart?.inlineData) throw new Error('No image in Gemini response')
+  if (!imagePart?.inlineData) throw new Error('Gemini no devolvió imagen. Intenta otro prompt.')
 
-  const { data: base64, mimeType: mime } = imagePart.inlineData
-  const ext = mime.includes('png') ? 'png' : 'jpg'
-  const ts = timestamp()
-  const filename = `gemini-${ts}.${ext}`
-  const filepath = path.join(OUTPUTS_DIR, filename)
-
-  ensureOutputsDir()
-  fs.writeFileSync(filepath, Buffer.from(base64, 'base64'))
-
-  return { path: `/outputs/${filename}`, base64, mime }
+  return { base64: imagePart.inlineData.data, mime: imagePart.inlineData.mimeType }
 }
 
-// ── Imagen 3 via REST API ─────────────────────────────────────────────
-async function generateWithImagen3(prompt: string): Promise<{ path: string; base64: string; mime: string }> {
+// ── Imagen 3 via Google AI REST ───────────────────────────────────────
+async function generateWithImagen3(prompt: string): Promise<{ base64: string; mime: string }> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not set')
 
+  // Try v1beta endpoint
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: { text: prompt },
-        number_of_images: 1,
-        aspect_ratio: '1:1',
-        safety_filter_level: 'BLOCK_ONLY_HIGH',
-        person_generation: 'ALLOW_ADULT',
+        instances: [{ prompt }],
+        parameters: { sampleCount: 1 },
       }),
     }
   )
 
   if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Imagen 3 API error ${res.status}: ${err}`)
+    const errText = await res.text()
+    // Imagen 3 requires special access — fall back to Gemini Flash
+    if (res.status === 403 || res.status === 404 || res.status === 400) {
+      console.warn('Imagen 3 not available, falling back to Gemini Flash')
+      return generateWithGeminiFlash(prompt)
+    }
+    throw new Error(`Imagen 3 error ${res.status}: ${errText.slice(0, 200)}`)
   }
 
   const data = await res.json()
-  const imageData = data.generatedImages?.[0]?.image?.imageBytes
-  if (!imageData) throw new Error('No image in Imagen 3 response')
+  const imageB64 = data.predictions?.[0]?.bytesBase64Encoded
+  if (!imageB64) {
+    console.warn('Imagen 3 returned no image, falling back to Gemini Flash')
+    return generateWithGeminiFlash(prompt)
+  }
 
-  const mime = 'image/png'
-  const ts = timestamp()
-  const filename = `imagen3-${ts}.png`
-  const filepath = path.join(OUTPUTS_DIR, filename)
-
-  ensureOutputsDir()
-  fs.writeFileSync(filepath, Buffer.from(imageData, 'base64'))
-
-  return { path: `/outputs/${filename}`, base64: imageData, mime }
+  return { base64: imageB64, mime: 'image/png' }
 }
 
 // ── Route handler ─────────────────────────────────────────────────────
@@ -99,19 +91,30 @@ export async function POST(req: NextRequest) {
 
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
-    let result: { path: string; base64: string; mime: string }
+    let result: { base64: string; mime: string }
 
     if (tool === 'gemini-imagen3') {
       result = await generateWithImagen3(prompt)
     } else if (tool === 'gemini') {
-      result = await generateWithGemini(prompt)
+      result = await generateWithGeminiFlash(prompt)
     } else {
       return NextResponse.json({ error: 'Higgsfield not yet connected' }, { status: 501 })
     }
 
+    // Save to disk (best-effort — skip on Vercel if /tmp fills)
+    let imagePath = null
+    try {
+      ensureOutputsDir()
+      const ext = result.mime.includes('png') ? 'png' : 'jpg'
+      const filename = `${tool}-${timestamp()}.${ext}`
+      const filepath = path.join(OUTPUTS_DIR, filename)
+      fs.writeFileSync(filepath, Buffer.from(result.base64, 'base64'))
+      imagePath = IS_VERCEL ? null : `/outputs/${filename}`
+    } catch { /* non-critical */ }
+
     return NextResponse.json({
       success: true,
-      imagePath: result.path,
+      imagePath,
       base64: result.base64,
       mime: result.mime,
       conceptId,
