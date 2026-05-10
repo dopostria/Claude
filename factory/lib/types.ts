@@ -22,14 +22,13 @@ export interface Concept {
   improved: boolean
 }
 
-export interface ImagePrompts {
-  gemini: string
-  higgsfield: string
-}
+// Single unified image prompt — style is chosen by Claude per concept
+export type ImagePrompts = string
 
 export interface AnimationConcept {
   id: string
   name: string
+  energy: 'subtle' | 'dynamic' | 'surreal'
   movement: string
   camera_direction: string
   video_prompt: string
@@ -66,7 +65,7 @@ export interface SessionData {
   date: string
   concepts: Concept[]
   selected_concepts: string[]
-  image_prompts: Record<string, ImagePrompts>
+  image_prompts: Record<string, string>
   generated_images: GeneratedImage[]
   selected_image_id: string | null
   animation_concepts: AnimationConcept[]
@@ -109,7 +108,7 @@ export interface FactoryState {
   sessionLog: LogEntry[]
   concepts: Concept[]
   selectedConceptIds: string[]
-  imagePrompts: Record<string, ImagePrompts>
+  imagePrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
   animationConcepts: AnimationConcept[]

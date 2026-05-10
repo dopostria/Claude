@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import PixelBorder from '../PixelBorder'
-import type { Concept, ImagePrompts } from '@/lib/types'
+import type { Concept } from '@/lib/types'
 
 interface IdeasOverlayProps {
   concepts: Concept[]
   selectedIds: string[]
-  imagePrompts: Record<string, ImagePrompts>
+  imagePrompts: Record<string, string>
   onSelectConcept: (id: string) => void
   onConfirmSelection: () => void
   onClose: () => void
@@ -261,7 +261,7 @@ export default function IdeasOverlay({
 
                   {/* Prompts expanded */}
                   {isExpanded && hasPrompts && (
-                    <PromptExpanded prompts={imagePrompts[concept.id]} />
+                    <PromptExpanded prompt={imagePrompts[concept.id] ?? ''} />
                   )}
                 </div>
               </div>
@@ -377,11 +377,10 @@ function ScoreMini({ scores }: { scores: Concept['scores'] }) {
   )
 }
 
-function PromptExpanded({ prompts }: { prompts: ImagePrompts }) {
+function PromptExpanded({ prompt }: { prompt: string }) {
   return (
-    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <PromptBox label="GEMINI IMAGEN 3" color="#00ff88" text={prompts.gemini} />
-      <PromptBox label="HIGGSFIELD NANO BANANA 2" color="#0088ff" text={prompts.higgsfield} />
+    <div style={{ marginTop: 12 }}>
+      <PromptBox label="IMAGE PROMPT" color="#00ff88" text={prompt} />
     </div>
   )
 }

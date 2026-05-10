@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { Concept, ImagePrompts, AnimationConcept, HistorySelection } from './types'
+import type { Concept, AnimationConcept, HistorySelection } from './types'
 
 const MODEL = 'claude-sonnet-4-5'
 
@@ -94,14 +94,76 @@ Mix of tags required: at least 2 Bolivia, at least 3 POP_CULTURE, at least 3 COT
   return parsed.concepts as Concept[]
 }
 
-export async function generateImagePrompts(concept: Concept): Promise<ImagePrompts> {
+export async function generateImagePrompts(concept: Concept): Promise<string> {
   const client = getClient()
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 1024,
-    system: `You are the CantSleept Prompt Engine. You convert visual concepts into optimized image generation prompts.
-Style: Garbage Pail Kids — grotesque-funny, hyper-detailed, neon saturated colors, sticker/collectible card texture, slightly wrong proportions (big heads, bulging eyes), polished but broken aesthetic.`,
+    max_tokens: 800,
+    system: `You are the CantSleept Visual Prompt Engine. You generate a single, highly specific image prompt for each concept.
+
+Your job: evaluate the concept and choose the MOST EFFECTIVE visual style for it. Do not default to one style.
+
+AVAILABLE STYLES (choose the best fit — or invent a better one):
+1. GPK / Collectible sticker: grotesque, hyper-detailed, wrong proportions, sticker card border
+2. Hyperrealistic cartoon fusion: cartoon character in photorealistic environment, 4K textures, neon lighting
+3. Cinematic photorealistic: cinematic composition, dramatic lighting, slightly exaggerated but near-real
+4. Retro illustration: 80s-90s aesthetic, saturated colors, thick outlines, cassette/VHS cover energy
+5. Dark surrealist: Dalí/Magritte meets pop culture, impossible backgrounds, broken physics
+6. Anime grotesque: anime style with exaggerated/grotesque proportions, Junji Ito meets pop
+
+ALL prompts MUST include:
+- Neon saturated colors (#ff0040, #00ff88, #ffdd00, #0088ff)
+- 9:16 vertical portrait format
+- Ultra-high detail (4K / 8K)
+- The visual contradiction that IS the concept
+
+REFERENCE EXAMPLES (match this level of specificity):
+EXAMPLE 1 (hyperrealistic cartoon fusion): "4K photorealistic grotesque detail, hyperrealistic cartoon fusion. Ultra-detailed chrome T-800 Terminator endoskeleton with oversized head, one bulging glowing crimson cybernetic eye with visible circuitry, sits defeated at wooden computer desk. Hyperrealistic metallic textures on skull, exposed servo motors in jaw. Computer LCD monitor shows crisp CAPTCHA interface 'Selecciona todas las imágenes con semáforos'. Bright red holographic scanning laser grid projects from eye socket onto screen. Vivid oversaturated lighting (#ff0040, #00ff88, #ffdd00), collectible sticker aesthetic, slightly exaggerated anatomy proportions. 9:16"
+
+EXAMPLE 2 (GPK sticker): "Garbage Pail Kids style hyper-detailed illustration: Jesus with oversized glowing halo at Last Supper table, surrounded by 12 apostles all holding smartphones begging for WiFi password. Neon saturated colors. Judas in corner with laptop showing torrent download at 99%. Speech bubbles: '¿CUÁL ES LA CONTRASEÑA?' Sticker card texture with ornate gold collectible border. Grotesque-funny proportions, 9:16"
+
+EXAMPLE 3 (hyperrealistic fusion con contexto boliviano): "4K photorealistic Garbage Pail Kids fusion. Barbie figure with oversized proportions, unnaturally smooth plastic skin, wearing 7-layered pollera with individual pleats, vibrant magenta pollera, traditional aguayo manta, brown bowler hat. Ken: coal dust on skin, weathered miner helmet. Background: Bolivian market stall, steam from aluminum pots, tucumanas, wiphala flag. Vivid oversaturated color grading, slightly wrong proportions. 9:16"
+
+Return ONLY the prompt text — no JSON, no explanation, just the prompt.`,
+    messages: [{
+      role: 'user',
+      content: `Concept:
+Title: ${concept.title}
+Setup: ${concept.setup}
+Punchline: ${concept.punchline}
+Tags: ${concept.tags.join(', ')}
+
+Choose the most visually effective style for this specific concept and write one production-ready image prompt.`,
+    }],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
+  if (!text) throw new Error('Empty prompt from Claude')
+  return text
+}
+
+export async function generateAnimationConcepts(
+  concept: Concept,
+  imagePrompt: string
+): Promise<AnimationConcept[]> {
+  const client = getClient()
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    system: `You are the CantSleept Animation Engine. You generate 3 genuinely distinct video animation concepts.
+
+RULES:
+- Prompts LEAD with the action verb / movement — not scene description
+- Describe WHAT MOVES and HOW, not what the image looks like
+- Max 3 sentences per prompt
+- PROHIBITED phrases: "electric ZAP", "magical", "glowing effect", "transition", "particle burst"
+
+The 3 concepts must differ in ENERGY:
+1. SUBTLE/ATMOSPHERIC — minimal movement, maximum impact. One small element changes everything.
+2. DYNAMIC/KINETIC — clear action, active camera, kinetic energy.
+3. SURREAL/UNEXPECTED — something that shouldn't move, moves. Physics breaks subtly.`,
     messages: [{
       role: 'user',
       content: `Concept:
@@ -109,53 +171,23 @@ Title: ${concept.title}
 Setup: ${concept.setup}
 Punchline: ${concept.punchline}
 
-Generate TWO image prompts. Return ONLY valid JSON:
-{
-  "gemini": "Prompt optimized for Gemini Imagen 3. Style keywords: Garbage Pail Kids style, grotesque cartoon, hyper-detailed illustration, neon saturated colors (#ff0040, #00ff88, #ffdd00), sticker card texture, slightly distorted proportions, collectible card border. Describe the exact visual scene.",
-  "higgsfield": "Prompt optimized for Higgsfield Nano Banana 2. Style keywords: 4K photorealistic grotesque detail, hyperrealistic cartoon fusion, vivid oversaturated colors, collectible sticker aesthetic, slightly wrong anatomy. Describe the exact visual scene with photorealistic detail cues."
-}`
-    }],
-  })
+Image style: ${imagePrompt.slice(0, 200)}
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON in Claude response for prompts')
-
-  return JSON.parse(jsonMatch[0]) as ImagePrompts
-}
-
-export async function generateAnimationConcepts(
-  concept: Concept,
-  imagePath: string
-): Promise<AnimationConcept[]> {
-  const client = getClient()
-
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 2048,
-    system: `You are the CantSleept Animation Engine. You create video animation concepts for still images.
-Principle: video prompts favor ACTION over description. Describe MOVEMENT, not appearance.
-NEVER use: "electric ZAP", tool-specific terms, static descriptions.`,
-    messages: [{
-      role: 'user',
-      content: `Base image concept:
-Title: ${concept.title}
-Setup: ${concept.setup}
-Punchline: ${concept.punchline}
-Image: ${imagePath}
-
-Generate 3 animation concepts. Return ONLY valid JSON:
+Generate exactly 3 animation concepts. Return ONLY valid JSON:
 {
   "animations": [
     {
-      "id": "unique-slug",
-      "name": "Short animation name",
-      "movement": "What moves, how it moves, duration. Specific and kinetic.",
-      "camera_direction": "Camera movement description. E.g: slow zoom in, static, pan left",
-      "video_prompt": "Optimized video generation prompt. Lead with the action verb. Describe motion, timing, energy. Max 60 words."
+      "id": "unique-kebab-slug",
+      "name": "2-3 WORD NAME IN CAPS",
+      "energy": "subtle",
+      "movement": "Specific description of what moves, how, and timing. 1-2 sentences.",
+      "camera_direction": "Exact camera behavior. E.g: ultra slow push in, locked off static, whip pan right",
+      "video_prompt": "Production-ready Veo prompt. Start with movement verb. Max 3 sentences, max 60 words."
     }
   ]
-}`,
+}
+
+Energy values must be exactly: "subtle", "dynamic", "surreal" — one of each.`,
     }],
   })
 

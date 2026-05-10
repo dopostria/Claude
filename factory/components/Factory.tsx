@@ -12,7 +12,7 @@ import VideoOverlay from './overlays/VideoOverlay'
 import type {
   FactoryState,
   Concept,
-  ImagePrompts,
+  AnimationConcept,
   RoomState,
 } from '@/lib/types'
 
@@ -58,6 +58,8 @@ export default function Factory() {
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [videoUri, setVideoUri] = useState<string | null>(null)
   const [videoModel, setVideoModel] = useState<string | null>(null)
+  const [animationConcepts, setAnimationConcepts] = useState<AnimationConcept[] | null>(null)
+  const [loadingAnimations, setLoadingAnimations] = useState(false)
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -73,14 +75,14 @@ export default function Factory() {
     setTimeout(() => setState(s => ({ ...s, signal: null })), 1400)
   }, [])
 
-  // ── NODO 1: Generate concepts ────────────────────────────────────────
+  // ── NODO 1 ───────────────────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
     if (generating) return
     setGenerating(true)
     setState(s => ({
       ...s,
       rooms: { ...s.rooms, boss: 'working', ideas: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generating today\'s concepts...', type: 'working' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando conceptos de hoy...', type: 'working' }],
     }))
     fireSignal('boss', 'ideas')
 
@@ -120,7 +122,7 @@ export default function Factory() {
     })
   }, [])
 
-  // ── NODO 2: Confirm selection + generate image prompts ───────────────
+  // ── NODO 2 ───────────────────────────────────────────────────────────
   const handleConfirmSelection = useCallback(async () => {
     const ids = state.selectedConceptIds
     if (ids.length === 0 || processingPrompts) return
@@ -139,7 +141,7 @@ export default function Factory() {
         body: JSON.stringify({ action: 'select_concepts', concept_ids: ids, concepts: state.concepts }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const { prompts }: { prompts: Record<string, ImagePrompts> } = await res.json()
+      const { prompts }: { prompts: Record<string, string> } = await res.json()
 
       setState(s => ({
         ...s,
@@ -159,9 +161,9 @@ export default function Factory() {
     } finally {
       setProcessingPrompts(false)
     }
-  }, [state.selectedConceptIds, processingPrompts, fireSignal])
+  }, [state.selectedConceptIds, processingPrompts, state.concepts, fireSignal])
 
-  // ── NODO 3: Generate image ───────────────────────────────────────────
+  // ── NODO 3 ───────────────────────────────────────────────────────────
   const handleGenerateImage = useCallback(async (conceptId: string, prompt: string) => {
     if (generatingImage) return
     setGeneratingImage(true)
@@ -170,7 +172,7 @@ export default function Factory() {
     setState(s => ({
       ...s,
       rooms: { ...s.rooms, images: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando imagen con Gemini Flash...', type: 'working' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando imagen...', type: 'working' }],
     }))
 
     try {
@@ -186,9 +188,9 @@ export default function Factory() {
       const data = await res.json()
 
       const newImage: GeneratedImage = {
-        id: `${conceptId}-gemini-${Date.now()}`,
+        id: `${conceptId}-${Date.now()}`,
         conceptId,
-        tool: 'gemini',
+        tool: data.model ?? 'gemini',
         imagePath: data.imagePath ?? '',
         base64: data.base64,
         mime: data.mime,
@@ -200,7 +202,7 @@ export default function Factory() {
       setState(s => ({
         ...s,
         rooms: { ...s.rooms, images: 'done' },
-        sessionLog: [...s.sessionLog, { time: now(), message: 'Imagen generada con Gemini Flash!', type: 'success' }],
+        sessionLog: [...s.sessionLog, { time: now(), message: `Imagen lista! (${data.model})`, type: 'success' }],
       }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -215,7 +217,7 @@ export default function Factory() {
     }
   }, [generatingImage])
 
-  // ── Select image + go to video ───────────────────────────────────────
+  // ── Select image ─────────────────────────────────────────────────────
   const handleSelectImage = useCallback((id: string) => {
     setSelectedImageId(id)
     setState(s => ({
@@ -224,15 +226,44 @@ export default function Factory() {
     }))
   }, [])
 
-  const handleContinueToVideo = useCallback(() => {
+  // ── NODO 4: Open video + fetch animation concepts ────────────────────
+  const handleContinueToVideo = useCallback(async () => {
     setState(s => ({
       ...s,
       activeOverlay: 'video',
       rooms: { ...s.rooms, video: 'idle' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo Video Engine con Veo 3...', type: 'info' }],
+      sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo Video Engine...', type: 'info' }],
     }))
     fireSignal('images', 'video')
-  }, [fireSignal])
+
+    const selectedImg = generatedImages.find(img => img.id === selectedImageId)
+    const concept = state.concepts.find(c => state.selectedConceptIds.includes(c.id) && c.id === selectedImg?.conceptId)
+      ?? state.concepts.find(c => state.selectedConceptIds.includes(c.id))
+
+    if (!concept) return
+
+    setLoadingAnimations(true)
+    setAnimationConcepts(null)
+
+    try {
+      const res = await fetch('/api/animation-concepts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ concept, imagePrompt: selectedImg?.prompt ?? '' }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setAnimationConcepts(data.animations ?? [])
+      setState(s => ({
+        ...s,
+        sessionLog: [...s.sessionLog, { time: now(), message: '3 conceptos de animación listos!', type: 'success' }],
+      }))
+    } catch {
+      setAnimationConcepts([])
+    } finally {
+      setLoadingAnimations(false)
+    }
+  }, [fireSignal, generatedImages, selectedImageId, state.concepts, state.selectedConceptIds])
 
   // ── NODO 5: Generate video ───────────────────────────────────────────
   const handleGenerateVideo = useCallback(async (prompt: string) => {
@@ -302,7 +333,6 @@ export default function Factory() {
 
       {state.signal && <SignalLine signal={state.signal} />}
 
-      {/* Main content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: 12, overflow: 'hidden', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
           <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#222', letterSpacing: 3 }}>
@@ -332,8 +362,8 @@ export default function Factory() {
           />
           <VideoRoom
             state={state.rooms.video}
-            videoReady={false}
-            onClick={() => {}}
+            videoReady={!!videoUri}
+            onClick={() => { if (videoUri) setState(s => ({ ...s, activeOverlay: 'video' })) }}
           />
         </div>
 
@@ -348,7 +378,6 @@ export default function Factory() {
 
       <Sidebar log={state.sessionLog} />
 
-      {/* Idea Engine overlay */}
       {state.activeOverlay === 'ideas' && state.concepts.length > 0 && (
         <IdeasOverlay
           concepts={state.concepts}
@@ -361,7 +390,6 @@ export default function Factory() {
         />
       )}
 
-      {/* Image Engine overlay */}
       {state.activeOverlay === 'images' && selectedConcepts.length > 0 && (
         <ImagesOverlay
           selectedConcepts={selectedConcepts}
@@ -377,11 +405,12 @@ export default function Factory() {
         />
       )}
 
-      {/* Video Engine overlay */}
       {state.activeOverlay === 'video' && (
         <VideoOverlay
           selectedConcepts={selectedConcepts}
           selectedImage={generatedImages.find(img => img.id === selectedImageId) ?? null}
+          animationConcepts={animationConcepts}
+          loadingAnimations={loadingAnimations}
           videoUri={videoUri}
           videoModel={videoModel}
           onGenerateVideo={handleGenerateVideo}

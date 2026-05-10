@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Concept, ImagePrompts } from '@/lib/types'
+import type { Concept } from '@/lib/types'
 
 interface GeneratedImage {
   id: string
@@ -13,7 +13,7 @@ interface GeneratedImage {
 
 interface ImagesOverlayProps {
   selectedConcepts: Concept[]
-  imagePrompts: Record<string, ImagePrompts>
+  imagePrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
   onGenerate: (conceptId: string, prompt: string) => void
@@ -50,7 +50,7 @@ export default function ImagesOverlay({
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0].id)
 
   const activeConcept = selectedConcepts[activeIdx] ?? selectedConcepts[0]
-  const basePrompt = activeConcept ? imagePrompts[activeConcept.id]?.gemini ?? '' : ''
+  const basePrompt = activeConcept ? imagePrompts[activeConcept.id] ?? '' : ''
   const style = STYLES.find(s => s.id === selectedStyle) ?? STYLES[0]
   const finalPrompt = basePrompt ? style.prefix + basePrompt + ASPECT_SUFFIX : ''
   const conceptImages = generatedImages.filter(img => img.conceptId === activeConcept?.id)
@@ -193,38 +193,49 @@ export default function ImagesOverlay({
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                {conceptImages.map(img => {
+                {conceptImages.map((img, imgIdx) => {
                   const isSelected = img.id === selectedImageId
+                  const ext = img.mime.includes('png') ? 'png' : 'jpg'
                   return (
-                    <div
-                      key={img.id}
-                      onClick={() => onSelectImage(img.id)}
-                      style={{
-                        border: `2px solid ${isSelected ? '#00ff88' : '#1a1a2e'}`,
-                        boxShadow: isSelected ? '0 0 14px #00ff8844' : 'none',
-                        cursor: 'pointer', background: '#000', position: 'relative',
-                        aspectRatio: '9/16', overflow: 'hidden',
-                        transition: 'border-color 0.15s',
-                      }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`data:${img.mime};base64,${img.base64}`} alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                      {isSelected && (
-                        <div style={{
-                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                          border: '3px solid #00ff88',
-                          pointerEvents: 'none',
-                        }}>
-                          <div style={{
-                            position: 'absolute', top: 6, right: 6,
-                            fontFamily: '"Press Start 2P", monospace', fontSize: 6,
-                            color: '#00ff88', background: 'rgba(0,0,0,0.85)', padding: '3px 6px',
-                          }}>✓ VEO</div>
-                        </div>
-                      )}
+                    <div key={img.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div
+                        onClick={() => onSelectImage(img.id)}
+                        style={{
+                          border: `2px solid ${isSelected ? '#00ff88' : '#1a1a2e'}`,
+                          boxShadow: isSelected ? '0 0 14px #00ff8844' : 'none',
+                          cursor: 'pointer', background: '#000', position: 'relative',
+                          aspectRatio: '9/16', overflow: 'hidden',
+                          transition: 'border-color 0.15s',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`data:${img.mime};base64,${img.base64}`} alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                        {isSelected && (
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '3px solid #00ff88', pointerEvents: 'none' }}>
+                            <div style={{ position: 'absolute', top: 6, right: 6, fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00ff88', background: 'rgba(0,0,0,0.85)', padding: '3px 6px' }}>✓ VEO</div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Fix 5: download button */}
+                      <a
+                        href={`data:${img.mime};base64,${img.base64}`}
+                        download={`cantsleept-${imgIdx + 1}.${ext}`}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          display: 'block', textAlign: 'center',
+                          fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                          color: '#333', border: '1px solid #1a1a2e',
+                          padding: '4px 0', textDecoration: 'none',
+                          background: 'transparent',
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#00ff88'; (e.currentTarget as HTMLAnchorElement).style.borderColor = '#00ff88' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#333'; (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1a1a2e' }}
+                      >
+                        ↓ DESCARGAR
+                      </a>
                     </div>
                   )
                 })}

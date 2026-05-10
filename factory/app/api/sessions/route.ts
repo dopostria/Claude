@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
         concepts: Concept[]
       }
 
-      // Generate image prompts using inline concepts (no storage read needed)
-      const prompts: Record<string, { gemini: string; higgsfield: string }> = {}
+      // Generate single image prompt per concept (Claude chooses style)
+      const prompts: Record<string, string> = {}
       for (const id of concept_ids) {
         const concept = inlineConcepts?.find((c: Concept) => c.id === id)
         if (concept) {
