@@ -69,45 +69,44 @@ async function generateWithSDK(
   throw new Error('All models failed to return image data. Check server logs.')
 }
 
-async function toPortrait916(base64: string, mime: string): Promise<{ base64: string; mime: string }> {
+async function toPortrait916(
+  base64: string,
+  mime: string
+): Promise<{ base64: string; mime: string; native916: boolean; originalDimensions: string }> {
   try {
     const buf = Buffer.from(base64, 'base64')
     const meta = await sharp(buf).metadata()
     const w = meta.width ?? 1024
     const h = meta.height ?? 1024
+    const originalDimensions = `${w}x${h}`
 
     const targetW = Math.round((h * 9) / 16)
     const targetH = h
 
-    // If already portrait enough, skip
     if (Math.abs(w / h - 9 / 16) < 0.05) {
-      return { base64, mime }
+      console.log(`[generate-image] ✓ native 9:16 — ${originalDimensions}`)
+      return { base64, mime, native916: true, originalDimensions }
     }
+
+    console.log(`[generate-image] sharp crop/pad ${originalDimensions} → ${targetW}x${targetH}`)
 
     let processed: Buffer
     if (targetW <= w) {
-      // Square or wide → center-crop to portrait 9:16
       processed = await sharp(buf)
-        .extract({
-          left: Math.round((w - targetW) / 2),
-          top: 0,
-          width: targetW,
-          height: targetH,
-        })
+        .extract({ left: Math.round((w - targetW) / 2), top: 0, width: targetW, height: targetH })
         .jpeg({ quality: 95 })
         .toBuffer()
     } else {
-      // Already taller than wide — pad sides with black to reach 9:16
       processed = await sharp(buf)
         .resize(targetW, targetH, { fit: 'contain', background: '#000000' })
         .jpeg({ quality: 95 })
         .toBuffer()
     }
 
-    return { base64: processed.toString('base64'), mime: 'image/jpeg' }
+    return { base64: processed.toString('base64'), mime: 'image/jpeg', native916: false, originalDimensions }
   } catch (err) {
     console.error('[generate-image] sharp 9:16 conversion failed:', err)
-    return { base64, mime }
+    return { base64, mime, native916: false, originalDimensions: 'unknown' }
   }
 }
 
@@ -137,6 +136,8 @@ export async function POST(req: NextRequest) {
       mime: portrait.mime,
       model: raw.model,
       imagePath: `/api/images/${filename}`,
+      native916: portrait.native916,
+      originalDimensions: portrait.originalDimensions,
       conceptId,
       timestamp: new Date().toISOString(),
     })

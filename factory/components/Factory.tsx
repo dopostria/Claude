@@ -199,6 +199,12 @@ export default function Factory() {
       }
       const data = await res.json()
 
+      const native916 = data.native916 as boolean | undefined
+      const originalDimensions = data.originalDimensions as string | undefined
+      const aspectLabel = native916
+        ? '9:16 nativo'
+        : `9:16 crop (orig ${originalDimensions ?? '?'})`
+
       const newImage: GeneratedImage = {
         id: `${conceptId}-${Date.now()}`,
         conceptId,
@@ -214,7 +220,10 @@ export default function Factory() {
       setState(s => ({
         ...s,
         rooms: { ...s.rooms, images: 'done' },
-        sessionLog: [...s.sessionLog, { time: now(), message: `Imagen lista! (${data.model})`, type: 'success' }],
+        sessionLog: [
+          ...s.sessionLog,
+          { time: now(), message: `Imagen lista! ${data.model} · ${aspectLabel}`, type: 'success' },
+        ],
       }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
