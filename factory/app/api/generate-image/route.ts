@@ -7,10 +7,11 @@ import sharp from 'sharp'
 const TMP_DIR = '/tmp/cantsleept-images'
 
 // Models tried in order — first that returns image data wins
+// supportsImageConfig: true = send imageConfig.aspectRatio for native 9:16 attempt
 const MODELS = [
-  'gemini-2.0-flash',
-  'gemini-2.5-flash-preview-image-generation',
-  'gemini-2.5-flash-image',
+  { name: 'gemini-2.0-flash',                          supportsImageConfig: true  },
+  { name: 'gemini-2.5-flash-preview-image-generation', supportsImageConfig: true  },
+  { name: 'gemini-2.5-flash-image',                    supportsImageConfig: false }, // chokes on imageConfig
 ]
 
 async function generateWithSDK(
@@ -19,7 +20,7 @@ async function generateWithSDK(
 ): Promise<{ base64: string; mime: string; model: string }> {
   const ai = new GoogleGenAI({ apiKey })
 
-  for (const model of MODELS) {
+  for (const { name: model, supportsImageConfig } of MODELS) {
     // Try IMAGE-only first, then TEXT+IMAGE fallback
     for (const modalities of [['IMAGE'], ['TEXT', 'IMAGE']]) {
       let response
@@ -29,6 +30,7 @@ async function generateWithSDK(
           contents: prompt,
           config: {
             responseModalities: modalities,
+            ...(supportsImageConfig ? { imageConfig: { aspectRatio: '9:16' } } : {}),
           } as Record<string, unknown>,
         })
       } catch (err) {
