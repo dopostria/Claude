@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import sharp from 'sharp'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -16,8 +17,10 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
     headers: H(apiKey),
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-      imageConfig: { aspectRatio: '9:16' },
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: { aspectRatio: '9:16' },  // REST: inside generationConfig
+      },
     }),
   })
   if (!res.ok) throw new Error(`${modelId} ${res.status}: ${(await res.text()).slice(0, 300)}`)
@@ -78,7 +81,40 @@ async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: stri
   throw new Error(errors.join(' | '))
 }
 
-// Best-effort save to public/generated/ — silently skips on read-only filesystems.
+// Ensure 9:16 portrait — crops in memory, no-op if already correct ratio.
+async function ensurePortrait(base64: string, mime: string): Promise<{ base64: string; mime: string }> {
+  const buf = Buffer.from(base64, 'base64')
+  const meta = await sharp(buf).metadata()
+  const w = meta.width ?? 1024
+  const h = meta.height ?? 1024
+  const ratio = w / h
+  const target = 9 / 16  // 0.5625
+
+  // Already portrait within 1% tolerance — skip crop
+  if (Math.abs(ratio - target) < 0.01) return { base64, mime }
+
+  let left: number, top: number, cropW: number, cropH: number
+  if (ratio > target) {
+    // Too wide — crop sides
+    cropH = h
+    cropW = Math.round(h * target)
+    left = Math.round((w - cropW) / 2)
+    top = 0
+  } else {
+    // Too tall — crop top/bottom
+    cropW = w
+    cropH = Math.round(w / target)
+    left = 0
+    top = Math.round((h - cropH) / 2)
+  }
+
+  const ext = mime.includes('png') ? 'png' : 'jpg'
+  const cropped = sharp(buf).extract({ left, top, width: cropW, height: cropH })
+  const outBuf = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
+  return { base64: outBuf.toString('base64'), mime }
+}
+
+// Best-effort disk save — never throws.
 async function trySaveToDisk(base64: string, mime: string, conceptId: string): Promise<string> {
   try {
     const ext = mime.includes('png') ? 'png' : 'jpg'
@@ -117,12 +153,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
     }
 
-    const imagePath = await trySaveToDisk(result.base64, result.mime, conceptId)
+    // Guarantee 9:16 regardless of what the model returned
+    const { base64, mime } = await ensurePortrait(result.base64, result.mime)
+
+    const imagePath = await trySaveToDisk(base64, mime, conceptId)
 
     return NextResponse.json({
       success: true,
-      base64: result.base64,
-      mime: result.mime,
+      base64,
+      mime,
       model: result.model,
       imagePath,
       conceptId,
