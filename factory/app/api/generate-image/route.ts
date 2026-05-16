@@ -1,127 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import sharp from 'sharp'
+import { GoogleGenAI } from '@google/genai'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
-const H = (apiKey: string) => ({ 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' })
-const BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
+const TMP_DIR = '/tmp/cantsleept-images'
 
-const GEMINI_IMAGE_MODELS = [
-  'gemini-2.5-flash-image',
-]
+async function generateWithNewSDK(
+  prompt: string,
+  apiKey: string
+): Promise<{ base64: string; mime: string; model: string }> {
+  const ai = new GoogleGenAI({ apiKey })
 
-async function tryGemini(modelId: string, prompt: string, apiKey: string): Promise<{ base64: string; mime: string; model: string }> {
-  const res = await fetch(`${BASE}/${modelId}:generateContent`, {
-    method: 'POST',
-    headers: H(apiKey),
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-    }),
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-image',
+    contents: prompt,
+    config: {
+      responseModalities: ['IMAGE'],
+      imageConfig: { aspectRatio: '9:16' },
+    } as Record<string, unknown>,
   })
-  if (!res.ok) throw new Error(`${modelId} ${res.status}: ${(await res.text()).slice(0, 300)}`)
-  const data = await res.json()
-  const parts: { inlineData?: { data: string; mimeType: string } }[] =
-    data.candidates?.[0]?.content?.parts ?? []
-  const img = parts.find(p => p.inlineData)
-  if (!img?.inlineData) throw new Error(`${modelId}: no image in response`)
-  return { base64: img.inlineData.data, mime: img.inlineData.mimeType, model: modelId }
-}
 
-async function tryImagen(prompt: string, apiKey: string): Promise<{ base64: string; mime: string; model: string }> {
-  const candidates = [
-    {
-      url: `${BASE}/imagen-3.0-generate-002:generateImages`,
-      body: { prompt, number_of_images: 1, aspect_ratio: '9:16', safety_filter_level: 'BLOCK_ONLY_HIGH' },
-      extract: (d: Record<string, unknown>) => {
-        const imgs = d.generated_images as { image?: { image_bytes?: string; mime_type?: string } }[] | undefined
-        const b = imgs?.[0]?.image?.image_bytes
-        const m = imgs?.[0]?.image?.mime_type ?? 'image/png'
-        return b ? { base64: b, mime: m } : null
-      },
-      model: 'imagen-3.0-generate-002',
-    },
-    {
-      url: `${BASE}/imagen-3.0-generate-002:predict`,
-      body: { instances: [{ prompt }], parameters: { sampleCount: 1, aspectRatio: '9:16' } },
-      extract: (d: Record<string, unknown>) => {
-        const pred = (d.predictions as { bytesBase64Encoded?: string; mimeType?: string }[])?.[0]
-        return pred?.bytesBase64Encoded ? { base64: pred.bytesBase64Encoded, mime: pred.mimeType ?? 'image/png' } : null
-      },
-      model: 'imagen-3.0-generate-002',
-    },
-    {
-      url: 'https://generativelanguage.googleapis.com/v1/models/imagen-3.0-generate-002:predict',
-      body: { instances: [{ prompt }], parameters: { sampleCount: 1, aspectRatio: '9:16' } },
-      extract: (d: Record<string, unknown>) => {
-        const pred = (d.predictions as { bytesBase64Encoded?: string; mimeType?: string }[])?.[0]
-        return pred?.bytesBase64Encoded ? { base64: pred.bytesBase64Encoded, mime: pred.mimeType ?? 'image/png' } : null
-      },
-      model: 'imagen-3.0-generate-002-v1',
-    },
-  ]
-
-  const errors: string[] = []
-  for (const c of candidates) {
-    try {
-      const res = await fetch(c.url, { method: 'POST', headers: H(apiKey), body: JSON.stringify(c.body) })
-      if (!res.ok) { errors.push(`${c.model} ${res.status}: ${(await res.text()).slice(0, 200)}`); continue }
-      const data = await res.json() as Record<string, unknown>
-      const result = c.extract(data)
-      if (result) return { ...result, model: c.model }
-      errors.push(`${c.model}: unexpected response shape`)
-    } catch (e) {
-      errors.push(e instanceof Error ? e.message : String(e))
+  const parts = response.candidates?.[0]?.content?.parts ?? []
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      return {
+        base64: part.inlineData.data,
+        mime: part.inlineData.mimeType ?? 'image/jpeg',
+        model: 'gemini-2.5-flash-image',
+      }
     }
   }
-  throw new Error(errors.join(' | '))
+  throw new Error('gemini-2.5-flash-image: no image in response')
 }
 
-// Ensure 9:16 portrait — crops in memory, no-op if already correct ratio.
-async function ensurePortrait(base64: string, mime: string): Promise<{ base64: string; mime: string }> {
-  const buf = Buffer.from(base64, 'base64')
-  const meta = await sharp(buf).metadata()
-  const w = meta.width ?? 1024
-  const h = meta.height ?? 1024
-  const ratio = w / h
-  const target = 9 / 16  // 0.5625
-
-  // Already portrait within 1% tolerance — skip crop
-  if (Math.abs(ratio - target) < 0.01) return { base64, mime }
-
-  let left: number, top: number, cropW: number, cropH: number
-  if (ratio > target) {
-    // Too wide — crop sides
-    cropH = h
-    cropW = Math.round(h * target)
-    left = Math.round((w - cropW) / 2)
-    top = 0
-  } else {
-    // Too tall — crop top/bottom
-    cropW = w
-    cropH = Math.round(w / target)
-    left = 0
-    top = Math.round((h - cropH) / 2)
-  }
-
+async function saveToTmp(base64: string, mime: string, conceptId: string): Promise<string> {
   const ext = mime.includes('png') ? 'png' : 'jpg'
-  const cropped = sharp(buf).extract({ left, top, width: cropW, height: cropH })
-  const outBuf = await (ext === 'png' ? cropped.png() : cropped.jpeg({ quality: 95 })).toBuffer()
-  return { base64: outBuf.toString('base64'), mime }
-}
-
-// Best-effort disk save — never throws.
-async function trySaveToDisk(base64: string, mime: string, conceptId: string): Promise<string> {
-  try {
-    const ext = mime.includes('png') ? 'png' : 'jpg'
-    const filename = `img-${conceptId}-${Date.now()}.${ext}`
-    const outDir = join(process.cwd(), 'public', 'generated')
-    await mkdir(outDir, { recursive: true })
-    await writeFile(join(outDir, filename), Buffer.from(base64, 'base64'))
-    return `/generated/${filename}`
-  } catch {
-    return ''
-  }
+  const filename = `img-${conceptId}-${Date.now()}.${ext}`
+  await mkdir(TMP_DIR, { recursive: true })
+  await writeFile(join(TMP_DIR, filename), Buffer.from(base64, 'base64'))
+  return filename
 }
 
 export async function POST(req: NextRequest) {
@@ -132,34 +49,16 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
 
-    const errors: string[] = []
-    let result: { base64: string; mime: string; model: string } | null = null
+    const result = await generateWithNewSDK(prompt, apiKey)
 
-    for (const modelId of GEMINI_IMAGE_MODELS) {
-      try { result = await tryGemini(modelId, prompt, apiKey); break }
-      catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
-    }
-
-    if (!result) {
-      try { result = await tryImagen(prompt, apiKey) }
-      catch (e) { errors.push(e instanceof Error ? e.message : String(e)) }
-    }
-
-    if (!result) {
-      return NextResponse.json({ error: `All image models failed:\n${errors.join('\n')}` }, { status: 500 })
-    }
-
-    // Guarantee 9:16 regardless of what the model returned
-    const { base64, mime } = await ensurePortrait(result.base64, result.mime)
-
-    const imagePath = await trySaveToDisk(base64, mime, conceptId)
+    const filename = await saveToTmp(result.base64, result.mime, conceptId)
 
     return NextResponse.json({
       success: true,
-      base64,
-      mime,
+      base64: result.base64,
+      mime: result.mime,
       model: result.model,
-      imagePath,
+      imagePath: `/api/images/${filename}`,
       conceptId,
       timestamp: new Date().toISOString(),
     })
