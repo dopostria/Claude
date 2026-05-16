@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 const BASE = 'https://generativelanguage.googleapis.com/v1beta'
 const HEADERS = (apiKey: string) => ({ 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' })
 
-// veo-2.0-generate-001 is Vertex AI only — not available on AI Studio endpoint
-const MODELS = ['veo-3.1-generate-preview', 'veo-3.0-generate-preview']
+// veo-3.0-generate-preview → 404 on AI Studio. veo-2.0-generate-001 is Vertex AI only.
+const MODELS = ['veo-3.1-generate-preview']
 
 async function pollOperation(operationName: string, apiKey: string, maxAttempts = 40): Promise<string> {
   for (let i = 0; i < maxAttempts; i++) {
@@ -16,6 +16,12 @@ async function pollOperation(operationName: string, apiKey: string, maxAttempts 
     if (data.done) {
       const uri = data.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri
       if (uri) return uri
+      const raiReasons: string[] = data.response?.generateVideoResponse?.raiMediaFilteredReasons ?? []
+      if (raiReasons.length > 0) {
+        throw new Error(
+          `Prompt bloqueado por Google: ${raiReasons[0]}.\n\nEdita el prompt y elimina referencias a marcas, celebridades o contenido de terceros.`
+        )
+      }
       throw new Error(`Veo done but no URI. Response: ${JSON.stringify(data.response).slice(0, 300)}`)
     }
   }
