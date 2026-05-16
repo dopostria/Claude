@@ -170,9 +170,7 @@ export default function IdeasOverlay({
                       marginBottom: 5,
                     }}>
                       #{String(idx + 1).padStart(2, '0')}
-                      {concept.improved && (
-                        <span style={{ color: '#ff6b35', marginLeft: 8 }}>↑ IMPROVED</span>
-                      )}
+                      <span style={{ color: '#004d3d', marginLeft: 8 }}>{concept.archetype}</span>
                     </div>
                     <div style={{
                       fontFamily: '"Press Start 2P", monospace',
@@ -197,7 +195,7 @@ export default function IdeasOverlay({
                       ))}
                     </div>
                   </div>
-                  <ScoreBadge score={concept.scores.overall} />
+                  <ScoreBadge qualityScore={concept.quality_score} />
                 </div>
 
                 {/* Concept content */}
@@ -229,7 +227,7 @@ export default function IdeasOverlay({
                   </div>
 
                   <div style={{ marginBottom: 10 }}>
-                    <ScoreMini scores={concept.scores} />
+                    <ScoreMini qualityScore={concept.quality_score} />
                   </div>
 
                   {/* Action buttons */}
@@ -323,51 +321,48 @@ export default function IdeasOverlay({
   )
 }
 
-function ScoreBadge({ score }: { score: number }) {
-  const color = score >= 9 ? '#00c4a0' : score >= 7 ? '#ff6b35' : '#ff3030'
+function ScoreBadge({ qualityScore }: { qualityScore: Concept['quality_score'] }) {
+  const passed = [
+    qualityScore.F1_scroll_stop,
+    qualityScore.F2_punchline_clear,
+    qualityScore.F3_contrast_not_cruel,
+    qualityScore.F4_works_silent,
+  ].filter(Boolean).length
+  const color = passed === 4 ? '#00c4a0' : passed === 3 ? '#ff6b35' : '#ff3030'
   return (
     <div style={{
-      flexShrink: 0,
-      width: 34,
-      height: 34,
+      flexShrink: 0, width: 34, height: 34,
       border: `2px solid ${color}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       boxShadow: `0 0 8px ${color}44`,
     }}>
-      <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 11, color, lineHeight: 1 }}>{score}</div>
+      <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color, lineHeight: 1 }}>{passed}/4</div>
     </div>
   )
 }
 
-function ScoreMini({ scores }: { scores: Concept['scores'] }) {
-  const bars = [
-    { key: 'scroll_stop',         label: '📱' },
-    { key: 'no_explanation',      label: '💡' },
-    { key: 'contrast_not_cruelty',label: '⚖' },
-    { key: 'no_audio',            label: '🔇' },
-  ] as const
-
+function ScoreMini({ qualityScore }: { qualityScore: Concept['quality_score'] }) {
+  const filters = [
+    { key: 'F1_scroll_stop'        as const, label: '📱' },
+    { key: 'F2_punchline_clear'    as const, label: '💡' },
+    { key: 'F3_contrast_not_cruel' as const, label: '⚖'  },
+    { key: 'F4_works_silent'       as const, label: '🔇' },
+  ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {bars.map(({ key, label }) => (
-        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 8, width: 14, flexShrink: 0 }}>{label}</div>
-          <div className="score-bar" style={{ flex: 1 }}>
-            <div
-              className="score-fill"
-              style={{
-                width: `${scores[key] * 10}%`,
-                background: scores[key] >= 8 ? '#00c4a0' : scores[key] >= 6 ? '#ff6b35' : '#ff3030',
-              }}
-            />
+    <div style={{ display: 'flex', gap: 6 }}>
+      {filters.map(({ key, label }) => {
+        const pass = qualityScore[key]
+        return (
+          <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <div style={{ fontSize: 9 }}>{label}</div>
+            <div style={{
+              width: 8, height: 8,
+              background: pass ? '#00c4a0' : '#ff3030',
+              boxShadow: pass ? '0 0 4px #00c4a044' : 'none',
+            }} />
           </div>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#0d3330', width: 10, textAlign: 'right', flexShrink: 0 }}>
-            {scores[key]}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

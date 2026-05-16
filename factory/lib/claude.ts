@@ -7,38 +7,174 @@ function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 }
 
-function buildIdeaSystemPrompt(brandContext: Record<string, unknown>): string {
-  return `You are the CantSleept Content Factory IDEA ENGINE. You generate absurdist visual concepts for @CantSleept — an anonymous pop culture account on Instagram and TikTok.
+function buildIdeaSystemPrompt(
+  bc: Record<string, unknown>,
+  recentHistory: HistorySelection[]
+): string {
+  const brand       = bc.brand        as Record<string, unknown>
+  const tone        = bc.tone         as Record<string, unknown>
+  const qf          = bc.quality_filters as Record<string, unknown>
+  const arch        = bc.archetypes   as Record<string, unknown>
+  const chars       = bc.character_universe as Record<string, unknown>
+  const settings    = bc.setting_universe   as Record<string, unknown>
+  const matrix      = bc.contrast_matrix    as Record<string, unknown>
+  const bolivia     = bc.bolivian_elements  as Record<string, unknown>
+  const punches     = bc.punchline_formats  as Record<string, unknown>
+  const visual      = bc.visual_style_rules as Record<string, unknown>
+  const avoid       = bc.what_to_avoid      as Record<string, unknown>
+  const examples    = bc.reference_examples as Record<string, unknown>[]
+  const rotRules    = bc.rotation_rules     as Record<string, unknown>
+  const trends      = bc.trend_feed         as Record<string, unknown>
 
-BRAND DNA:
-- Language: Spanglish (Spanish + English mixed naturally, never forced)
-- Tone: deadpan + surreal + unhinged — simultaneously
-- Humor model: @elhijotuerto — the CONCEPT is the joke, no explanation ever needed
-- Visual reference: Garbage Pail Kids — grotesque, hyper-detailed, saturated, slightly broken characters
-- Core paradox: polished content that LOOKS broken
+  const perSession  = rotRules.per_session  as Record<string, unknown>
+  const crossSess   = rotRules.cross_session as Record<string, unknown>
 
-QUALITY FILTERS — every concept must pass all 4:
-1. Stops the scroll in half a second (if it needs context → NOT ready)
-2. The punchline needs zero explanation (if you need to explain it → it's broken)
-3. Humor comes from CONTRAST, never from cruelty or punching down
-4. Works 100% without audio — the image alone is the joke
+  const archetypeList   = (arch.list        as Record<string, unknown>[])
+  const filterList      = (qf.filters       as Record<string, unknown>[])
+  const punchList       = (punches.formats  as Record<string, unknown>[])
+  const trendList       = (trends.trends    as unknown[]) ?? []
 
-CONCEPT TAGS (assign all that apply):
-- "Bolivia" → has a bolivian cultural wink (cholitas, Tiwanaku, Mercado de Brujas, etc.)
-- "POP_CULTURE" → references a globally recognizable icon
-- "COTIDIANO" → universal everyday situation that everyone recognizes instantly
+  // ── 1. IDENTIDAD Y TONO ─────────────────────────────────────────────────
+  const sections: string[] = [`Eres el CantSleept Content Factory IDEA ENGINE.
 
-REFERENCE EXAMPLES (this is the bar):
-${JSON.stringify(brandContext.reference_examples || [], null, 2)}
+CUENTA: ${brand.handle} | Plataformas: ${(brand.platforms as string[]).join(', ')} | Idioma: ${brand.language}
+Paradoja central: ${brand.central_paradox}
+Referencia de humor: ${brand.humor_reference}
+Referencia visual: ${brand.visual_reference}
 
-CRITICAL RULES:
-- NEVER explain the joke inside the concept
-- The visual setup + punchline together = the complete joke
-- Auto-improve any concept scoring below 7 before including it
-- Only output concepts that pass ALL 4 filters
-- Mix tags: include Bolivia, POP_CULTURE, and COTIDIANO concepts
-- Write titles and setups in Spanglish
-- Punchlines must be visual, not text-dependent`
+TONO: ${(tone.primary as string[]).join(' + ')} — ${tone.note}
+Suena así:
+${(tone.what_it_sounds_like as string[]).map(x => `- ${x}`).join('\n')}
+NUNCA suena así:
+${(tone.what_it_never_sounds_like as string[]).map(x => `- ${x}`).join('\n')}`]
+
+  // ── 2. FILTROS DE CALIDAD ────────────────────────────────────────────────
+  sections.push(`FILTROS DE CALIDAD
+${qf.rule}
+
+${filterList.map(f => `${f.id} — ${f.name}\n  Pregunta: ${f.question}\n  Falla si: ${f.fail_condition}`).join('\n\n')}`)
+
+  // ── 3. ARQUETIPOS ────────────────────────────────────────────────────────
+  sections.push(`ARQUETIPOS (A1–A10)
+${arch.rule}
+
+${archetypeList.map(a =>
+  `${a.id}: ${a.name}\n  ${a.description}\n  Motor de contraste: ${a.contrast_engine}\n  Ejemplo: ${a.example}`
+).join('\n\n')}`)
+
+  // ── 4. ROTATION RULES ────────────────────────────────────────────────────
+  sections.push(`ROTATION RULES — POR SESIÓN
+- Total: ${perSession.total_concepts} conceptos
+- Mínimo ${perSession.min_archetypes_covered} arquetipos distintos, máximo ${perSession.max_same_archetype} del mismo
+- Máximo ${perSession.max_same_character_as_protagonist} vez el mismo personaje como protagonista
+- ${perSession.bolivia_tag_target}
+- ${perSession.punchline_variety}
+- ${perSession.consecutive_rule}
+
+ROTATION RULES — ENTRE SESIONES (ventana: ${crossSess.history_window})
+- ${crossSess.character_rule}
+- ${crossSess.archetype_rule}
+- ${crossSess.setting_rule}`)
+
+  // ── 5. UNIVERSO DE PERSONAJES Y SETTINGS ─────────────────────────────────
+  sections.push(`UNIVERSO DE PERSONAJES
+${chars.note}
+
+Íconos globales: ${(chars.global_icons as string[]).join(' · ')}
+
+Personajes bolivianos: ${(chars.bolivian_characters as string[]).join(' · ')}
+
+Arquetipos universales: ${(chars.universal_archetypes as string[]).join(' · ')}
+
+UNIVERSO DE SETTINGS
+${settings.note}
+
+Settings globales: ${(settings.global_settings as string[]).join(' · ')}
+
+Settings bolivianos: ${(settings.bolivian_settings as string[]).join(' · ')}`)
+
+  // ── 6. CONTRAST MATRIX ───────────────────────────────────────────────────
+  sections.push(`CONTRAST MATRIX — GENERADOR DE TENSIÓN CÓMICA
+${matrix.note}
+
+${(matrix.pairs as Array<{ A: string; B: string }>).map(p => `A: ${p.A}  ↔  B: ${p.B}`).join('\n')}`)
+
+  // ── 7. ELEMENTOS BOLIVIANOS ──────────────────────────────────────────────
+  sections.push(`ELEMENTOS BOLIVIANOS (opcional pero preferido)
+${bolivia.note}
+Espacios: ${(bolivia.spaces as string[]).join(', ')}
+Personajes: ${(bolivia.characters as string[]).join(', ')}
+Objetos: ${(bolivia.objects as string[]).join(', ')}
+Sabor de lenguaje: ${(bolivia.language_flavor as string[]).join(', ')}`)
+
+  // ── 8. FORMATOS DE PUNCHLINE ─────────────────────────────────────────────
+  sections.push(`FORMATOS DE PUNCHLINE
+${punches.note}
+
+${punchList.map(p => `${p.id} — ${p.name}: ${p.description}\n  Ejemplo: ${p.example}`).join('\n\n')}`)
+
+  // ── 9. ESTILO VISUAL ─────────────────────────────────────────────────────
+  sections.push(`ESTILO VISUAL
+Estética: ${visual.aesthetic}
+Proporciones: ${visual.proportions}
+Colores: ${visual.colors}
+Expresión: ${visual.character_expression}
+Evitar: ${(visual.what_to_avoid as string[]).join(' · ')}`)
+
+  // ── 10. QUÉ EVITAR ───────────────────────────────────────────────────────
+  sections.push(`QUÉ EVITAR
+Contenido: ${(avoid.content as string[]).join(' · ')}
+Creativamente: ${(avoid.creative as string[]).join(' · ')}`)
+
+  // ── 11. REFERENCE EXAMPLES ───────────────────────────────────────────────
+  sections.push(`REFERENCE EXAMPLES — EL BAR A SUPERAR
+
+${examples.map(e =>
+  `"${e.title}" [${e.archetype}] [${(e.tags as string[]).join('+')}]\n  Setup: ${e.setup}\n  Punchline (${e.punchline_format}): ${e.punchline}\n  Por qué funciona: ${e.why_it_works}`
+).join('\n\n')}`)
+
+  // ── 12. HISTORIAL (si existe) ────────────────────────────────────────────
+  if (recentHistory.length > 0) {
+    sections.push(`HISTORIAL RECIENTE — NO REPETIR
+Personajes protagonistas de los últimos 2 días (no pueden ser protagonistas hoy, pueden aparecer en fondo):
+${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}`)
+  }
+
+  // ── 13. TRENDS (si existen) ──────────────────────────────────────────────
+  if (trendList.length > 0) {
+    sections.push(`TRENDS DEL DÍA (incorporar 2-3 de los 10 conceptos — el trend es ingrediente, no el chiste)
+${trends.instruction}
+${trendList.map((t, i) => `${i + 1}. ${JSON.stringify(t)}`).join('\n')}`)
+  }
+
+  // ── 14. FORMATO DE OUTPUT ────────────────────────────────────────────────
+  sections.push(`FORMATO DE OUTPUT — OBLIGATORIO
+Responde ÚNICAMENTE con un array JSON válido de exactamente 10 conceptos. Sin markdown, sin texto adicional, solo el JSON.
+
+[
+  {
+    "id": "concept_01",
+    "title": "máximo 5 palabras en Spanglish",
+    "archetype": "A1",
+    "setup": "qué se ve — descripción visual, máximo 2 oraciones",
+    "punchline_format": "P1",
+    "punchline": "qué lo cierra — lo más corto posible",
+    "tags": ["BOLIVIA"],
+    "quality_score": {
+      "F1_scroll_stop": true,
+      "F2_punchline_clear": true,
+      "F3_contrast_not_cruel": true,
+      "F4_works_silent": true,
+      "total": "4/4"
+    },
+    "why_it_works": "una oración"
+  },
+  ...
+]
+
+Los 10 conceptos ordenados de mayor a menor calidad. Todos deben tener total "4/4". Si un concepto no pasa los 4 filtros, reescríbelo hasta que pase o descártalo y genera uno nuevo.`)
+
+  return sections.join('\n\n---\n\n')
 }
 
 export async function generateConcepts(
@@ -48,50 +184,21 @@ export async function generateConcepts(
 ): Promise<Concept[]> {
   const client = getClient()
 
-  const historyNote = recentHistory.length > 0
-    ? `\nRECENT APPROVED CONCEPTS (DO NOT repeat these themes or settings):\n${recentHistory.map(h => `- ${h.concept_title}: ${h.concept_setup}`).join('\n')}`
-    : '\nNo recent history — this is a fresh session.'
-
-  const userPrompt = `Generate exactly 10 visual concepts for @CantSleept. Today's date: ${date}.
-${historyNote}
-
-Return ONLY valid JSON — no markdown, no explanation, just the JSON object:
-
-{
-  "concepts": [
-    {
-      "id": "unique-kebab-slug",
-      "title": "Max 5 words, punchy, in Spanglish",
-      "setup": "Visual description — what we see in the image. Max 30 words. In Spanglish.",
-      "punchline": "What closes the joke — the visual twist. Max 20 words. Must work WITHOUT explanation.",
-      "scores": {
-        "scroll_stop": 8,
-        "no_explanation": 9,
-        "contrast_not_cruelty": 10,
-        "no_audio": 9,
-        "overall": 9
-      },
-      "tags": ["Bolivia"],
-      "improved": false
-    }
-  ]
-}
-
-Mix of tags required: at least 2 Bolivia, at least 3 POP_CULTURE, at least 3 COTIDIANO. All concepts score 7+ overall.`
-
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 4096,
-    system: buildIdeaSystemPrompt(brandContext),
-    messages: [{ role: 'user', content: userPrompt }],
+    max_tokens: 8000,
+    system: buildIdeaSystemPrompt(brandContext, recentHistory),
+    messages: [{
+      role: 'user',
+      content: `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.`,
+    }],
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON in Claude response')
+  const jsonMatch = text.match(/\[[\s\S]*\]/)
+  if (!jsonMatch) throw new Error('No JSON array in Claude response')
 
-  const parsed = JSON.parse(jsonMatch[0])
-  return parsed.concepts as Concept[]
+  return JSON.parse(jsonMatch[0]) as Concept[]
 }
 
 export async function generateDualPrompts(concept: Concept): Promise<{ imagePrompt: string; videoPrompt: string }> {
@@ -136,9 +243,11 @@ Return ONLY valid JSON (no markdown, no explanation):
       role: 'user',
       content: `Concept:
 Title: ${concept.title}
+Archetype: ${concept.archetype}
 Setup: ${concept.setup}
-Punchline: ${concept.punchline}
+Punchline (${concept.punchline_format}): ${concept.punchline}
 Tags: ${concept.tags.join(', ')}
+Why it works: ${concept.why_it_works}
 
 Generate one image prompt + one video animation prompt for this concept.`,
     }],

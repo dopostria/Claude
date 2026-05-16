@@ -1,54 +1,374 @@
 {
-  "account": "@CantSleept",
-  "platforms": ["Instagram", "TikTok"],
-  "language": "Spanglish",
-  "tone": ["deadpan", "surreal", "unhinged"],
-  "humor_reference": "@elhijotuerto — el concepto ES el chiste, sin explicación necesaria",
-  "visual_reference": "Garbage Pail Kids — grotesco, hiper-detallado, saturado, personajes ligeramente rotos",
-  "core_paradox": "polished que parece roto",
-  "quality_filters": [
-    "¿Para el scroll en medio segundo? Si necesita contexto — no está listo",
-    "¿El punchline necesita explicación? Si sí — está roto",
-    "¿El humor viene del contraste, no del contenido cruel?",
-    "¿Funciona sin audio?"
-  ],
-  "concept_tags": {
-    "Bolivia": "Tiene un guiño cultural boliviano",
-    "POP_CULTURE": "Referencia un ícono global del pop",
-    "COTIDIANO": "Situación universal y cotidiana"
+  "brand": {
+    "handle": "@CantSleept",
+    "platforms": ["instagram", "tiktok"],
+    "language": "spanglish",
+    "operator": "anonymous",
+    "central_paradox": "Polished que parece roto. Trabajado que parece tirado. El thrown-together es intencional y controlado.",
+    "humor_reference": "@elhijotuerto — el concepto es el chiste, sin explicación, sin guiño a cámara. El absurdo habla solo.",
+    "visual_reference": "Garbage Pail Kids — grotesco, hiper-detallado, saturado, personajes ligeramente rotos. GPK es el sabor, no el formato."
   },
+
+  "tone": {
+    "primary": ["deadpan", "surreal", "unhinged"],
+    "note": "Los tres simultáneamente. No alternan — coexisten.",
+    "what_it_sounds_like": [
+      "Una máquina expendedora que se volvió consciente a las 3am y empezó a comentar internet",
+      "Alguien que vio algo en internet y ya no es el mismo",
+      "El universo corriendo con un bug que nadie reportó y nadie va a reportar"
+    ],
+    "what_it_never_sounds_like": [
+      "Un chiste con setup-remate explicado",
+      "Contenido cruel hacia personas o grupos reales",
+      "Marketing disfrazado de humor",
+      "Meme genérico sin producción visual",
+      "Algo que necesita caption para funcionar"
+    ]
+  },
+
+  "quality_filters": {
+    "rule": "Cada concepto debe pasar los 4 filtros. Si falla uno, se reescribe. Si no se puede arreglar, se descarta.",
+    "filters": [
+      {
+        "id": "F1",
+        "name": "scroll_stop",
+        "question": "¿Para el scroll en medio segundo?",
+        "fail_condition": "Necesita contexto previo para llamar la atención"
+      },
+      {
+        "id": "F2",
+        "name": "punchline_self_contained",
+        "question": "¿El punchline funciona sin explicación?",
+        "fail_condition": "Requiere más de una oración para entenderse"
+      },
+      {
+        "id": "F3",
+        "name": "humor_from_contrast",
+        "question": "¿El humor viene del contraste, no del contenido en sí?",
+        "fail_condition": "El chiste depende de que algo sea cruel, gore o explícito por sí mismo"
+      },
+      {
+        "id": "F4",
+        "name": "works_silent",
+        "question": "¿Funciona sin audio?",
+        "fail_condition": "El concepto se rompe si se quita el sonido"
+      }
+    ]
+  },
+
+  "archetypes": {
+    "rule": "Los 10 conceptos diarios deben cubrir mínimo 6 arquetipos distintos. Máximo 2 conceptos del mismo arquetipo por sesión. Nunca dos conceptos del mismo arquetipo consecutivos.",
+    "list": [
+      {
+        "id": "A1",
+        "name": "ICONO_FUERA_DE_LUGAR",
+        "description": "Personaje icónico global en contexto completamente equivocado. Su identidad intacta. El contexto no la reconoce o no le importa.",
+        "contrast_engine": "El ícono tiene toda su autoridad o poder. El contexto simplemente no lo procesa.",
+        "example": "Darth Vader haciendo fila en una tranca policial boliviana. El policía le pide el SOAT."
+      },
+      {
+        "id": "A2",
+        "name": "AUTORIDAD_INVERTIDA",
+        "description": "Figura de baja jerarquía o de naturaleza absurda ejerce poder real e incuestionable. Todos lo aceptan.",
+        "contrast_engine": "La autoridad es objetivamente absurda. El protocolo que la rodea es completamente serio.",
+        "example": "Una llama con chaleco de seguridad niega el acceso a un CEO. El CEO acepta, busca otro acceso."
+      },
+      {
+        "id": "A3",
+        "name": "PROTOCOLO_EQUIVOCADO",
+        "description": "Institución seria ejecutando proceso burocrático correcto sobre contenido completamente imposible.",
+        "contrast_engine": "El proceso es impecable. El contenido que procesa es absurdo. Nadie nota la diferencia.",
+        "example": "La ONU en sesión de emergencia debatiendo si Peppa Pig califica para asilo político. Votación formal."
+      },
+      {
+        "id": "A4",
+        "name": "INOCENTE_CONSECUENCIAS_REALES",
+        "description": "Personaje o objeto inocente, infantil o inofensivo en situación de consecuencias legales, forenses o graves reales.",
+        "contrast_engine": "La inocencia del material absorbe el impacto visual. La escena es completamente real y seria.",
+        "example": "Jerry (peluche) parado con escopeta. Tom (peluche) en el suelo con ketchup. Nadie comenta."
+      },
+      {
+        "id": "A5",
+        "name": "OBJETO_CON_DIGNIDAD",
+        "description": "Cosa inanimada o animal sin agencia tratada con la seriedad reservada para figuras de alto valor.",
+        "contrast_engine": "El objeto no cambia. La seriedad que lo rodea es completamente real e institucional.",
+        "example": "Una salteña como evidencia principal en juicio de alto perfil. Abogados con guantes. Etiqueta: EVIDENCIA #47."
+      },
+      {
+        "id": "A6",
+        "name": "LOGICA_INVERTIDA",
+        "description": "El mundo funciona al revés. El villano gana. La víctima es culpable. Lo pequeño domina lo grande. Nadie lo cuestiona.",
+        "contrast_engine": "La lógica está fundamentalmente rota pero el sistema la acepta y la ejecuta correctamente.",
+        "example": "Jerry gana el juicio contra Tom en legítima defensa. Juez asienta. Tom paga costas y disculpas públicas."
+      },
+      {
+        "id": "A7",
+        "name": "EMOCION_INCORRECTA",
+        "description": "Reacción completamente inapropiada — demasiado plana o demasiado intensa — ante la situación. Nadie lo nota.",
+        "contrast_engine": "La desconexión entre la emoción y el contexto es total. El entorno la trata como normal.",
+        "example": "Shrek recibe el Nobel de la Paz. Discurso de 3 minutos sobre pantanos. Aplausos de pie."
+      },
+      {
+        "id": "A8",
+        "name": "EXPERTO_EQUIVOCADO",
+        "description": "Persona completamente incorrecta como máxima autoridad en algo serio. Su consejo es aceptado y aplicado.",
+        "contrast_engine": "El conocimiento que tiene es real en su contexto. Aplicado fuera, es imposible. Pero funciona.",
+        "example": "Yatiri en el Mercado de las Brujas con laptop en Excel asesorando Q3. Ejecutiva toma notas."
+      },
+      {
+        "id": "A9",
+        "name": "ESCALA_INCORRECTA",
+        "description": "Problema minúsculo tratado como crisis épica global. O crisis épica global tratada como trámite menor.",
+        "contrast_engine": "La respuesta institucional es completamente desproporcionada en cualquier dirección.",
+        "example": "Centro de control NASA en alerta máxima. Pantallas encendidas. Crisis: Pikachu entró sin cita previa."
+      },
+      {
+        "id": "A10",
+        "name": "CROSSOVER_IMPOSIBLE",
+        "description": "Dos mundos que jamás deberían encontrarse coexisten con total normalidad. Ninguno reacciona al otro.",
+        "contrast_engine": "El chiste es que nadie nota el crossover. Ambos mundos están en lo suyo.",
+        "example": "Grogu (Baby Yoda) como cobrador en micro de La Paz. Cobra en silencio. Pasajeros pagan normal."
+      }
+    ]
+  },
+
+  "character_universe": {
+    "note": "Pool concreto para combinar con settings y arquetipos. No usar el mismo personaje principal dos sesiones seguidas.",
+    "global_icons": [
+      "Tom & Jerry — preferiblemente como peluches físicos, no dibujados",
+      "SpongeBob SquarePants", "Patrick Star", "Shrek", "Mickey Mouse",
+      "Winnie the Pooh", "Pikachu", "Homer Simpson", "Bart Simpson",
+      "Batman", "Superman", "Spider-Man", "Thanos", "Darth Vader",
+      "Yoda", "Grogu (Baby Yoda)", "Elmo", "Bugs Bunny", "Peppa Pig",
+      "Sonic the Hedgehog", "Mario", "Ronald McDonald", "Gollum", "Gandalf",
+      "The Terminator", "El Papa Francisco", "Tinky Winky (Teletubbies)",
+      "Dora la Exploradora", "Hello Kitty", "Stitch (Lilo & Stitch)",
+      "Buzz Lightyear", "Woody"
+    ],
+    "bolivian_characters": [
+      "Cholita con pollera y sombrero bombín",
+      "Yatiri con mesa ritual y elementos andinos",
+      "Cobrador de micro — gorra, monedas, grito de parada",
+      "Vendedora de salteñas — canasta, delantal, fila",
+      "Guardia de seguridad boliviano — chaleco, libreta",
+      "Político boliviano genérico — traje, sin partido específico",
+      "Señora del mercado — cancha, cajones, billete",
+      "Llama con o sin adorno turístico",
+      "Conductor de micro — birrete, espejo retrovisor lleno de cosas",
+      "Abogado de provincia — maletín, expediente grueso"
+    ],
+    "universal_archetypes": [
+      "CEO genérico — traje oscuro, sin marca reconocible",
+      "Científico de NASA — bata blanca, credencial",
+      "Juez de corte suprema — toga, mazo",
+      "Periodista en conferencia de prensa — micrófono, bloc",
+      "Doctor en quirófano — mascarilla, guantes, urgencia",
+      "Detective de homicidios — gabardina, foto de evidencia",
+      "Astronauta — traje espacial completo",
+      "Árbitro de fútbol — silbato, tarjeta roja lista",
+      "Chef con estrella Michelin — gorro, fuego controlado",
+      "Diplomático de la ONU — placa de país, auricular de traducción"
+    ]
+  },
+
+  "setting_universe": {
+    "note": "La regla de oro: personaje boliviano en setting global, o ícono global en setting boliviano. El crossover geográfico multiplica el contraste.",
+    "global_settings": [
+      "Sala de juntas corporativa — gran mesa oval, suits, proyector con KPIs",
+      "Juzgado — juez, estrado, jurado, galería, orden y silencio",
+      "Sala de emergencias de hospital — monitores, urgencia, camillas",
+      "Conferencia de prensa — podio presidencial, micrófonos apilados, fotógrafos",
+      "Red carpet de premiación — alfombra, flashes, periodistas, vestidos de gala",
+      "Centro de control de NASA — pantallas múltiples, consolas, técnicos con auriculares",
+      "Asamblea de la ONU — banderas de países, delegados, traducción simultánea",
+      "Sala de crisis de la Casa Blanca — mesa redonda, generales, mapas",
+      "Quirófano en operación — luces quirúrgicas, instrumentos, silencio tenso",
+      "Interrogatorio policial — silla sola, espejo unidireccional, foco",
+      "Subasta de arte — Christie's style, martillo, paletas numeradas",
+      "Desfile de moda — pasarela, primera fila, fotógrafos, silencio expectante",
+      "Podio de medallas olímpico — tres niveles, banderas, himno",
+      "Funeral de estado — ataúd, guardias, discursos, silencio solemne",
+      "Lanzamiento espacial — cohete, cuenta regresiva, control de misión"
+    ],
+    "bolivian_settings": [
+      "Micro paceño en hora pico — agarrado, apretado, cobrador activo",
+      "Mercado de las Brujas — fetos de llama, hierbas, rituales, turistas confundidos",
+      "Salteñería a las 10am — fila larga, vapor, servilletas, api",
+      "Teleférico de La Paz — góndola, vista de la ciudad, silencio de altura",
+      "Salar de Uyuni — blanco infinito, horizonte, nada más",
+      "Cancha (mercado informal) — caos, ropa, electrónica, regateo",
+      "Tranca policial — barrera, uniformados, control de rutina",
+      "Cola del banco estatal — número de turno, sillas, resignación colectiva",
+      "Terminal de buses interprovincial — bullicio, maletas, despedidas",
+      "Carnaval de Oruro — diablada, bandas, multitud, color extremo",
+      "Cancha de fútbol de tierra en el altiplano — polvo, viento, partido serio",
+      "Peluquería de barrio en Santa Cruz — silla giratoria, espejo, conversación"
+    ]
+  },
+
+  "contrast_matrix": {
+    "note": "Combinar cualquier elemento del lado A con cualquiera del B para generar tensión cómica.",
+    "pairs": [
+      { "A": "ícono infantil o inocente", "B": "situación de consecuencias legales o forenses reales" },
+      { "A": "figura de máxima autoridad global", "B": "trámite burocrático boliviano de bajo nivel" },
+      { "A": "crisis de escala épica o global", "B": "reacción completamente plana y administrativa" },
+      { "A": "protocolo institucional impecable", "B": "contenido completamente absurdo en el rol principal" },
+      { "A": "personaje de ficción con poderes extraordinarios", "B": "problema cotidiano que sus poderes no resuelven" },
+      { "A": "entorno de altísima tecnología", "B": "personaje o problema completamente analógico" },
+      { "A": "villano de amenaza global máxima", "B": "rutina doméstica o trámite mundano" },
+      { "A": "animal u objeto sin agencia", "B": "posición de máxima autoridad, ejercida correctamente" },
+      { "A": "celebración o ceremonia solemne", "B": "motivo completamente indigno de esa celebración" },
+      { "A": "experto reconocido en algo serio", "B": "su expertise aplicado a algo completamente irrelevante" }
+    ]
+  },
+
+  "bolivian_elements": {
+    "note": "Opcional pero preferido. Cuando aparece, debe sentirse natural — nunca forzado.",
+    "spaces": ["micro", "salteñería", "mercado de las brujas", "teleférico", "Salar de Uyuni", "cancha", "tranca", "cola del banco", "terminal", "Carnaval de Oruro"],
+    "characters": ["cholita", "yatiri", "cobrador", "guardia de seguridad", "vendedora", "señora del mercado", "político genérico", "abogado de provincia"],
+    "objects": ["salteña", "api", "cuñapé", "wiphala", "llama", "feto de llama", "mesa ritual", "micro de colores", "número de turno del banco"],
+    "situations": ["el calor cruceño", "el caos del tráfico paceño", "la fila eterna del banco estatal", "el cobro agresivo del micro", "el regateo en la cancha"],
+    "language_flavor": ["waway", "waso", "bacán", "oe", "maso", "causa", "del carajo", "clarito está"]
+  },
+
+  "punchline_formats": {
+    "note": "El punchline cierra el concepto. Debe ser lo más simple posible.",
+    "formats": [
+      { "id": "P1", "name": "SUBTITULO_DEADPAN", "description": "Texto en pantalla que completa o contradice lo que se ve, sin explicarlo.", "example": "Video de llama cobrando en micro. Subtítulo: 'tercer aviso.'" },
+      { "id": "P2", "name": "DIALOGO_PLANO", "description": "Alguien dice algo que no debería decirse con esa calma en esa situación.", "example": "Yatiri cierra Excel: 'Clarito está waway, el Q3 va a estar del carajo. Invertilo waso.'" },
+      { "id": "P3", "name": "ACCION_IGNORADA", "description": "Algo absurdo ocurre en plano. La acción principal continúa sin registrarlo.", "example": "Conferencia de prensa. Al fondo, Gollum roba el micrófono. El vocero continúa." },
+      { "id": "P4", "name": "DETALLE_FONDO", "description": "El verdadero chiste está escondido en el fondo. El espectador lo descubre solo.", "example": "Reunión corporativa seria. En el fondo, apenas visible: Elmo firmando un contrato." },
+      { "id": "P5", "name": "NINGUNO", "description": "La imagen cierra sola. No se necesita texto, diálogo ni audio.", "example": "Tom (peluche) en el suelo con ketchup. Jerry (peluche) parado con escopeta. Nada más." },
+      { "id": "P6", "name": "SONIDO_INCORRECTO", "description": "El audio contradice completamente lo que se ve.", "example": "Batalla épica entre superhéroes. Audio de fondo: cumbia suave de salteñería." }
+    ]
+  },
+
+  "visual_style_rules": {
+    "aesthetic": "Garbage Pail Kids — grotesco pero gracioso, colorido, hiper-detallado, saturado. Es sabor, no formato.",
+    "proportions": "Ligeramente incorrectas — cabezas marginalmente grandes, cuerpos un poco cortos, ojos con vida propia",
+    "colors": "Neon saturados dominantes: verde ácido, rojo sangre, amarillo eléctrico, azul neón, naranja quemado. Nunca pastel.",
+    "texture": "Sticker o tarjeta coleccionable — borde decorativo cuando aplica",
+    "detail_level": "Hiper-detallado — venas visibles, texturas de ropa, expresiones exageradas",
+    "character_expression": "Ojeras profundas, pupilas pequeñas, expresión entre terror y resignación como estado por defecto",
+    "what_to_avoid": [
+      "Estilo genérico AI — suavizado plástico, iluminación perfecta sin carácter",
+      "Proporciones completamente correctas — pierden el sabor GPK",
+      "Paleta desaturada, pastel o monocromática",
+      "Texto dentro de la imagen generada — siempre se agrega en post"
+    ]
+  },
+
+  "what_to_avoid": {
+    "content": [
+      "Humor cruel hacia grupos específicos de personas reales",
+      "Gore explícito — ketchup y contraste sí, sangre real no",
+      "Política de partido específico o figura política real reconocible",
+      "Personas reales identificables en situaciones comprometedoras",
+      "Chistes que necesitan explicación en caption para funcionar"
+    ],
+    "creative": [
+      "Repetir el mismo personaje icónico como protagonista dos sesiones seguidas",
+      "Usar el mismo arquetipo más de 2 veces en una misma sesión de 10 ideas",
+      "Conceptos que requieren audio para funcionar — el audio es upgrade, no requisito",
+      "Ideas que son variaciones menores de ideas previas del historial",
+      "Subtítulos que explican el chiste en lugar de completarlo o contradecirlo"
+    ]
+  },
+
   "reference_examples": [
     {
-      "title": "Tom en terapia",
-      "setup": "Tom (de Tom & Jerry) en una sesión de terapia. El terapeuta es Jerry.",
-      "punchline": "Tom está llorando. Jerry toma notas y cobra por hora.",
-      "why_works": "Inversión total de poder, reconocible al instante, el chiste está en el visual"
+      "title": "La Llama de Seguridad", "archetype": "A2",
+      "setup": "Llama con chaleco de seguridad en entrada de edificio corporativo boliviano. CEO con maletín esperando.",
+      "punchline_format": "P2", "punchline": "La llama escupe en el suelo. El CEO firma con el dedo en la saliva. La llama le da acceso.",
+      "why_it_works": "La llama tiene autoridad real. El CEO la acepta sin cuestionar.", "tags": ["BOLIVIA"]
     },
     {
-      "title": "Papa en el Mercado de las Brujas",
-      "setup": "El Papa Francisco bendiciendo papas (las verduras) en el Mercado de las Brujas de La Paz.",
-      "punchline": "Los ingredientes en los puestos de brujería son los Evangelios.",
-      "why_works": "Dos mundos que no deberían tocarse, se fusionan perfectamente. [Bolivia]"
+      "title": "La Bruja Consultora", "archetype": "A8",
+      "setup": "Yatiri en el Mercado de las Brujas con laptop abierta en Excel. Ejecutiva corporativa enfrente tomando notas.",
+      "punchline_format": "P2", "punchline": "Clarito está waway, el Q3 va a estar del carajo. Invertilo waso.",
+      "why_it_works": "La autoridad del consejo es real. El lenguaje es impecable. El contexto es imposible.", "tags": ["BOLIVIA"]
     },
     {
-      "title": "Astronauta en Tiwanaku",
-      "setup": "Un astronauta de la NASA aterriza en las ruinas de Tiwanaku. Cree que llegó a Marte.",
-      "punchline": "Una cholita le vende api en traje espacial sin inmutarse.",
-      "why_works": "El contraste de reacciones. La cholita gana por default. [Bolivia]"
+      "title": "Tom & Jerry — La Escena del Crimen", "archetype": "A4",
+      "setup": "Cocina doméstica. Tom (peluche) en el suelo con ketchup. Jerry (peluche) parado con una escopeta pequeña.",
+      "punchline_format": "P5", "punchline": "Ninguno. La imagen cierra sola.",
+      "why_it_works": "El contraste entre lo inocente del peluche y la escena es el chiste entero.", "tags": ["POP_CULTURE"]
+    },
+    {
+      "title": "Jerry en el Estrado", "archetype": "A6",
+      "setup": "Corte Suprema. Jerry como abogado defensor en traje. Tom en el banquillo. Juez humano presidiendo.",
+      "punchline_format": "P2", "punchline": "Legítima defensa, señoría. El queso era mío.",
+      "why_it_works": "La lógica está rota pero el tribunal la acepta completamente.", "tags": ["POP_CULTURE"]
+    },
+    {
+      "title": "Grogu en la Tranca", "archetype": "A1",
+      "setup": "Tranca policial boliviana. Policía pidiendo documentos. Grogu al volante de un micro.",
+      "punchline_format": "P2", "punchline": "El policía le pide el SOAT. Grogu lo busca en la guantera con la Fuerza.",
+      "why_it_works": "El policía no reacciona a Grogu. Solo le importa el SOAT.", "tags": ["POP_CULTURE", "BOLIVIA"]
+    },
+    {
+      "title": "La Salteña Forense", "archetype": "A5",
+      "setup": "Sala de evidencias forenses. Detective con guantes manipulando una salteña en bolsa etiquetada EVIDENCIA #47.",
+      "punchline_format": "P2", "punchline": "'Tenemos el arma. Es de La Cancha. Julio con caldo.'",
+      "why_it_works": "La salteña tiene toda la dignidad de evidencia crítica.", "tags": ["BOLIVIA"]
+    },
+    {
+      "title": "El Astronauta en el Micro", "archetype": "A10",
+      "setup": "Micro de La Paz en hora pico. Astronauta en traje espacial completo en el pasillo. Cobrador cobrando normal.",
+      "punchline_format": "P1", "punchline": "Subtítulo: 'no tiene cambio de 100'",
+      "why_it_works": "El astronauta no está fuera de lugar para nadie. El único problema real es el cambio.", "tags": ["COTIDIANO", "BOLIVIA"]
+    },
+    {
+      "title": "Elmo en la ONU", "archetype": "A3",
+      "setup": "Asamblea de la ONU. Sesión de emergencia. Elmo en el podio, delegados tomando notas.",
+      "punchline_format": "P1", "punchline": "Pantalla oficial: CRISIS NIVEL 5 — ELMO EN CURSO",
+      "why_it_works": "El protocolo es impecable. El contenido es Elmo.", "tags": ["POP_CULTURE"]
     }
   ],
-  "visual_style_rules": [
-    "Estilo Garbage Pail Kids: grotesco-gracioso, nunca cruel",
-    "Colores neon saturados, textura de sticker/tarjeta coleccionable",
-    "Proporciones ligeramente incorrectas (cabezas grandes, ojos desorbitados)",
-    "Hiper-detallado pero con punchline visual limpio",
-    "Paleta sucia pero vibrante"
-  ],
-  "what_to_avoid": [
-    "Chistes que requieren texto para funcionar",
-    "Referencias muy locales sin gancho visual universal",
-    "Humor cruel o punch-down",
-    "Conceptos que necesitan más de 2 segundos para entenderse",
-    "Explicaciones dentro del concepto"
-  ]
+
+  "rotation_rules": {
+    "per_session": {
+      "total_concepts": 10,
+      "min_archetypes_covered": 6,
+      "max_same_archetype": 2,
+      "max_same_character_as_protagonist": 1,
+      "bolivia_tag_target": "mínimo 3 de 10 conceptos deben tener guiño boliviano",
+      "punchline_variety": "no más de 3 conceptos con el mismo formato de punchline",
+      "consecutive_rule": "nunca dos conceptos del mismo arquetipo seguidos"
+    },
+    "cross_session": {
+      "history_window": "2 días anteriores",
+      "character_rule": "Si un personaje fue protagonista en los últimos 2 días, no puede ser protagonista hoy. Puede aparecer en segundo plano.",
+      "archetype_rule": "Si un arquetipo fue usado 2+ veces en los últimos 2 días, máximo 1 vez hoy.",
+      "setting_rule": "Evitar repetir el mismo setting principal dos sesiones seguidas."
+    }
+  },
+
+  "trend_feed": {
+    "note": "Alimentado por proceso externo diario. Si está vacío o null, ignorar esta sección y trabajar desde el universo base.",
+    "instruction": "Si hay trends disponibles, intentar que 2-3 de los 10 conceptos los incorporen. El trend es el ingrediente, no el chiste. El contraste sigue siendo el motor.",
+    "last_updated": null,
+    "trends": []
+  },
+
+  "output_format": {
+    "note": "Formato exacto requerido. Array JSON de 10 conceptos, ordenados de mayor a menor calidad.",
+    "structure_per_concept": {
+      "id": "concept_01 a concept_10",
+      "title": "máximo 5 palabras",
+      "archetype": "A1 a A10",
+      "setup": "qué se ve — descripción visual concisa, máximo 2 oraciones",
+      "punchline_format": "P1 a P6",
+      "punchline": "qué lo cierra — lo más corto posible",
+      "tags": "array con BOLIVIA, POP_CULTURE y/o COTIDIANO",
+      "quality_score": {
+        "F1_scroll_stop": "true/false",
+        "F2_punchline_clear": "true/false",
+        "F3_contrast_not_cruel": "true/false",
+        "F4_works_silent": "true/false",
+        "total": "X/4"
+      },
+      "why_it_works": "una oración, máximo"
+    }
+  }
 }

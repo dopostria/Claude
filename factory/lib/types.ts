@@ -4,22 +4,27 @@ export type ActiveOverlay = 'none' | 'ideas' | 'images' | 'video'
 
 export type ConceptTag = 'Bolivia' | 'POP_CULTURE' | 'COTIDIANO'
 
-export interface ConceptScores {
-  scroll_stop: number
-  no_explanation: number
-  contrast_not_cruelty: number
-  no_audio: number
-  overall: number
+export type ArchetypeId = 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10'
+export type PunchlineFormat = 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6'
+
+export interface QualityScore {
+  F1_scroll_stop: boolean
+  F2_punchline_clear: boolean
+  F3_contrast_not_cruel: boolean
+  F4_works_silent: boolean
+  total: string
 }
 
 export interface Concept {
   id: string
   title: string
+  archetype: ArchetypeId
   setup: string
+  punchline_format: PunchlineFormat
   punchline: string
-  scores: ConceptScores
   tags: ConceptTag[]
-  improved: boolean
+  quality_score: QualityScore
+  why_it_works: string
 }
 
 // Single unified image prompt — style is chosen by Claude per concept
