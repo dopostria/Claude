@@ -8,7 +8,6 @@ const BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 const GEMINI_IMAGE_MODELS = [
   'gemini-2.5-flash-image',
-  'gemini-2.0-flash-exp-image-generation',
 ]
 
 async function tryGemini(modelId: string, prompt: string, apiKey: string): Promise<{ base64: string; mime: string; model: string }> {
@@ -17,10 +16,7 @@ async function tryGemini(modelId: string, prompt: string, apiKey: string): Promi
     headers: H(apiKey),
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-        imageConfig: { aspectRatio: '9:16' },  // REST: inside generationConfig
-      },
+      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
     }),
   })
   if (!res.ok) throw new Error(`${modelId} ${res.status}: ${(await res.text()).slice(0, 300)}`)
