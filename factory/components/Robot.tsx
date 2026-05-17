@@ -4,103 +4,77 @@ import type { RoomState } from '@/lib/types'
 
 type RoomType = 'boss' | 'ideas' | 'images' | 'video'
 
-const COLORS: Record<RoomType, string> = {
+// Robot body colors per spec: #ffdd00 Ideas, #0088ff Images, #ff0040 Video
+const BODY_COLORS: Record<RoomType, string> = {
   boss:   '#a855f7',
-  ideas:  '#00c4a0',
-  images: '#ff6b35',
-  video:  '#48cae4',
+  ideas:  '#ffdd00',
+  images: '#0088ff',
+  video:  '#ff0040',
+}
+
+const ACCENT = '#00ffcc' // eyes + core
+
+// Unit size: 3px (8×8 grid scaled 3x = 24px wide)
+const U = 3
+
+// Pixel map: [col, row, type]  type 1=body  type 2=accent
+// Base element sits at grid (3, 0) = container position (9px, 0px).
+// Shadow offset for pixel at (c, r): x=(c-3)*U, y=r*U
+const PIXELS: [number, number, 1 | 2][] = [
+  // row 1 — antenna base
+  [2,1,1],[3,1,1],[4,1,1],[5,1,1],
+  // row 2 — head top
+  [1,2,1],[2,2,1],[3,2,1],[4,2,1],[5,2,1],[6,2,1],
+  // row 3 — head with eyes (cols 2 and 5)
+  [0,3,1],[1,3,1],[2,3,2],[3,3,1],[4,3,1],[5,3,2],[6,3,1],[7,3,1],
+  // row 4 — head lower
+  [0,4,1],[1,4,1],[2,4,1],[3,4,1],[4,4,1],[5,4,1],[6,4,1],[7,4,1],
+  // row 5 — neck
+  [2,5,1],[3,5,1],[4,5,1],[5,5,1],
+  // row 6 — body top
+  [0,6,1],[1,6,1],[2,6,1],[3,6,1],[4,6,1],[5,6,1],[6,6,1],[7,6,1],
+  // row 7 — body with core (cols 2-4)
+  [0,7,1],[1,7,1],[2,7,2],[3,7,2],[4,7,2],[5,7,1],[6,7,1],[7,7,1],
+  // row 8 — body lower
+  [0,8,1],[1,8,1],[2,8,1],[3,8,1],[4,8,1],[5,8,1],[6,8,1],[7,8,1],
+  // rows 9-10 — legs
+  [1,9,1],[2,9,1],[5,9,1],[6,9,1],
+  [1,10,1],[2,10,1],[5,10,1],[6,10,1],
+]
+
+function buildBoxShadow(body: string, accent: string): string {
+  return PIXELS.map(([c, r, t]) =>
+    `${(c - 3) * U}px ${r * U}px 0 0 ${t === 2 ? accent : body}`
+  ).join(', ')
 }
 
 interface RobotProps {
   room: RoomType
   state: RoomState
+  launching?: boolean
 }
 
-export default function Robot({ room, state }: RobotProps) {
-  const c   = COLORS[room]
-  const c70 = `${c}b3`
-  const c35 = `${c}59`
-  const c20 = `${c}33`
+export default function Robot({ room, state, launching }: RobotProps) {
+  const body   = BODY_COLORS[room]
+  const shadow = buildBoxShadow(body, ACCENT)
+  const cls    = `robot ${state} ${room}${launching ? ' launching' : ''}`
 
   return (
-    <div
-      className={`robot-${state}`}
-      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}
-    >
-      {/* Antenna tip — 4×4 */}
-      <div
-        className="robot-antenna-tip"
-        style={{ width: 4, height: 4, background: c, boxShadow: `0 0 6px ${c}` }}
-      />
-      {/* Antenna shaft — 2×8 */}
-      <div style={{ width: 2, height: 8, background: c35 }} />
-
-      {/* Head — 24×20 */}
-      <div style={{
-        width: 24,
-        height: 20,
-        background: '#050e0d',
-        border: `2px solid ${c}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        padding: '0 4px',
-      }}>
-        <div className="robot-eye" style={{ width: 4, height: 4, background: c, boxShadow: `0 0 3px ${c}` }} />
-        <div className="robot-eye" style={{ width: 4, height: 4, background: c, boxShadow: `0 0 3px ${c}` }} />
-      </div>
-
-      {/* Neck — 4×4 */}
-      <div style={{ width: 4, height: 4, background: c35 }} />
-
-      {/* Body row: left-arm + body + right-arm */}
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-
-        {/* Left arm — 6×14 + hand 6×6 */}
+    // Container sized to exactly fit all box-shadow pixels: 24×33px
+    // Base element at col 3, row 0 → container left=9px, top=0
+    <div className={cls} style={{ position: 'relative', display: 'inline-block' }}>
+      <div style={{ position: 'relative', width: 24, height: 33 }}>
         <div
-          className="robot-arm-left"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transformOrigin: 'top center' }}
-        >
-          <div style={{ width: 6, height: 14, background: c70, border: `1px solid ${c35}` }} />
-          <div style={{ width: 6, height: 6, background: c35 }} />
-        </div>
-
-        {/* Body — 20×24 with core */}
-        <div style={{
-          width: 20,
-          height: 24,
-          background: '#050e0d',
-          border: `2px solid ${c}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div
-            className="robot-core"
-            style={{ width: 6, height: 6, background: c, boxShadow: `0 0 5px ${c}` }}
-          />
-        </div>
-
-        {/* Right arm — 6×14 + hand 6×6 */}
-        <div
-          className="robot-arm-right"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transformOrigin: 'top center' }}
-        >
-          <div style={{ width: 6, height: 14, background: c70, border: `1px solid ${c35}` }} />
-          <div style={{ width: 6, height: 6, background: c35 }} />
-        </div>
-      </div>
-
-      {/* Legs — 6×12 each */}
-      <div style={{ display: 'flex', gap: 4 }}>
-        <div style={{ width: 6, height: 12, background: c20, border: `1px solid ${c35}` }} />
-        <div style={{ width: 6, height: 12, background: c20, border: `1px solid ${c35}` }} />
-      </div>
-
-      {/* Feet — 8×4 each */}
-      <div style={{ display: 'flex', gap: 2 }}>
-        <div style={{ width: 8, height: 4, background: c35 }} />
-        <div style={{ width: 8, height: 4, background: c35 }} />
+          style={{
+            position: 'absolute',
+            left: 9,
+            top: 0,
+            width: U,
+            height: U,
+            background: body,
+            boxShadow: shadow,
+          }}
+        />
       </div>
     </div>
   )

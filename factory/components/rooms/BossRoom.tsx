@@ -9,6 +9,7 @@ interface BossRoomProps {
   lastConceptTitle: string | null
   onGenerate: () => void
   generating: boolean
+  launching?: boolean
 }
 
 export default function BossRoom({
@@ -17,6 +18,7 @@ export default function BossRoom({
   lastConceptTitle,
   onGenerate,
   generating,
+  launching,
 }: BossRoomProps) {
   const stateColors: Record<RoomState, string> = {
     idle:    '#0d3330',
@@ -28,6 +30,7 @@ export default function BossRoom({
 
   return (
     <div
+      id="room-boss"
       className={`room-card ${state !== 'idle' ? state : ''}`}
       style={{
         display: 'flex',
@@ -65,8 +68,9 @@ export default function BossRoom({
       </div>
 
       {/* Robot */}
-      <div style={{ flexShrink: 0 }}>
-        <Robot room="boss" state={state} />
+      <div style={{ flexShrink: 0, position: 'relative' }}>
+        <Robot room="boss" state={state} launching={launching} />
+        {state === 'done' && <div className="done-check-overlay">✓</div>}
       </div>
 
       {/* Divider */}

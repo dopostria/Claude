@@ -60,6 +60,10 @@ export default function Factory() {
   const [videoModel, setVideoModel] = useState<string | null>(null)
   const [animationConcepts, setAnimationConcepts] = useState<AnimationConcept[] | null>(null)
   const [loadingAnimations, setLoadingAnimations] = useState(false)
+  const [bossLaunching, setBossLaunching] = useState(false)
+  const [pillAnim, setPillAnim] = useState<{
+    startX: number; startY: number; dx: number; dy: number
+  } | null>(null)
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -76,8 +80,32 @@ export default function Factory() {
   }, [])
 
   const fireSignal = useCallback((from: string, to: string) => {
+    // Legacy SVG signal line
     setState(s => ({ ...s, signal: { from, to } }))
     setTimeout(() => setState(s => ({ ...s, signal: null })), 1400)
+
+    // Pill animation: fly from center of `from` room to center of `to` room
+    const fromEl = document.getElementById(`room-${from}`)
+    const toEl   = document.getElementById(`room-${to}`)
+    if (fromEl && toEl) {
+      const fr = fromEl.getBoundingClientRect()
+      const tr = toEl.getBoundingClientRect()
+      const startX = fr.left + fr.width  / 2
+      const startY = fr.top  + fr.height / 2
+      setPillAnim({
+        startX,
+        startY,
+        dx: (tr.left + tr.width  / 2) - startX,
+        dy: (tr.top  + tr.height / 2) - startY,
+      })
+      setTimeout(() => setPillAnim(null), 700)
+    }
+
+    // Boss launch gesture on outbound signals from boss
+    if (from === 'boss') {
+      setBossLaunching(true)
+      setTimeout(() => setBossLaunching(false), 200)
+    }
   }, [])
 
   // ── NODO 1 ───────────────────────────────────────────────────────────
@@ -380,6 +408,7 @@ export default function Factory() {
           lastConceptTitle={stats.lastConceptTitle}
           onGenerate={handleGenerate}
           generating={generating}
+          launching={bossLaunching}
         />
 
         {/* 3 rooms */}
@@ -440,6 +469,19 @@ export default function Factory() {
           onClose={handleCloseOverlay}
           generating={generatingImage}
           generatingFor={generatingFor}
+        />
+      )}
+
+      {/* Pill animation: flies from boss center to active room center */}
+      {pillAnim && (
+        <div
+          className="pill-fly"
+          style={{
+            left: pillAnim.startX - 4,
+            top:  pillAnim.startY - 2,
+            '--pill-x': `${pillAnim.dx}px`,
+            '--pill-y': `${pillAnim.dy}px`,
+          } as React.CSSProperties}
         />
       )}
 

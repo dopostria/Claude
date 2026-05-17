@@ -18,6 +18,7 @@ export default function IdeasRoom({ state, conceptCount, selectedCount, onClick 
 
   return (
     <RoomCard
+      id="room-ideas"
       state={state}
       onClick={canClick ? onClick : undefined}
       label="NODE_01"
@@ -47,6 +48,7 @@ export function ImagesRoom({ state, imageCount, onClick }: ImagesRoomProps) {
 
   return (
     <RoomCard
+      id="room-images"
       state={state}
       onClick={canClick ? onClick : undefined}
       label="NODE_02"
@@ -75,6 +77,7 @@ export function VideoRoom({ state, videoReady, onClick }: VideoRoomProps) {
 
   return (
     <RoomCard
+      id="room-video"
       state={state}
       onClick={canClick ? onClick : undefined}
       label="NODE_03"
@@ -92,6 +95,7 @@ export function VideoRoom({ state, videoReady, onClick }: VideoRoomProps) {
 // ─── Shared RoomCard ──────────────────────────────────────────────────────────
 
 interface RoomCardProps {
+  id?: string
   state: RoomState
   onClick?: () => void
   label: string
@@ -102,7 +106,7 @@ interface RoomCardProps {
   hint?: string
 }
 
-function RoomCard({ state, onClick, label, title, color, robot, statusLines, hint }: RoomCardProps) {
+function RoomCard({ id, state, onClick, label, title, color, robot, statusLines, hint }: RoomCardProps) {
   const stateColors: Record<RoomState, string> = {
     idle:    '#0d3330',
     working: '#ff6b35',
@@ -113,6 +117,7 @@ function RoomCard({ state, onClick, label, title, color, robot, statusLines, hin
 
   return (
     <div
+      id={id}
       className={`room-card ${state !== 'idle' ? state : ''}`}
       onClick={onClick}
       style={{
@@ -175,12 +180,14 @@ function RoomCard({ state, onClick, label, title, color, robot, statusLines, hin
       {/* ── Zone 2: robot (centered, fills space) ── */}
       <div style={{
         flex: 1,
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '12px 0',
       }}>
         {robot}
+        {state === 'done' && <div className="done-check-overlay">✓</div>}
       </div>
 
       {/* ── Zone 3: status ── */}

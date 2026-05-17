@@ -72,96 +72,105 @@ body::after {
 
 /* ─── ROBOT ANIMATIONS ───────────────────────────────────────────────────── */
 
-.robot-idle {
-  animation: idleBob 4s ease-in-out infinite;
-}
-.robot-idle .robot-antenna-tip {
-  animation: antennaBlink 3s ease-in-out infinite;
-}
+/* State classes: .robot.idle / .robot.working.ideas|images|video / .robot.done / .robot.error */
 
-.robot-working {
-  animation: breathe 1s ease-in-out infinite;
-}
-.robot-working .robot-core {
-  animation: corePulse 0.55s ease-in-out infinite;
-}
-.robot-working .robot-arm-left {
-  animation: armSwingL 0.5s ease-in-out infinite;
-  transform-origin: top center;
-}
-.robot-working .robot-arm-right {
-  animation: armSwingR 0.5s ease-in-out infinite;
-  transform-origin: top center;
-}
+.robot.idle { opacity: 0.5; }
 
-.robot-done .robot-arm-left {
-  transform: rotate(-75deg);
-  transform-origin: top center;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.robot-done .robot-arm-right {
-  transform: rotate(75deg);
-  transform-origin: top center;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.robot-done .robot-core {
-  animation: coreDone 1.5s ease-in-out infinite;
-}
+.robot.working.ideas  { animation: float   1.2s ease-in-out infinite; }
+.robot.working.images { animation: spin    0.8s linear      infinite; }
+.robot.working.video  { animation: wobble  0.3s ease-in-out infinite; }
 
-.robot-error {
-  animation: glitchTilt 0.18s linear infinite;
+.robot.done {
+  animation: collapse 0.3s ease-out forwards;
   transform-origin: bottom center;
 }
 
-@keyframes idleBob {
+.robot.error { animation: glitchTilt 0.18s linear infinite; }
+
+.robot.launching { animation: bossLaunch 0.15s ease-out; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes wobble {
+  0%   { transform: translateX(0)    rotate(0deg);  }
+  25%  { transform: translateX(-3px) rotate(-5deg); }
+  75%  { transform: translateX(3px)  rotate(5deg);  }
+  100% { transform: translateX(0)    rotate(0deg);  }
+}
+
+@keyframes collapse {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(90deg) translateX(8px); }
+}
+
+@keyframes pillFly {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(var(--pill-x), var(--pill-y)); }
+}
+
+@keyframes pixelExplode {
+  0%, 100% { transform: translate(0, 0);              opacity: 1;   }
+  50%       { transform: translate(var(--ex), var(--ey)); opacity: 0.5; }
+}
+
+@keyframes bossLaunch {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-2px); }
 }
 
-@keyframes antennaBlink {
-  0%, 78%, 100% { opacity: 1; }
-  82%           { opacity: 0.05; }
-  88%           { opacity: 0.9; }
-  92%           { opacity: 0.05; }
-  96%           { opacity: 1; }
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scaleY(1) translateY(0); }
-  50%       { transform: scaleY(1.04) translateY(-1px); }
-}
-
-@keyframes corePulse {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 1; }
-}
-
-@keyframes coreDone {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-
-@keyframes armSwingL {
-  0%, 100% { transform: rotate(-18deg); }
-  50%       { transform: rotate(22deg); }
-}
-
-@keyframes armSwingR {
-  0%, 100% { transform: rotate(18deg); }
-  50%       { transform: rotate(-22deg); }
-}
-
 @keyframes glitchTilt {
   0%   { transform: rotate(-4deg) translateX(-1px); }
-  25%  { transform: rotate(3deg)  translateX(2px); }
+  25%  { transform: rotate(3deg)  translateX(2px);  }
   50%  { transform: rotate(-2deg) translateX(-2px); }
-  75%  { transform: rotate(4deg)  translateX(1px); }
+  75%  { transform: rotate(4deg)  translateX(1px);  }
   100% { transform: rotate(-3deg) translateX(-1px); }
+}
+
+@keyframes fadeInCheck {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1);   }
 }
 
 @keyframes neonPulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.3; }
+}
+
+/* Pill element */
+.pill-fly {
+  position: fixed;
+  width: 8px;
+  height: 4px;
+  background: #00ffcc;
+  border-radius: 2px;
+  z-index: 30;
+  pointer-events: none;
+  animation: pillFly 600ms ease-out forwards;
+}
+
+/* Done checkmark overlay */
+.done-check-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00ff88;
+  font-size: 14px;
+  font-family: monospace;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 5;
+  animation: fadeInCheck 0.2s ease-out 0.3s both;
+  text-shadow: 0 0 8px #00ff88;
 }
 
 /* ─── BUTTONS ────────────────────────────────────────────────────────────── */
