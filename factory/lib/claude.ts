@@ -4,7 +4,7 @@ import path from 'path'
 import type { Concept, AnimationConcept, HistorySelection, UsedCombination } from './types'
 import { getTodayUsedCombinations } from './storage'
 
-const MODEL = 'claude-sonnet-4-5'
+const MODEL = 'claude-sonnet-4-6'
 
 function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })

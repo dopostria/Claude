@@ -67,10 +67,9 @@ export default function Robot({ room, state, launching }: RobotProps) {
       style={{
         width:               FRAME_W,
         height:              FRAME_H,
-        backgroundImage:     "url('/sprites/robot.png')",
-        backgroundRepeat:    'no-repeat',
-        backgroundPositionX: -frame * FRAME_W,
-        backgroundPositionY: 0,
+        backgroundImage:  "url('/sprites/robot.png')",
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: `${-frame * FRAME_W}px 0px`,
         imageRendering:      'pixelated',
         filter:              `${FILTERS[room]}${idleFilter}`,
         flexShrink:          0,
