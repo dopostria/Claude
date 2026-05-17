@@ -170,7 +170,16 @@ ${examples.map(e =>
   `"${e.title}" [${e.archetype}] [${(e.tags as string[]).join('+')}]\n  Setup: ${e.setup}\n  Punchline (${e.punchline_format}): ${e.punchline}\n  Por qué funciona: ${e.why_it_works}`
 ).join('\n\n')}
 
-Los reference_examples son el BAR de calidad, no plantillas a replicar. Si un concepto generado se parece estructuralmente a un reference example, descartarlo y generar uno diferente.`)
+CRITICAL — REFERENCE EXAMPLES ARE THE BAR, NOT THE TEMPLATE:
+The reference_examples show the quality and tone required. They are NOT concepts to replicate or remix.
+Before finalizing any concept, check: does this concept share the same structure, character, or mechanic as any reference example?
+- Same character in a different setting = DISCARD
+- Same mechanic with a different character = DISCARD
+- Structurally identical contrast = DISCARD
+If yes to any of the above — generate a new concept from scratch using a different humor_engine and archetype combination.
+The Llama example exists. Never generate another llama-as-authority concept.
+The Yatiri example exists. Never generate another expert-in-wrong-place with bolivian mystic concept.
+The Tom & Jerry courtroom exists. Never generate another Tom & Jerry legal scenario.`)
 
   // ── 12. HISTORIAL (si existe) ────────────────────────────────────────────
   if (recentHistory.length > 0) {
