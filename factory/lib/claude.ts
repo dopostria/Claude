@@ -68,7 +68,7 @@ ${humorDna.core_principle}
 HUMOR ENGINES (H1–H7) — elegir qué engine(s) aplica ANTES de asignar arquetipo:
 
 ${humorEngines.map(h => {
-  const exs = h.examples as string[]
+  const exs = (h.examples ?? h.chaos_catalog ?? []) as string[]
   const extra = h.rule ? `\n  Regla: ${h.rule}` : h.signal ? `\n  Signal: ${h.signal}` : ''
   return `${h.id}: ${h.name}\n  ${h.description}${extra}\n  Ejemplos: ${exs.slice(0, 2).join(' · ')}`
 }).join('\n\n')}
