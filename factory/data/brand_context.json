@@ -369,7 +369,7 @@
         "total": "X/4"
       },
       "why_it_works": "una oración, máximo",
-      "humor_engine": "H1, H3 (uno o más de H1-H7)",
+      "humor_engine": "H1, H3 (uno o más de H1-H8)",
       "humor_score": "X/5"
     }
   },
@@ -473,6 +473,24 @@
           "El calor cruceño — hace calor todo el año, nadie se acostumbra",
           "El frío paceño — hace frío todo el año, todos se acostumbraron"
         ]
+      },
+      {
+        "id": "H8",
+        "name": "GRONCHO_DESUBICADO",
+        "description": "Humor popular, callejero, al límite de lo políticamente correcto. El personaje inocente está en una situación comprometedora real — drogas, fiesta, corrupción, sexo implícito — y nadie lo comenta. El contraste entre la inocencia del personaje y la situación real es el chiste. No explicar. No disculparse.",
+        "signal": "¿El mismo concepto en una versión 'limpia' sería menos gracioso? Si sí — usar H8.",
+        "examples": [
+          "Pikachu en tranca con parafernalia visible en el asiento, botella de singani abierta, una ñata dormida al lado. Policía: '¿SOAT vigente?' Pikachu busca entre las cosas. Lo encuentra. El policía lo deja ir.",
+          "Winnie Pooh saliendo de un bunker con miel en la cara y bolsas selladas. Agentes con chalecos esperando. Pooh: 'Era para uso personal.'",
+          "Elmo como testigo en juicio. Abogado: '¿Dónde estaba la noche del 14?' Elmo: 'Elmo no recuerda esa noche.' Juez asiente.",
+          "SpongeBob como funcionario público. Escritorio vacío. Sello en mano. Cola hasta la puerta. Subtítulo: 'día 847 sin ir a trabajar'"
+        ],
+        "rules": [
+          "La situación comprometedora es real y visible. El personaje no la niega ni la explica.",
+          "El entorno no reacciona — la situación es tan normal que nadie la nota.",
+          "La oscuridad viene de lo que NO se dice, no de lo que se muestra explícitamente.",
+          "Nunca cruel hacia personas reales vulnerables. Apunta a instituciones, figuras de poder, y ficciones."
+        ]
       }
     ],
 
@@ -484,7 +502,31 @@
         "Nunca cruel hacia personas reales o grupos específicos. El humor negro apunta a situaciones, instituciones, y ficciones — no a individuos reales vulnerables.",
         "La reacción del entorno es cero. Nadie se escandaliza. Nadie comenta. El mundo acepta lo oscuro como normal. Eso lo hace más oscuro."
       ],
-      "sweet_spot": "Cuando alguien dice 'eso está mal' pero ya se está riendo — ahí está el sweet spot."
+      "sweet_spot": "Cuando alguien dice 'esto está mal' pero ya se está riendo y lo manda al grupo — ahí está el sweet spot. El límite es: políticamente incorrecto sí, discriminatorio no."
+    },
+
+    "political_humor_rules": {
+      "description": "Referencias políticas bolivianas son material válido y fértil. Reglas para usarlas sin NSFW y sin nombres reales.",
+      "rule": "Nunca usar nombres reales de políticos. Siempre describir por cargo, situación, o característica reconocible. Los bolivianos saben quién es quién.",
+      "character_descriptions": [
+        "el expresidente que quiere volver y no puede — el de la ceja y el pollover",
+        "el presidente actual que no consigue gasolina ni dólares",
+        "el general que llegó con un tanque y se fue en 20 minutos",
+        "la candidata que siempre pierde pero siempre vuelve",
+        "el gobernador camba que habla de autonomía desde su rancho",
+        "el senador que sella leyes que nadie leyó",
+        "el ministro que da conferencia de prensa sin luz"
+      ],
+      "situations_that_always_work": [
+        "La gasolina que no hay",
+        "El dólar que no alcanza",
+        "El bloqueo que nadie sabe quién convocó",
+        "La elección que nadie quiere pero todos van a tener",
+        "El juicio que lleva 4 años y nadie recuerda de qué era",
+        "La ley que se aprobó a las 3am sin quórum",
+        "El funcionario que cobra pero no aparece"
+      ],
+      "tone": "Deadpan total. La crítica política funciona cuando el sistema la acepta como normal, no cuando el contenido la denuncia."
     },
 
     "language_and_voice": {

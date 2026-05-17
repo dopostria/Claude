@@ -34,10 +34,11 @@ function buildIdeaSystemPrompt(
   const filterList      = (qf.filters             as Record<string, unknown>[])
   const punchList       = (punches.formats        as Record<string, unknown>[])
   const trendList       = (trends.trends          as unknown[]) ?? []
-  const humorEngines    = (humorDna.humor_engines as Record<string, unknown>[])
+  const humorEngines    = (humorDna.humor_engines       as Record<string, unknown>[])
   const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
-  const darkRules       = (humorDna.dark_humor_rules as Record<string, unknown>)
-  const langVoice       = (humorDna.language_and_voice as Record<string, unknown>)
+  const darkRules       = (humorDna.dark_humor_rules     as Record<string, unknown>)
+  const langVoice       = (humorDna.language_and_voice   as Record<string, unknown>)
+  const politicalRules  = (humorDna.political_humor_rules as Record<string, unknown>)
 
   // ── 1. IDENTIDAD Y TONO ─────────────────────────────────────────────────
   const sections: string[] = [`Eres el CantSleept Content Factory IDEA ENGINE.
@@ -69,8 +70,11 @@ HUMOR ENGINES (H1–H7) — elegir qué engine(s) aplica ANTES de asignar arquet
 
 ${humorEngines.map(h => {
   const exs = (h.examples ?? h.chaos_catalog ?? []) as string[]
-  const extra = h.rule ? `\n  Regla: ${h.rule}` : h.signal ? `\n  Signal: ${h.signal}` : ''
-  return `${h.id}: ${h.name}\n  ${h.description}${extra}\n  Ejemplos: ${exs.slice(0, 2).join(' · ')}`
+  const rulesLine = Array.isArray(h.rules)
+    ? `\n  Reglas: ${(h.rules as string[]).join(' · ')}`
+    : h.rule ? `\n  Regla: ${h.rule}` : ''
+  const signal = h.signal ? `\n  Signal: ${h.signal}` : ''
+  return `${h.id}: ${h.name}\n  ${h.description}${signal}${rulesLine}\n  Ejemplos: ${exs.slice(0, 2).join(' · ')}`
 }).join('\n\n')}
 
 HUMOR SCORE CHECKLIST — ${humorChecklist.description}
@@ -80,6 +84,13 @@ ${humorChecklist.passing_score}
 DARK HUMOR RULES
 ${(darkRules.rules as string[]).map(r => `- ${r}`).join('\n')}
 Sweet spot: ${darkRules.sweet_spot}
+
+POLITICAL HUMOR RULES (Bolivia)
+${politicalRules.description}
+Regla: ${politicalRules.rule}
+Figuras usables (sin nombres reales): ${(politicalRules.character_descriptions as string[]).join(' · ')}
+Situaciones que siempre funcionan: ${(politicalRules.situations_that_always_work as string[]).join(' · ')}
+Tono: ${politicalRules.tone}
 
 VOZ Y LENGUAJE
 ${(langVoice.voice_rules as string[]).map(r => `- ${r}`).join('\n')}
