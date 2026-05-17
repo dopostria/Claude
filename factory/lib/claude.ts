@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import fs from 'fs'
 import path from 'path'
-import type { Concept, AnimationConcept, HistorySelection } from './types'
+import type { Concept, AnimationConcept, HistorySelection, UsedCombination } from './types'
+import { getTodayUsedCombinations } from './storage'
 
 const MODEL = 'claude-sonnet-4-5'
 
@@ -79,9 +80,18 @@ del feed y usarlos con el personaje y arquetipo correcto.
     trendFeedBlock = ''
   }
 
-  console.log('=== TREND FEED INJECTED ===')
-  console.log(trendFeedBlock ? `SÍ — trends activos: ${JSON.parse(fs.readFileSync(trendFeedPath, 'utf-8')).trends.length}` : 'NO — feed vacío o error')
+  // ── COMBINATION BLACKLIST — leer sesión de hoy ───────────────────────────
+  const usedCombinations: UsedCombination[] = getTodayUsedCombinations()
+
+  console.log('=== COMBINATION BLACKLIST ===')
+  console.log(JSON.stringify(usedCombinations, null, 2))
+  console.log('Cholita+NASA bloqueada:',
+    usedCombinations.some(c =>
+      c.character.includes('cholita') && c.setting.includes('nasa')
+    )
+  )
   console.log('=== END ===')
+
   const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
   const darkRules       = (humorDna.dark_humor_rules     as Record<string, unknown>)
   const langVoice       = (humorDna.language_and_voice   as Record<string, unknown>)
@@ -261,12 +271,16 @@ The Yatiri example exists. Never generate another expert-in-wrong-place with bol
 The Tom & Jerry courtroom exists. Never generate another Tom & Jerry legal scenario.`)
 
   // ── 12. CROSS-BATCH MEMORY ───────────────────────────────────────────────
+  const combinationBlacklist = usedCombinations.length > 0
+    ? `\n\nCOMBINATION BLACKLIST — estas combinaciones personaje+setting ya fueron usadas HOY. No repetir en ninguna forma:\n${usedCombinations.map(c => `- ${c.character} en ${c.setting}`).join('\n')}`
+    : ''
+
   sections.push(`CROSS-BATCH MEMORY:
 These concepts and punchlines were already generated in previous sessions today.
 Do not regenerate them in any form:
 - Shrek recibiendo premio con discurso sobre pantanos
 - Cualquier personaje en la ONU o Asamblea General
-Track generated titles within the session and reject structural duplicates.`)
+Track generated titles within the session and reject structural duplicates.${combinationBlacklist}`)
 
   // ── 13. ACTUALIDAD BOLIVIANA (trends) ────────────────────────────────────
   if (trendFeedBlock) {
@@ -302,7 +316,9 @@ Responde ÚNICAMENTE con un array JSON válido de exactamente 10 conceptos. Sin 
     },
     "why_it_works": "una oración",
     "humor_engine": "H1, H3",
-    "humor_score": "5/5"
+    "humor_score": "5/5",
+    "character": "nombre del personaje principal en minúsculas, ej: 'shrek', 'cholita paceña', 'vicepresidente boliviano'",
+    "setting": "lugar/contexto principal en minúsculas, ej: 'nasa', 'tranca policial', 'salteñería'"
   },
   ...
 ]

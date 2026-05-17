@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import type { SessionData, History, HistorySelection } from './types'
+import type { SessionData, History, HistorySelection, UsedCombination } from './types'
 import BRAND_CONTEXT from '../data/brand_context.json'
 
 // On Vercel, cwd() is read-only — use /tmp for mutable data
@@ -89,9 +89,16 @@ export function getOrCreateTodaySession(): SessionData {
     selected_animation_id: null,
     generated_video: null,
     log: [],
+    used_combinations: [],
   }
   writeSession(fresh)
   return fresh
+}
+
+export function getTodayUsedCombinations(): UsedCombination[] {
+  const date = getTodayDate()
+  const session = readSession(date)
+  return session?.used_combinations ?? []
 }
 
 export function getWeeklyStats(): { postsThisWeek: number; avgScore: number; lastConceptTitle: string | null } {

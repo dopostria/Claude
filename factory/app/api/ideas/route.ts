@@ -12,6 +12,9 @@ export async function POST() {
 
     const session = getOrCreateTodaySession()
     session.concepts = concepts
+    session.used_combinations = concepts
+      .filter(c => c.character && c.setting)
+      .map(c => ({ character: c.character.toLowerCase(), setting: c.setting.toLowerCase(), concept_id: c.id }))
     session.log.push({
       timestamp: new Date().toISOString(),
       type: 'concept_generated',

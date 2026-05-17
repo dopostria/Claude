@@ -27,6 +27,8 @@ export interface Concept {
   why_it_works: string
   humor_engine: string
   humor_score: string
+  character: string
+  setting: string
 }
 
 // Single unified image prompt — style is chosen by Claude per concept
@@ -68,6 +70,12 @@ export interface SessionEntry {
   status: 'pending' | 'done' | 'error'
 }
 
+export interface UsedCombination {
+  character: string
+  setting: string
+  concept_id: string
+}
+
 export interface SessionData {
   date: string
   concepts: Concept[]
@@ -79,6 +87,7 @@ export interface SessionData {
   selected_animation_id: string | null
   generated_video: GeneratedVideo | null
   log: SessionEntry[]
+  used_combinations: UsedCombination[]
 }
 
 export interface HistorySelection {

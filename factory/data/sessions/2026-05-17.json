@@ -1,0 +1,328 @@
+{
+  "date": "2026-05-17",
+  "concepts": [
+    {
+      "id": "concept_01",
+      "title": "Grogu Cobra en Bloqueo 67",
+      "archetype": "A10",
+      "setup": "Bloqueo de carretera número 67, día 11. Grogu con chaleco reflectante cobrando peaje a los autos que intentan pasar. Fila larga. Nadie protesta.",
+      "punchline_format": "P2",
+      "punchline": "Grogu con la mano extendida: 'Cinco bolivianos causa. Pa' la lucha.'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "El crossover entre Star Wars y bloqueo boliviano con Grogu ejerciendo autoridad real en caos político actual",
+      "humor_engine": "H1, H7",
+      "humor_score": "5/5",
+      "character": "grogu",
+      "setting": "bloqueo carretera 67"
+    },
+    {
+      "id": "concept_02",
+      "title": "Pikachu Sin Gasolina Tercera Hora",
+      "archetype": "A9",
+      "setup": "Gasolinera vacía. Pikachu sentado en el asiento del conductor de un Suzuki Fun. Botella de singani abierta en el tablero. Tres horas esperando. Cara de total resignación.",
+      "punchline_format": "P1",
+      "punchline": "Subtítulo: 'el subsidio que evo dejó finalmente murió'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Crisis económica real boliviana con personaje inocente en situación comprometedora que todos reconocen",
+      "humor_engine": "H7, H8",
+      "humor_score": "5/5",
+      "character": "pikachu",
+      "setting": "gasolinera vacía bolivia"
+    },
+    {
+      "id": "concept_03",
+      "title": "Batman Documentos en Tranca Marset",
+      "archetype": "A1",
+      "setup": "Tranca policial boliviana. Alerta de seguridad de embajada estadounidense visible al fondo. Batman detenido mostrando documentos. Policía revisando con linterna.",
+      "punchline_format": "P2",
+      "punchline": "Policía: '¿Conoce al señor Marset?' Batman: 'No oficial, vengo de Gotham.'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Ícono global en contexto boliviano absurdo sobre narcotraficante capturado sin que nadie note la ironía",
+      "humor_engine": "H1, H7",
+      "humor_score": "5/5",
+      "character": "batman",
+      "setting": "tranca policial"
+    },
+    {
+      "id": "concept_04",
+      "title": "Cholita Referee Bolivia vs Irak",
+      "archetype": "A2",
+      "setup": "Cancha oficial FIFA. Partido repechaje Bolivia vs Irak. Cholita con pollera y sombrero bombín como árbitro central. Silbato plateado. Bandera levantada.",
+      "punchline_format": "P2",
+      "punchline": "Cholita saca tarjeta roja a jugador iraquí: 'Fuera waway.'",
+      "tags": [
+        "BOLIVIA",
+        "DEPORTES",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Autoridad boliviana invertida en contexto deportivo mundial real de este momento con jerga natural",
+      "humor_engine": "H2, H7",
+      "humor_score": "5/5",
+      "character": "cholita paceña",
+      "setting": "cancha fifa repechaje"
+    },
+    {
+      "id": "concept_05",
+      "title": "Vicepresidente Edmand en Escritorio Vacío",
+      "archetype": "A6",
+      "setup": "Oficina del Vicepresidente. Edmand Lara sentado en su escritorio oficial. Cartel hecho a mano pegado en la pared detrás: 'OPOSICIÓN DESDE ADENTRO'. Sello presidencial visible.",
+      "punchline_format": "P5",
+      "punchline": "ninguno — el cartel artesanal vs el sello oficial lo cierra todo",
+      "tags": [
+        "BOLIVIA",
+        "POLÍTICA",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Lógica política boliviana invertida usando descripción física sin nombres con contraste visual perfecto",
+      "humor_engine": "H3, H7",
+      "humor_score": "5/5",
+      "character": "vicepresidente boliviano",
+      "setting": "oficina vicepresidencia"
+    },
+    {
+      "id": "concept_06",
+      "title": "SpongeBob Expert en Inflación 14%",
+      "archetype": "A8",
+      "setup": "Centro de prensa económica. SpongeBob con traje y corbata en podio oficial. Gráfico de inflación 14% proyectado. Periodistas tomando notas.",
+      "punchline_format": "P2",
+      "punchline": "SpongeBob: 'La solución es simple — imprimir menos dinero y más Krabby Patties.'",
+      "tags": [
+        "POP_CULTURE",
+        "BOLIVIA",
+        "ACTUALIDAD"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Experto completamente incorrecto dando consejo real sobre crisis económica boliviana actual",
+      "humor_engine": "H1, H3",
+      "humor_score": "5/5",
+      "character": "spongebob",
+      "setting": "conferencia prensa económica"
+    },
+    {
+      "id": "concept_07",
+      "title": "Peppa Pig Esperando Turno Banco",
+      "archetype": "A9",
+      "setup": "Cola del Banco Unión. Peppa Pig con número 347. Pantalla digital: ATENDIENDO 89. Silla plástica. 6 horas esperando. Expresión completamente plana.",
+      "punchline_format": "P5",
+      "punchline": "ninguno — el turno 347 vs ATENDIENDO 89 en pantalla digital lo cierra todo",
+      "tags": [
+        "BOLIVIA",
+        "COTIDIANO"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Escala incorrecta con personaje inocente en burocracia boliviana real sin reaccionar",
+      "humor_engine": "H5, H7",
+      "humor_score": "5/5",
+      "character": "peppa pig",
+      "setting": "banco estatal bolivia"
+    },
+    {
+      "id": "concept_08",
+      "title": "Homer Fumando en Micro Lleno",
+      "archetype": "A7",
+      "setup": "Micro paceño hora pico. Pasillo completamente lleno. Homer Simpson fumando tranquilo junto a la ventana. Humo visible. Pasajeros apretados alrededor sin mirar.",
+      "punchline_format": "P1",
+      "punchline": "Subtítulo: 'tercera vez esta semana'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Emoción incorrecta total con personaje en situación inapropiada que el entorno acepta como normal",
+      "humor_engine": "H7, H8",
+      "humor_score": "5/5",
+      "character": "homer simpson",
+      "setting": "micro paceño"
+    },
+    {
+      "id": "concept_09",
+      "title": "Stitch Evidencia Salteña Julio",
+      "archetype": "A5",
+      "setup": "Sala forense. Stitch con guantes quirúrgicos y lupa examinando salteña en bandeja metálica. Etiqueta: EVIDENCIA #23 - JULIO CON CALDO. Luz forense azul.",
+      "punchline_format": "P2",
+      "punchline": "Stitch anota en libreta: 'Caldo nivel crítico. Julio confirmado.'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Objeto boliviano con dignidad forense máxima y personaje inocente en protocolo serio",
+      "humor_engine": "H1, H3",
+      "humor_score": "5/5",
+      "character": "stitch",
+      "setting": "sala forense"
+    },
+    {
+      "id": "concept_10",
+      "title": "Darth Vader Vendiendo en Cancha",
+      "archetype": "A1",
+      "setup": "Cancha (mercado informal) de El Alto. Darth Vader detrás de un puesto con ropa usada apilada. Casco completo puesto. Cartel: 2X15 BOLIVIANOS.",
+      "punchline_format": "P2",
+      "punchline": "Cliente regateando. Vader respira pesado: 'Última oferta — 12 o nada waso.'",
+      "tags": [
+        "BOLIVIA",
+        "POP_CULTURE"
+      ],
+      "quality_score": {
+        "F1_scroll_stop": true,
+        "F2_punchline_clear": true,
+        "F3_contrast_not_cruel": true,
+        "F4_works_silent": true,
+        "total": "4/4"
+      },
+      "why_it_works": "Ícono global de poder máximo en contexto informal boliviano ejerciendo regateo con autoridad deadpan",
+      "humor_engine": "H1, H7",
+      "humor_score": "5/5",
+      "character": "darth vader",
+      "setting": "cancha el alto"
+    }
+  ],
+  "selected_concepts": [],
+  "image_prompts": {},
+  "generated_images": [],
+  "selected_image_id": null,
+  "animation_concepts": [],
+  "selected_animation_id": null,
+  "generated_video": null,
+  "log": [
+    {
+      "timestamp": "2026-05-17T01:05:19.992Z",
+      "type": "concept_generated",
+      "data": {
+        "count": 10
+      },
+      "status": "done"
+    },
+    {
+      "timestamp": "2026-05-17T01:13:50.123Z",
+      "type": "concept_generated",
+      "data": {
+        "count": 10
+      },
+      "status": "done"
+    }
+  ],
+  "used_combinations": [
+    {
+      "character": "grogu",
+      "setting": "bloqueo carretera 67",
+      "concept_id": "concept_01"
+    },
+    {
+      "character": "pikachu",
+      "setting": "gasolinera vacía bolivia",
+      "concept_id": "concept_02"
+    },
+    {
+      "character": "batman",
+      "setting": "tranca policial",
+      "concept_id": "concept_03"
+    },
+    {
+      "character": "cholita paceña",
+      "setting": "cancha fifa repechaje",
+      "concept_id": "concept_04"
+    },
+    {
+      "character": "vicepresidente boliviano",
+      "setting": "oficina vicepresidencia",
+      "concept_id": "concept_05"
+    },
+    {
+      "character": "spongebob",
+      "setting": "conferencia prensa económica",
+      "concept_id": "concept_06"
+    },
+    {
+      "character": "peppa pig",
+      "setting": "banco estatal bolivia",
+      "concept_id": "concept_07"
+    },
+    {
+      "character": "homer simpson",
+      "setting": "micro paceño",
+      "concept_id": "concept_08"
+    },
+    {
+      "character": "stitch",
+      "setting": "sala forense",
+      "concept_id": "concept_09"
+    },
+    {
+      "character": "darth vader",
+      "setting": "cancha el alto",
+      "concept_id": "concept_10"
+    }
+  ]
+}
