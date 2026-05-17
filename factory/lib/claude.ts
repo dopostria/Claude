@@ -168,7 +168,9 @@ Creativamente: ${(avoid.creative as string[]).join(' · ')}`)
 
 ${examples.map(e =>
   `"${e.title}" [${e.archetype}] [${(e.tags as string[]).join('+')}]\n  Setup: ${e.setup}\n  Punchline (${e.punchline_format}): ${e.punchline}\n  Por qué funciona: ${e.why_it_works}`
-).join('\n\n')}`)
+).join('\n\n')}
+
+Los reference_examples son el BAR de calidad, no plantillas a replicar. Si un concepto generado se parece estructuralmente a un reference example, descartarlo y generar uno diferente.`)
 
   // ── 12. HISTORIAL (si existe) ────────────────────────────────────────────
   if (recentHistory.length > 0) {
