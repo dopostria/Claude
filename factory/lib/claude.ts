@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
+import fs from 'fs'
+import path from 'path'
 import type { Concept, AnimationConcept, HistorySelection } from './types'
-import { readTrendFeed } from './trending'
 
 const MODEL = 'claude-sonnet-4-5'
 
@@ -26,7 +27,6 @@ function buildIdeaSystemPrompt(
   const avoid       = bc.what_to_avoid      as Record<string, unknown>
   const examples    = bc.reference_examples as Record<string, unknown>[]
   const rotRules    = bc.rotation_rules     as Record<string, unknown>
-  const _bc_trends  = bc.trend_feed         as Record<string, unknown> // kept for type safety, overridden below
 
   const perSession  = rotRules.per_session  as Record<string, unknown>
   const crossSess   = rotRules.cross_session as Record<string, unknown>
@@ -34,9 +34,54 @@ function buildIdeaSystemPrompt(
   const archetypeList   = (arch.list              as Record<string, unknown>[])
   const filterList      = (qf.filters             as Record<string, unknown>[])
   const punchList       = (punches.formats        as Record<string, unknown>[])
-  const trendFeed       = readTrendFeed()
-  const trendList       = trendFeed.trends
   const humorEngines    = (humorDna.humor_engines       as Record<string, unknown>[])
+
+  // ── TREND FEED — lectura directa desde disco ─────────────────────────────
+  const trendFeedPath = path.join(process.cwd(), 'data', 'trend_feed.json')
+  let trendFeedBlock = ''
+  try {
+    const trendRaw = fs.readFileSync(trendFeedPath, 'utf-8')
+    const trendData = JSON.parse(trendRaw) as { trends: Array<{ topic: string; summary: string; humor_angle: string; tags: string[] }> }
+    if (trendData.trends && trendData.trends.length > 0) {
+      trendFeedBlock = `=== ACTUALIDAD BOLIVIANA HOY — OBLIGATORIO ===
+${trendData.trends.map(t => `
+TREND: ${t.topic}
+QUÉ PASÓ: ${t.summary}
+ÁNGULO CÓMICO: ${t.humor_angle}
+TAGS: ${t.tags.join(', ')}`).join('\n')}
+
+REGLA DURA: De los 10 conceptos generados, MÍNIMO 4 deben usar
+uno de estos trends como contexto, setting o situación base.
+
+El trend NO es el chiste. Es el mundo donde ocurre el chiste.
+El humor_engine y el arquetipo siguen siendo el motor.
+
+CÓMO USAR LOS TRENDS — EJEMPLOS CONCRETOS:
+- Si el trend es "67 bloqueos activos" → el concepto no es "personaje en un bloqueo genérico".
+  Es "personaje en el bloqueo número 67, que ya nadie recuerda por qué empezó,
+  llevando 11 horas esperando, con cara de total resignación."
+- Si el trend es "gasolina 4x más cara" → cualquier personaje con vehículo
+  ahora no puede llenarlo. Ese es el conflicto real boliviano de hoy.
+- Si el trend es "narco capturado en Bolivia" → personaje pop culture buscado
+  por agencia internacional, encontrado en lugar completamente mundano y boliviano.
+- Si el trend es "vicepresidente opositor desde adentro" → funcionario que
+  no renuncia pero tampoco coopera — arquetipo A6 perfecto.
+- Si el trend es "repechaje Bolivia vs Irak/Surinam" → el contexto deportivo
+  más absurdo del continente en este momento como setting real.
+
+Si al terminar de generar los 10 conceptos hay menos de 4 con trend —
+descartar los más débiles sin trend y regenerarlos con trend incorporado.
+Nunca forzar un trend donde no encaja — elegir los 4 trends más fértiles
+del feed y usarlos con el personaje y arquetipo correcto.
+=== FIN ACTUALIDAD ===`
+    }
+  } catch {
+    trendFeedBlock = ''
+  }
+
+  console.log('=== TREND FEED INJECTED ===')
+  console.log(trendFeedBlock ? `SÍ — trends activos: ${JSON.parse(fs.readFileSync(trendFeedPath, 'utf-8')).trends.length}` : 'NO — feed vacío o error')
+  console.log('=== END ===')
   const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
   const darkRules       = (humorDna.dark_humor_rules     as Record<string, unknown>)
   const langVoice       = (humorDna.language_and_voice   as Record<string, unknown>)
@@ -223,24 +268,16 @@ Do not regenerate them in any form:
 - Cualquier personaje en la ONU o Asamblea General
 Track generated titles within the session and reject structural duplicates.`)
 
-  // ── 13. HISTORIAL (si existe) ────────────────────────────────────────────
+  // ── 13. ACTUALIDAD BOLIVIANA (trends) ────────────────────────────────────
+  if (trendFeedBlock) {
+    sections.push(trendFeedBlock)
+  }
+
+  // ── 14. HISTORIAL (si existe) ────────────────────────────────────────────
   if (recentHistory.length > 0) {
     sections.push(`HISTORIAL RECIENTE — NO REPETIR
 Personajes protagonistas de los últimos 2 días (no pueden ser protagonistas hoy, pueden aparecer en fondo):
 ${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}`)
-  }
-
-  // ── 14. TRENDS (si existen) ──────────────────────────────────────────────
-  if (trendList.length > 0) {
-    sections.push(`TREND FEED — ACTUALIDAD BOLIVIANA HOY:
-${trendList.map((t, i) => {
-  const trend = t as { topic: string; summary: string; humor_angle: string; source: string; tags: string[] }
-  return `${i + 1}. [${trend.source}] ${trend.topic}\n   ${trend.summary}\n   Ángulo de humor: ${trend.humor_angle}\n   Tags: ${trend.tags.join(', ')}`
-}).join('\n\n')}
-
-De los 10 conceptos, mínimo 2 deben incorporar un trend activo como contexto o setting.
-El trend es el ingrediente — el humor_engine y el arquetipo siguen siendo el motor.
-Nunca hacer el trend el chiste. Hacer el chiste sobre algo que el trend hace posible.`)
   }
 
   // ── 15. FORMATO DE OUTPUT ────────────────────────────────────────────────
