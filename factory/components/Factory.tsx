@@ -70,6 +70,11 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
+  // Refresh Bolivia trend feed in background on every app load (6-hour cache on server)
+  useEffect(() => {
+    fetch('/api/trends', { method: 'POST' }).catch(() => {})
+  }, [])
+
   const fireSignal = useCallback((from: string, to: string) => {
     setState(s => ({ ...s, signal: { from, to } }))
     setTimeout(() => setState(s => ({ ...s, signal: null })), 1400)

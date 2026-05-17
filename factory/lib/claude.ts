@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Concept, AnimationConcept, HistorySelection } from './types'
+import { readTrendFeed } from './trending'
 
 const MODEL = 'claude-sonnet-4-5'
 
@@ -25,7 +26,7 @@ function buildIdeaSystemPrompt(
   const avoid       = bc.what_to_avoid      as Record<string, unknown>
   const examples    = bc.reference_examples as Record<string, unknown>[]
   const rotRules    = bc.rotation_rules     as Record<string, unknown>
-  const trends      = bc.trend_feed         as Record<string, unknown>
+  const _bc_trends  = bc.trend_feed         as Record<string, unknown> // kept for type safety, overridden below
 
   const perSession  = rotRules.per_session  as Record<string, unknown>
   const crossSess   = rotRules.cross_session as Record<string, unknown>
@@ -33,7 +34,8 @@ function buildIdeaSystemPrompt(
   const archetypeList   = (arch.list              as Record<string, unknown>[])
   const filterList      = (qf.filters             as Record<string, unknown>[])
   const punchList       = (punches.formats        as Record<string, unknown>[])
-  const trendList       = (trends.trends          as unknown[]) ?? []
+  const trendFeed       = readTrendFeed()
+  const trendList       = trendFeed.trends
   const humorEngines    = (humorDna.humor_engines       as Record<string, unknown>[])
   const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
   const darkRules       = (humorDna.dark_humor_rules     as Record<string, unknown>)
@@ -213,9 +215,15 @@ ${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.conce
 
   // ── 13. TRENDS (si existen) ──────────────────────────────────────────────
   if (trendList.length > 0) {
-    sections.push(`TRENDS DEL DÍA (incorporar 2-3 de los 10 conceptos — el trend es ingrediente, no el chiste)
-${trends.instruction}
-${trendList.map((t, i) => `${i + 1}. ${JSON.stringify(t)}`).join('\n')}`)
+    sections.push(`TREND FEED — ACTUALIDAD BOLIVIANA HOY:
+${trendList.map((t, i) => {
+  const trend = t as { topic: string; summary: string; humor_angle: string; source: string; tags: string[] }
+  return `${i + 1}. [${trend.source}] ${trend.topic}\n   ${trend.summary}\n   Ángulo de humor: ${trend.humor_angle}\n   Tags: ${trend.tags.join(', ')}`
+}).join('\n\n')}
+
+De los 10 conceptos, mínimo 2 deben incorporar un trend activo como contexto o setting.
+El trend es el ingrediente — el humor_engine y el arquetipo siguen siendo el motor.
+Nunca hacer el trend el chiste. Hacer el chiste sobre algo que el trend hace posible.`)
   }
 
   // ── 14. FORMATO DE OUTPUT ────────────────────────────────────────────────
