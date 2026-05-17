@@ -68,7 +68,7 @@ ${filterList.map(f => `${f.id} — ${f.name}\n  Pregunta: ${f.question}\n  Falla
   sections.push(`HUMOR DNA — EL FILTRO ENCIMA DE LOS FILTROS
 ${humorDna.core_principle}
 
-HUMOR ENGINES (H1–H7) — elegir qué engine(s) aplica ANTES de asignar arquetipo:
+HUMOR ENGINES (H1–H8) — elegir qué engine(s) aplica ANTES de asignar arquetipo:
 
 ${humorEngines.map(h => {
   const exs = (h.examples ?? h.chaos_catalog ?? []) as string[]
@@ -102,7 +102,16 @@ Jerga boliviana disponible: ${[
 ].join(' · ')}
 
 QUÉ MATA EL HUMOR:
-${(humorDna.what_kills_the_humor as string[]).map(x => `- ${x}`).join('\n')}`)
+${(humorDna.what_kills_the_humor as string[]).map(x => `- ${x}`).join('\n')}
+
+REQUIRED — H8 (GRONCHO_DESUBICADO) QUOTA:
+At least 2 of the 10 concepts must use humor_engine H8 (GRONCHO_DESUBICADO).
+H8 concepts must include at least one of:
+- parafernalia visible
+- situación comprometedora real
+- referencia política usando solo descripciones físicas sin nombres
+- personaje inocente en situación que ninguna marca aprobaría
+If the batch has zero H8 concepts — regenerate until it has minimum 2.`)
 
   // ── 4. ARQUETIPOS ────────────────────────────────────────────────────────
   sections.push(`ARQUETIPOS (A1–A10)
@@ -206,14 +215,22 @@ The Llama example exists. Never generate another llama-as-authority concept.
 The Yatiri example exists. Never generate another expert-in-wrong-place with bolivian mystic concept.
 The Tom & Jerry courtroom exists. Never generate another Tom & Jerry legal scenario.`)
 
-  // ── 12. HISTORIAL (si existe) ────────────────────────────────────────────
+  // ── 12. CROSS-BATCH MEMORY ───────────────────────────────────────────────
+  sections.push(`CROSS-BATCH MEMORY:
+These concepts and punchlines were already generated in previous sessions today.
+Do not regenerate them in any form:
+- Shrek recibiendo premio con discurso sobre pantanos
+- Cualquier personaje en la ONU o Asamblea General
+Track generated titles within the session and reject structural duplicates.`)
+
+  // ── 13. HISTORIAL (si existe) ────────────────────────────────────────────
   if (recentHistory.length > 0) {
     sections.push(`HISTORIAL RECIENTE — NO REPETIR
 Personajes protagonistas de los últimos 2 días (no pueden ser protagonistas hoy, pueden aparecer en fondo):
 ${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}`)
   }
 
-  // ── 13. TRENDS (si existen) ──────────────────────────────────────────────
+  // ── 14. TRENDS (si existen) ──────────────────────────────────────────────
   if (trendList.length > 0) {
     sections.push(`TREND FEED — ACTUALIDAD BOLIVIANA HOY:
 ${trendList.map((t, i) => {
@@ -226,7 +243,7 @@ El trend es el ingrediente — el humor_engine y el arquetipo siguen siendo el m
 Nunca hacer el trend el chiste. Hacer el chiste sobre algo que el trend hace posible.`)
   }
 
-  // ── 14. FORMATO DE OUTPUT ────────────────────────────────────────────────
+  // ── 15. FORMATO DE OUTPUT ────────────────────────────────────────────────
   sections.push(`FORMATO DE OUTPUT — OBLIGATORIO
 Responde ÚNICAMENTE con un array JSON válido de exactamente 10 conceptos. Sin markdown, sin texto adicional, solo el JSON.
 
