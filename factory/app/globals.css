@@ -112,8 +112,9 @@ body::after {
 }
 
 @keyframes pillFly {
-  0%   { opacity: 1; transform: translate(0, 0); }
-  100% { opacity: 0; transform: translate(var(--pill-x), var(--pill-y)); }
+  from { offset-distance: 0%;   opacity: 1; }
+  80%  {                         opacity: 1; }
+  to   { offset-distance: 100%; opacity: 0; }
 }
 
 @keyframes pixelExplode {
@@ -144,16 +145,20 @@ body::after {
   50%       { opacity: 0.3; }
 }
 
-/* Pill element */
+/* Pill element — 6×12px capsule, orange top / blue bottom, arc via offset-path */
 .pill-fly {
   position: fixed;
-  width: 8px;
-  height: 4px;
-  background: #00ffcc;
-  border-radius: 2px;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 12px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #ff6b35 50%, #4a90d9 50%);
+  box-shadow: 0 0 6px rgba(255, 107, 53, 0.9), 0 0 12px rgba(74, 144, 217, 0.5);
   z-index: 30;
   pointer-events: none;
-  animation: pillFly 600ms ease-out forwards;
+  transform: translate(-3px, -6px); /* center pill on path point */
+  animation: pillFly 800ms ease-in-out forwards;
 }
 
 /* Done checkmark overlay */

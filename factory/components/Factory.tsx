@@ -61,9 +61,7 @@ export default function Factory() {
   const [animationConcepts, setAnimationConcepts] = useState<AnimationConcept[] | null>(null)
   const [loadingAnimations, setLoadingAnimations] = useState(false)
   const [bossLaunching, setBossLaunching] = useState(false)
-  const [pillAnim, setPillAnim] = useState<{
-    startX: number; startY: number; dx: number; dy: number
-  } | null>(null)
+  const [pillPath, setPillPath] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -84,21 +82,21 @@ export default function Factory() {
     setState(s => ({ ...s, signal: { from, to } }))
     setTimeout(() => setState(s => ({ ...s, signal: null })), 1400)
 
-    // Pill animation: fly from center of `from` room to center of `to` room
+    // Pill animation: arc from `from` room center to `to` room center via offset-path
     const fromEl = document.getElementById(`room-${from}`)
     const toEl   = document.getElementById(`room-${to}`)
     if (fromEl && toEl) {
       const fr = fromEl.getBoundingClientRect()
       const tr = toEl.getBoundingClientRect()
-      const startX = fr.left + fr.width  / 2
-      const startY = fr.top  + fr.height / 2
-      setPillAnim({
-        startX,
-        startY,
-        dx: (tr.left + tr.width  / 2) - startX,
-        dy: (tr.top  + tr.height / 2) - startY,
-      })
-      setTimeout(() => setPillAnim(null), 700)
+      const sx = fr.left + fr.width  / 2
+      const sy = fr.top  + fr.height / 2
+      const ex = tr.left + tr.width  / 2
+      const ey = tr.top  + tr.height / 2
+      // Quadratic arc: control point 100px above the midpoint
+      const cx = (sx + ex) / 2
+      const cy = Math.min(sy, ey) - 100
+      setPillPath(`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`)
+      setTimeout(() => setPillPath(null), 900)
     }
 
     // Boss launch gesture on outbound signals from boss
@@ -472,16 +470,11 @@ export default function Factory() {
         />
       )}
 
-      {/* Pill animation: flies from boss center to active room center */}
-      {pillAnim && (
+      {/* Pill animation: arcs from boss to target room via offset-path quadratic curve */}
+      {pillPath && (
         <div
           className="pill-fly"
-          style={{
-            left: pillAnim.startX - 4,
-            top:  pillAnim.startY - 2,
-            '--pill-x': `${pillAnim.dx}px`,
-            '--pill-y': `${pillAnim.dy}px`,
-          } as React.CSSProperties}
+          style={{ offsetPath: `path('${pillPath}')` } as React.CSSProperties}
         />
       )}
 
