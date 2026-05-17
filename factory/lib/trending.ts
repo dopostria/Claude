@@ -7,7 +7,10 @@ const TREND_PATH = path.join(MUTABLE_DIR, 'trend_feed.json')
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
 
-const TREND_PROMPT = `Search for the top 5 most talked-about news or events in Bolivia right now.
+function buildTrendPrompt(): string {
+  const today = new Date().toISOString().split('T')[0]
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  return `Today is ${today}. Search for the top 5 most talked-about news or events in Bolivia from the LAST 7 DAYS ONLY (between ${weekAgo} and ${today}). Ignore anything older than 7 days.
 For each one, return ONLY a JSON array with this structure, nothing else:
 [
   {
@@ -17,10 +20,11 @@ For each one, return ONLY a JSON array with this structure, nothing else:
     "summary": "qué está pasando en máximo 2 oraciones",
     "humor_angle": "por qué esto puede ser absurdo, irónico o chistoso para un boliviano",
     "tags": ["política", "cotidiano", "viral", "deportes", "economía"],
-    "expires": "[fecha de hoy + 2 días]"
+    "expires": "${today}"
   }
 ]
 Return only the JSON array. No preamble. No markdown.`
+}
 
 export interface TrendItem {
   id: string
@@ -76,10 +80,10 @@ export async function fetchAndSaveTrends(): Promise<TrendFeed> {
         'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
-        messages: [{ role: 'user', content: TREND_PROMPT }],
+        messages: [{ role: 'user', content: buildTrendPrompt() }],
       }),
     })
 

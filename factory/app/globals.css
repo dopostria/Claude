@@ -72,44 +72,8 @@ body::after {
 
 /* ─── ROBOT ANIMATIONS ───────────────────────────────────────────────────── */
 
-/* State classes: .robot.idle / .robot.working.ideas|images|video / .robot.done / .robot.error */
-
-.robot.idle { opacity: 0.5; }
-
-.robot.working.ideas  { animation: float   1.2s ease-in-out infinite; }
-.robot.working.images { animation: spin    0.8s linear      infinite; }
-.robot.working.video  { animation: wobble  0.3s ease-in-out infinite; }
-
-.robot.done {
-  animation: collapse 0.3s ease-out forwards;
-  transform-origin: bottom center;
-}
-
-.robot.error { animation: glitchTilt 0.18s linear infinite; }
-
+/* .robot.launching — brief jump when boss fires a signal */
 .robot.launching { animation: bossLaunch 0.15s ease-out; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-4px); }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes wobble {
-  0%   { transform: translateX(0)    rotate(0deg);  }
-  25%  { transform: translateX(-3px) rotate(-5deg); }
-  75%  { transform: translateX(3px)  rotate(5deg);  }
-  100% { transform: translateX(0)    rotate(0deg);  }
-}
-
-@keyframes collapse {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(90deg) translateX(8px); }
-}
 
 @keyframes pillFly {
   from { offset-distance: 0%;   opacity: 1; }
@@ -125,14 +89,6 @@ body::after {
 @keyframes bossLaunch {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-2px); }
-}
-
-@keyframes glitchTilt {
-  0%   { transform: rotate(-4deg) translateX(-1px); }
-  25%  { transform: rotate(3deg)  translateX(2px);  }
-  50%  { transform: rotate(-2deg) translateX(-2px); }
-  75%  { transform: rotate(4deg)  translateX(1px);  }
-  100% { transform: rotate(-3deg) translateX(-1px); }
 }
 
 @keyframes fadeInCheck {
