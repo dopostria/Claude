@@ -148,7 +148,19 @@ Sabor de lenguaje: ${(bolivia.language_flavor as string[]).join(', ')}`)
   sections.push(`FORMATOS DE PUNCHLINE
 ${punches.note}
 
-${punchList.map(p => `${p.id} — ${p.name}: ${p.description}\n  Ejemplo: ${p.example}`).join('\n\n')}`)
+${punchList.map(p => `${p.id} — ${p.name}: ${p.description}\n  Ejemplo: ${p.example}`).join('\n\n')}
+
+CRITICAL — PUNCHLINE FIELD IS NEVER EMPTY:
+When punchline_format is P5 (NINGUNO), the punchline field must still be filled.
+Write: "ninguno — [one sentence explaining exactly what visual element closes the joke]"
+Example: "ninguno — el turno 347 vs ATENDIENDO 89 en la pantalla digital lo cierra todo."
+A blank punchline field is always a bug, never a valid choice.
+
+When punchline_format is P1 (SUBTITULO_DEADPAN), the subtitle text must be the most unexpected, specific word or phrase possible. Never the obvious thing the character would say.
+Example wrong: Shrek says something about swamps. (too predictable)
+Example right: Shrek al micrófono: 'El drenaje fue un error.' (specific, unexpected angle)
+
+Predictable punchlines fail H4 automatically. If you can guess the punchline from the setup in under 2 seconds — rewrite it.`)
 
   // ── 9. ESTILO VISUAL ─────────────────────────────────────────────────────
   sections.push(`ESTILO VISUAL
