@@ -25,6 +25,8 @@ export interface Concept {
   tags: ConceptTag[]
   quality_score: QualityScore
   why_it_works: string
+  humor_engine: string
+  humor_score: string
 }
 
 // Single unified image prompt — style is chosen by Claude per concept

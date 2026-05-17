@@ -15,6 +15,7 @@ function buildIdeaSystemPrompt(
   const tone        = bc.tone         as Record<string, unknown>
   const qf          = bc.quality_filters as Record<string, unknown>
   const arch        = bc.archetypes   as Record<string, unknown>
+  const humorDna    = bc.humor_dna    as Record<string, unknown>
   const chars       = bc.character_universe as Record<string, unknown>
   const settings    = bc.setting_universe   as Record<string, unknown>
   const matrix      = bc.contrast_matrix    as Record<string, unknown>
@@ -29,10 +30,14 @@ function buildIdeaSystemPrompt(
   const perSession  = rotRules.per_session  as Record<string, unknown>
   const crossSess   = rotRules.cross_session as Record<string, unknown>
 
-  const archetypeList   = (arch.list        as Record<string, unknown>[])
-  const filterList      = (qf.filters       as Record<string, unknown>[])
-  const punchList       = (punches.formats  as Record<string, unknown>[])
-  const trendList       = (trends.trends    as unknown[]) ?? []
+  const archetypeList   = (arch.list              as Record<string, unknown>[])
+  const filterList      = (qf.filters             as Record<string, unknown>[])
+  const punchList       = (punches.formats        as Record<string, unknown>[])
+  const trendList       = (trends.trends          as unknown[]) ?? []
+  const humorEngines    = (humorDna.humor_engines as Record<string, unknown>[])
+  const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
+  const darkRules       = (humorDna.dark_humor_rules as Record<string, unknown>)
+  const langVoice       = (humorDna.language_and_voice as Record<string, unknown>)
 
   // ── 1. IDENTIDAD Y TONO ─────────────────────────────────────────────────
   const sections: string[] = [`Eres el CantSleept Content Factory IDEA ENGINE.
@@ -54,7 +59,39 @@ ${qf.rule}
 
 ${filterList.map(f => `${f.id} — ${f.name}\n  Pregunta: ${f.question}\n  Falla si: ${f.fail_condition}`).join('\n\n')}`)
 
-  // ── 3. ARQUETIPOS ────────────────────────────────────────────────────────
+  // ── 3. HUMOR DNA — ENGINES Y CHECKLIST ──────────────────────────────────
+  const hChecks = (humorChecklist.questions as Record<string, unknown>[])
+  const jergaRaw = (langVoice.bolivian_jerga_usable as Record<string, unknown>)
+  sections.push(`HUMOR DNA — EL FILTRO ENCIMA DE LOS FILTROS
+${humorDna.core_principle}
+
+HUMOR ENGINES (H1–H7) — elegir qué engine(s) aplica ANTES de asignar arquetipo:
+
+${humorEngines.map(h => {
+  const exs = h.examples as string[]
+  const extra = h.rule ? `\n  Regla: ${h.rule}` : h.signal ? `\n  Signal: ${h.signal}` : ''
+  return `${h.id}: ${h.name}\n  ${h.description}${extra}\n  Ejemplos: ${exs.slice(0, 2).join(' · ')}`
+}).join('\n\n')}
+
+HUMOR SCORE CHECKLIST — ${humorChecklist.description}
+${hChecks.map(c => `${c.id}: ${c.question}\n  Falla si: ${c.fail}`).join('\n\n')}
+${humorChecklist.passing_score}
+
+DARK HUMOR RULES
+${(darkRules.rules as string[]).map(r => `- ${r}`).join('\n')}
+Sweet spot: ${darkRules.sweet_spot}
+
+VOZ Y LENGUAJE
+${(langVoice.voice_rules as string[]).map(r => `- ${r}`).join('\n')}
+Jerga boliviana disponible: ${[
+  ...((jergaRaw.universal as string[]) ?? []).slice(0, 8),
+  ...((jergaRaw.frases_meme_vigentes as string[]) ?? []).slice(0, 3),
+].join(' · ')}
+
+QUÉ MATA EL HUMOR:
+${(humorDna.what_kills_the_humor as string[]).map(x => `- ${x}`).join('\n')}`)
+
+  // ── 4. ARQUETIPOS ────────────────────────────────────────────────────────
   sections.push(`ARQUETIPOS (A1–A10)
 ${arch.rule}
 
@@ -167,12 +204,18 @@ Responde ÚNICAMENTE con un array JSON válido de exactamente 10 conceptos. Sin 
       "F4_works_silent": true,
       "total": "4/4"
     },
-    "why_it_works": "una oración"
+    "why_it_works": "una oración",
+    "humor_engine": "H1, H3",
+    "humor_score": "5/5"
   },
   ...
 ]
 
-Los 10 conceptos ordenados de mayor a menor calidad. Todos deben tener total "4/4". Si un concepto no pasa los 4 filtros, reescríbelo hasta que pase o descártalo y genera uno nuevo.`)
+REGLAS DE FILTRO DUAL — ambos sistemas deben pasar antes de incluir un concepto:
+1. quality_score: todos los F1-F4 en true (total "4/4")
+2. humor_score: mínimo "5/5" para incluir. "4/5" → reescribir una vez. "3/5" o menos → descartar y generar nuevo.
+Si un concepto falla, reemplazarlo — el output final siempre tiene exactamente 10 conceptos que pasaron ambos filtros.
+Ordenados de mayor a menor calidad combinada.`)
 
   return sections.join('\n\n---\n\n')
 }

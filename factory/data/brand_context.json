@@ -368,7 +368,174 @@
         "F4_works_silent": "true/false",
         "total": "X/4"
       },
-      "why_it_works": "una oración, máximo"
+      "why_it_works": "una oración, máximo",
+      "humor_engine": "H1, H3 (uno o más de H1-H7)",
+      "humor_score": "X/5"
+    }
+  },
+
+  "humor_dna": {
+    "description": "El filtro encima de los filtros. Antes de evaluar calidad, el concepto debe pasar por aquí. Esto define si algo es genuinamente @CantSleept o solo es un concepto correcto.",
+
+    "core_principle": "El humor vive en la brecha entre el recipiente y el contenido. El recipiente es inocente, polished, o institucional. El contenido es oscuro, absurdo, o inapropiado. Cuanto mayor la brecha — sin explicarla — más fuerte el chiste.",
+
+    "humor_engines": [
+      {
+        "id": "H1",
+        "name": "RECIPIENTE_INOCENTE_CARGA_OSCURA",
+        "description": "Un personaje, objeto o formato inocente/lindo/institucional lleva el contenido oscuro o inapropiado. La oscuridad es más graciosa cuando la dice algo que no debería poder decirla.",
+        "signal": "¿Sería menos gracioso si lo dijera un personaje obvio? Si sí — el recipiente es correcto.",
+        "examples": [
+          "Pato tierno fumando: 'No soy fanático de la violencia, pero lo de Reynaldo Ezequiel...'",
+          "Peluche de Jerry con escopeta. Tom en el suelo con ketchup.",
+          "Annabelle como Actuarial Analyst. Nameplate, taza de café, headset.",
+          "Guante de brillantitos rosa con moño — haciendo el dedo medio."
+        ],
+        "bolivian_version": "Cholita como árbitro de la FIFA. La llama como juez de instrucción. La salteña como evidencia forense principal."
+      },
+      {
+        "id": "H2",
+        "name": "EL_PUNCHLINE_NO_DICHO",
+        "description": "El chiste termina donde la oración no termina. El espectador completa el pensamiento. No mostrar — implicar. El silencio es el remate.",
+        "signal": "¿El concepto funciona MEJOR si se corta antes de revelar todo? Si sí — usar H2.",
+        "examples": [
+          "'No soy fanático de la violencia, pero lo de Reynaldo Ezequiel...' — corte.",
+          "Monja apuntando con pistola de agua. Título: 'Mami de Dios'. Sin más.",
+          "Vacas con lentes de sol en granero oscuro. Sin texto. Sin contexto."
+        ],
+        "rule": "Si el concepto necesita texto para cerrar — intentar primero si funciona sin él. Si funciona sin texto, ese es el formato correcto."
+      },
+      {
+        "id": "H3",
+        "name": "PRODUCCION_COMO_PARTE_DEL_CHISTE",
+        "description": "El nivel de producción es inapropiado para el contenido — demasiado polished, demasiado serio, demasiado institucional. El contraste entre la calidad del formato y lo que dice es parte de lo gracioso.",
+        "signal": "¿El mismo chiste en formato meme genérico sería menos gracioso? Si sí — la producción importa.",
+        "examples": [
+          "Guante de alta costura con brillantitos Swarovski — para hacer el dedo medio.",
+          "Portada de revista vintage con tipografía de época — para una monja con pistola de agua.",
+          "Nameplate corporativo grabado — para Annabelle Higgins, Actuarial Analyst.",
+          "Pantalla de videojuego de pelea profesional — para EMO vs THERIAN."
+        ],
+        "rule": "Siempre preguntar: ¿cuál es el formato más serio/polished posible para este contenido absurdo? Ese es el formato correcto."
+      },
+      {
+        "id": "H4",
+        "name": "ESPECIFICIDAD_SOBRE_GENERALIDAD",
+        "description": "El detalle específico e inesperado es donde vive el chiste. Lo genérico no golpea. Lo específico sí.",
+        "signal": "¿Se puede hacer el concepto más específico sin complicarlo? Si sí — hacerlo.",
+        "examples": [
+          "No 'sufro porque no hablo inglés' — 'sufro porque no hablo inglés FLUIDO'.",
+          "No 'Arnold es pequeño' — 'si Sylvester Stallone, Arnold ES TOBILLO'.",
+          "No 'bloqueo en Bolivia' — 'Despierto → están bloqueando el país'. (el gato con chullo lo dice todo)",
+          "No 'evidencia importante' — 'EVIDENCIA #47. Es de La Cancha. Julio con caldo.'"
+        ],
+        "rule": "El detalle específico que nadie esperaba pero todos reconocen = punchline perfecto."
+      },
+      {
+        "id": "H5",
+        "name": "ANIMAL_COMO_VEHICULO_DEADPAN",
+        "description": "Los animales no reaccionan. No se inmutan. No explican. Eso ES el chiste — la total indiferencia del animal ante lo que está pasando.",
+        "signal": "¿Un humano en el mismo rol sería menos gracioso? Si sí — usar animal.",
+        "examples": [
+          "Mono acostado entre flores: 'No time for chupapichis.' Sin mirar a cámara.",
+          "Vacas con lentes de sol. Sin texto. Sin razón. Sin disculpa.",
+          "Gato con chullo boliviano: 'Despierto → están bloqueando el país.' Cara plana.",
+          "Llama con chaleco de seguridad. Escupe. El CEO firma en la saliva."
+        ],
+        "bolivian_animals": ["llama", "alpaca", "cóndor", "perro callejero de La Paz", "gato de mercado"]
+      },
+      {
+        "id": "H6",
+        "name": "INTERNET_SUBCULTURES_COLLIDING",
+        "description": "Tomar dos tribus del internet que normalmente no interactúan y hacerlas colisionar en un formato serio. El humor viene del reconocimiento — saber quiénes son los dos lados.",
+        "signal": "¿El chiste requiere conocer el internet para entenderlo, pero se entiende en 2 segundos si lo conoces? Si sí — es H6.",
+        "examples": [
+          "EMO vs THERIAN — pantalla de videojuego de pelea. PRESS START.",
+          "Furry como árbitro en final de Champions. Tarjeta roja a Mbappé. Sin contexto.",
+          "Stan de BTS como testigo clave en juicio por crímenes de guerra."
+        ],
+        "rule": "El formato tiene que ser serio e institucional. La tribu tiene que ser reconocible. El cruce tiene que ser imposible."
+      },
+      {
+        "id": "H7",
+        "name": "CAOS_BOLIVIANO_COMO_SETTING",
+        "description": "El caos boliviano no es el chiste — es el setting que todos los bolivianos y latinos conocen. Meterlo como contexto normal convierte una idea global en algo que no existe en ningún otro feed.",
+        "signal": "¿El mismo concepto con setting genérico sería menos específico? Si sí — bolivianizarlo.",
+        "chaos_catalog": [
+          "Bloqueo de carretera — aparece sin aviso, paraliza todo, nadie sabe cuánto dura",
+          "La Ceja de El Alto — caos comercial, informal, frío extremo, cualquier cosa puede pasar",
+          "El Plan 3000 en Santa Cruz — barrio popular, reputación de peligroso, tiene su propia lógica",
+          "La fila del banco estatal — número de turno, 3 horas mínimo, el sistema cae",
+          "El SOAT — todos lo buscan cuando lo piden, nunca está donde debería",
+          "El cobrador del micro — grita, cobra, no da cambio, siempre apurado",
+          "Los pacos (policías) en tranca — multa, trámite, negotiable",
+          "La burocracia del sello — sellado, firmado, foliado, pero en otra ventanilla",
+          "El calor cruceño — hace calor todo el año, nadie se acostumbra",
+          "El frío paceño — hace frío todo el año, todos se acostumbraron"
+        ]
+      }
+    ],
+
+    "dark_humor_rules": {
+      "description": "El humor negro es la columna vertebral. Pero funciona con reglas específicas.",
+      "rules": [
+        "La oscuridad se IMPLICA, no se muestra. Ketchup sí, sangre real no. La oración que no termina sí, el detalle explícito no.",
+        "El recipiente tiene que ser inocente o institucional. El pato dice lo oscuro. La cholita dice lo oscuro. El nameplate corporativo dice lo oscuro.",
+        "Nunca cruel hacia personas reales o grupos específicos. El humor negro apunta a situaciones, instituciones, y ficciones — no a individuos reales vulnerables.",
+        "La reacción del entorno es cero. Nadie se escandaliza. Nadie comenta. El mundo acepta lo oscuro como normal. Eso lo hace más oscuro."
+      ],
+      "sweet_spot": "Cuando alguien dice 'eso está mal' pero ya se está riendo — ahí está el sweet spot."
+    },
+
+    "language_and_voice": {
+      "description": "La voz de @CantSleept en texto. Cuándo usar qué.",
+      "spanglish_rules": [
+        "Mezclar español e inglés en la misma oración cuando el cambio de idioma es parte del chiste",
+        "El inglés para términos institucionales/corporativos — el español para el contexto real",
+        "Nunca traducir lo que funciona en un solo idioma — 'fluido' no es 'fluent', son cosas distintas"
+      ],
+      "bolivian_jerga_usable": {
+        "universal": ["waway", "waso", "bacán", "oe", "del carajo", "pa'nada", "charlando (mintiendo)", "chela", "chaqui", "p'al toque", "elay puej", "atatau", "alalay", "caserita", "yapa", "jallalla"],
+        "paceño": ["causa", "jefe", "pacos", "compadrear", "colla"],
+        "cruceño": ["camba", "oe bróder", "primo", "tienes calor no?"],
+        "frases_meme_vigentes": [
+          "'Mi ciela' — forma de llamar, tipico de vendedoras y señoras del mercado",
+          "'Ahora no joven, estoy...' — rechazo cortés que es en realidad un desprecio total",
+          "'¿Tiene un minuto para hablar del señor?' — el meme del testigo de Jehová",
+          "'No lo sé Rick, parece falso' — duda deadpan ante algo obvio",
+          "'Clarito está waway' — certeza absoluta sobre algo imposible",
+          "'Elay puej' — resignación total ante una situación absurda"
+        ]
+      },
+      "voice_rules": [
+        "Deadpan siempre — nunca gritar el chiste, nunca usar signos de exclamación en el punchline",
+        "Oraciones cortas. Cuanto más corto el texto, más peso tiene.",
+        "Si el punchline necesita dos oraciones — está roto. Una sola.",
+        "El humor negro se entrega con la misma calma que una nota de trabajo"
+      ]
+    },
+
+    "what_kills_the_humor": [
+      "Explicar el chiste en el caption o en el texto de la imagen",
+      "Punchline que se ve venir desde el setup",
+      "Oscuridad que muestra en lugar de implicar",
+      "Recipiente obvio para el contenido — si el mensajero es el esperado, no hay contraste",
+      "Generalidad cuando la especificidad era posible — 'personaje famoso en situación rara' sin el detalle que lo hace único",
+      "Reacción del entorno — si alguien en la escena nota lo absurdo, el chiste muere",
+      "Dos chistes en el mismo concepto — elegir uno y ejecutarlo perfectamente",
+      "Formato genérico para contenido que merece formato serio/polished"
+    ],
+
+    "humor_score_checklist": {
+      "description": "Además de los 4 filtros de calidad, cada concepto debe responder estas preguntas.",
+      "questions": [
+        { "id": "H_CHECK_1", "question": "¿El recipiente es suficientemente inocente o institucional para el contenido?", "fail": "El mensajero es el esperado — no hay brecha." },
+        { "id": "H_CHECK_2", "question": "¿El punchline funciona mejor sin terminar o sin texto?", "fail": "El concepto necesita explicarse para funcionar." },
+        { "id": "H_CHECK_3", "question": "¿El formato es lo suficientemente serio/polished para el contenido absurdo?", "fail": "Formato genérico — perder la producción como parte del chiste." },
+        { "id": "H_CHECK_4", "question": "¿Hay un detalle específico que hace este concepto único e irreplicable?", "fail": "Concepto genérico — falta la especificidad que lo hace reconocible." },
+        { "id": "H_CHECK_5", "question": "¿El entorno no reacciona a lo absurdo? ¿Nadie nota nada?", "fail": "Alguien en la escena reacciona — eso mata la deadpan." }
+      ],
+      "passing_score": "5 de 5 para publicar. 4 de 5 para revisar. 3 o menos — descartar o reescribir desde cero."
     }
   }
 }
