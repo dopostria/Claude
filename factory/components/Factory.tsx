@@ -72,17 +72,14 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
-  // Refresh Bolivia trend feed in background on every app load (6-hour cache on server)
   useEffect(() => {
     fetch('/api/trends', { method: 'POST' }).catch(() => {})
   }, [])
 
   const fireSignal = useCallback((from: string, to: string) => {
-    // Legacy SVG signal line
     setState(s => ({ ...s, signal: { from, to } }))
     setTimeout(() => setState(s => ({ ...s, signal: null })), 1400)
 
-    // Pill animation: arc from `from` room center to `to` room center via offset-path
     const fromEl = document.getElementById(`room-${from}`)
     const toEl   = document.getElementById(`room-${to}`)
     if (fromEl && toEl) {
@@ -92,14 +89,12 @@ export default function Factory() {
       const sy = fr.top  + fr.height / 2
       const ex = tr.left + tr.width  / 2
       const ey = tr.top  + tr.height / 2
-      // Quadratic arc: control point 100px above the midpoint
       const cx = (sx + ex) / 2
       const cy = Math.min(sy, ey) - 100
       setPillPath(`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`)
       setTimeout(() => setPillPath(null), 900)
     }
 
-    // Boss launch gesture on outbound signals from boss
     if (from === 'boss') {
       setBossLaunching(true)
       setTimeout(() => setBossLaunching(false), 200)
@@ -140,7 +135,6 @@ export default function Factory() {
     }
   }, [generating, fireSignal])
 
-  // ── Select/deselect concept ──────────────────────────────────────────
   const handleSelectConcept = useCallback((id: string) => {
     setState(s => {
       const already = s.selectedConceptIds.includes(id)
@@ -153,7 +147,7 @@ export default function Factory() {
     })
   }, [])
 
-  // ── NODO 2 — generate both image + video prompts, stay in ideas overlay ──
+  // ── NODO 2 ───────────────────────────────────────────────────────────
   const handleConfirmSelection = useCallback(async () => {
     const ids = state.selectedConceptIds
     if (ids.length === 0 || processingPrompts) return
@@ -193,7 +187,6 @@ export default function Factory() {
     }
   }, [state.selectedConceptIds, processingPrompts, state.concepts])
 
-  // ── Open PIXEL DAMAGE with (possibly edited) prompts ────────────────
   const handleOpenImages = useCallback((editedImagePrompts: Record<string, string>, editedVideoPrompts: Record<string, string>) => {
     setState(s => ({
       ...s,
@@ -269,7 +262,6 @@ export default function Factory() {
     }
   }, [generatingImage])
 
-  // ── Select image ─────────────────────────────────────────────────────
   const handleSelectImage = useCallback((id: string) => {
     setSelectedImageId(id)
     setState(s => ({
@@ -278,7 +270,7 @@ export default function Factory() {
     }))
   }, [])
 
-  // ── NODO 4: Open video + fetch animation concepts ────────────────────
+  // ── NODO 4 ───────────────────────────────────────────────────────────
   const handleContinueToVideo = useCallback(async () => {
     setState(s => ({
       ...s,
@@ -317,7 +309,7 @@ export default function Factory() {
     }
   }, [fireSignal, generatedImages, selectedImageId, state.concepts, state.selectedConceptIds])
 
-  // ── NODO 5: Generate video ───────────────────────────────────────────
+  // ── NODO 5 ───────────────────────────────────────────────────────────
   const handleGenerateVideo = useCallback(async (prompt: string) => {
     if (generatingVideo) return
     const selectedImg = generatedImages.find(img => img.id === selectedImageId)
@@ -365,52 +357,58 @@ export default function Factory() {
     }
   }, [generatingVideo, generatedImages, selectedImageId])
 
-  const handleCloseOverlay = useCallback(() => {
-    setState(s => ({ ...s, activeOverlay: 'none' }))
-  }, [])
-
-  const handleOpenIdeas = useCallback(() => {
-    if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' }))
-  }, [state.concepts.length])
-
-  const handleOpenImagesOverlay = useCallback(() => {
-    if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' }))
-  }, [state.selectedConceptIds.length])
+  const handleCloseOverlay  = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
+  const handleOpenIdeas     = useCallback(() => { if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' })) }, [state.concepts.length])
+  const handleOpenImagesOverlay = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' })) }, [state.selectedConceptIds.length])
 
   const selectedConcepts = state.concepts.filter(c => state.selectedConceptIds.includes(c.id))
-
-  // Derive videoPrompt for the selected concept (first selected that has an image)
   const selectedImg = generatedImages.find(img => img.id === selectedImageId)
   const videoPromptForSelected = selectedImg
     ? state.videoPrompts[selectedImg.conceptId] ?? ''
     : state.videoPrompts[state.selectedConceptIds[0]] ?? ''
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+    <div className="factory-root">
       <StarBackground />
 
+      {/* Pill arc */}
+      {pillPath && (
+        <div className="pill-fly" style={{ offsetPath: `path('${pillPath}')` } as React.CSSProperties} />
+      )}
+
+      {/* Signal overlay */}
       {state.signal && <SignalLine signal={state.signal} />}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: 10, overflow: 'hidden', minWidth: 0 }}>
-        {/* Title */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 0 }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#004d3d', letterSpacing: 4 }}>
-            ✦ CANTSLEEPT CONTENT FACTORY ✦
-          </div>
-        </div>
+      {/* HUD top */}
+      <div className="hud-bar">
+        <span className="hud-label">✦ CANTSLEEPT CONTENT FACTORY ✦</span>
+        <div className="hud-sep" />
+        <span className="hud-label">POSTS/WK</span>
+        <span className="hud-value">{stats.postsThisWeek}</span>
+        {stats.lastConceptTitle && (
+          <>
+            <div className="hud-sep" />
+            <span className="hud-label">LAST</span>
+            <span className="hud-value" style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {stats.lastConceptTitle.toUpperCase()}
+            </span>
+          </>
+        )}
+        <div className="hud-spacer" />
+        <span className="hud-label">{new Date().toISOString().split('T')[0]}</span>
+      </div>
 
-        {/* Dr. Adderall — horizontal bar */}
-        <BossRoom
-          state={state.rooms.boss}
-          postsThisWeek={stats.postsThisWeek}
-          lastConceptTitle={stats.lastConceptTitle}
-          onGenerate={handleGenerate}
-          generating={generating}
-          launching={bossLaunching}
-        />
-
-        {/* 3 rooms */}
-        <div style={{ display: 'grid', gridTemplateColumns: '5fr 4fr 3fr', gap: 6, flex: 1, minHeight: 0 }}>
+      {/* Factory body: 2×2 grid + comms panel */}
+      <div className="factory-body">
+        <div className="factory-grid">
+          <BossRoom
+            state={state.rooms.boss}
+            postsThisWeek={stats.postsThisWeek}
+            lastConceptTitle={stats.lastConceptTitle}
+            onGenerate={handleGenerate}
+            generating={generating}
+            launching={bossLaunching}
+          />
           <IdeasRoom
             state={state.rooms.ideas}
             conceptCount={state.concepts.length}
@@ -429,18 +427,10 @@ export default function Factory() {
           />
         </div>
 
-        {/* Room labels */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, paddingBottom: 2 }}>
-          {(['3AM THOUGHTS', 'PIXEL DAMAGE', 'MOTION SICK'] as const).map(label => (
-            <div key={label} style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', letterSpacing: 2 }}>
-              {label}
-            </div>
-          ))}
-        </div>
+        <Sidebar log={state.sessionLog} />
       </div>
 
-      <Sidebar log={state.sessionLog} />
-
+      {/* Overlays */}
       {state.activeOverlay === 'ideas' && state.concepts.length > 0 && (
         <IdeasOverlay
           concepts={state.concepts}
@@ -470,14 +460,6 @@ export default function Factory() {
         />
       )}
 
-      {/* Pill animation: arcs from boss to target room via offset-path quadratic curve */}
-      {pillPath && (
-        <div
-          className="pill-fly"
-          style={{ offsetPath: `path('${pillPath}')` } as React.CSSProperties}
-        />
-      )}
-
       {state.activeOverlay === 'video' && (
         <VideoOverlay
           selectedConcepts={selectedConcepts}
@@ -499,10 +481,10 @@ export default function Factory() {
 
 function SignalLine({ signal }: { signal: { from: string; to: string } }) {
   const positions: Record<string, { x: string; y: string }> = {
-    boss:   { x: '30%', y: '18%' },
-    ideas:  { x: '20%', y: '65%' },
-    images: { x: '55%', y: '65%' },
-    video:  { x: '78%', y: '65%' },
+    boss:   { x: '25%', y: '30%' },
+    ideas:  { x: '75%', y: '30%' },
+    images: { x: '25%', y: '70%' },
+    video:  { x: '75%', y: '70%' },
   }
   const from = positions[signal.from]
   const to   = positions[signal.to]
