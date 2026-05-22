@@ -13,153 +13,75 @@ interface BossRoomProps {
 }
 
 export default function BossRoom({
-  state,
-  postsThisWeek,
-  lastConceptTitle,
-  onGenerate,
-  generating,
-  launching,
+  state, postsThisWeek, lastConceptTitle, onGenerate, generating, launching,
 }: BossRoomProps) {
-  const stateColors: Record<RoomState, string> = {
-    idle:    '#0d3330',
-    working: '#ff6b35',
-    done:    '#00c4a0',
-    error:   '#ff3030',
-  }
-  const ledColor = stateColors[state]
+  const stateClass = state === 'working' ? 'is-working' : state === 'done' ? 'is-done' : state === 'error' ? 'is-error' : ''
+  const led = state === 'idle' ? '#3a0815' : state === 'working' ? '#ff1a3d' : state === 'done' ? '#cc1433' : '#ff3030'
 
   return (
-    <div
-      id="room-boss"
-      className={`room-card ${state !== 'idle' ? state : ''}`}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 20,
-        padding: '10px 20px',
-        flexShrink: 0,
-      }}
-    >
-      {/* Pixel corners */}
-      <div className="px-corner px-tl" />
-      <div className="px-corner px-tr" />
-      <div className="px-corner px-bl" />
-      <div className="px-corner px-br" />
+    <div id="room-boss" className={`iso-room boss ${stateClass}`}>
+      <div className="r-cnr r-cnr-tl" /><div className="r-cnr r-cnr-tr" />
+      <div className="r-cnr r-cnr-bl" /><div className="r-cnr r-cnr-br" />
+      <div className="room-scan" />
 
-      {/* Node + room name */}
-      <div style={{ minWidth: 160, flexShrink: 0 }}>
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 5,
-          color: '#004d3d',
-          letterSpacing: 3,
-          marginBottom: 5,
-        }}>
-          NODE_00
-        </div>
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 10,
-          color: '#a855f7',
-          letterSpacing: 1,
-        }}>
-          DR. ADDERALL
-        </div>
+      <div className="r-hdr">
+        <span className="r-node">NODE_00</span>
+        <span className="r-name">DR. ADDERALL</span>
       </div>
 
-      {/* Robot */}
-      <div style={{ flexShrink: 0, position: 'relative' }}>
-        <Robot room="boss" state={state} launching={launching} />
-        {state === 'done' && <div className="done-check-overlay">✓</div>}
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 60, background: '#0d3330', flexShrink: 0 }} />
-
-      {/* Stats */}
-      <div style={{ flex: 1, display: 'flex', gap: 32, alignItems: 'center' }}>
-        <div>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 5,
-            color: '#004d3d',
-            letterSpacing: 2,
-            marginBottom: 4,
-          }}>POSTS / WEEK</div>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 18,
-            color: '#48cae4',
-            lineHeight: 1,
-          }}>{postsThisWeek}</div>
+      <div className="r-body" style={{ flexDirection: 'column', gap: 10 }}>
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: '"Press Start 2P",monospace', fontSize: 5, color: '#3a0815', letterSpacing: 2, marginBottom: 3 }}>POSTS/WK</div>
+            <div style={{ fontFamily: '"Press Start 2P",monospace', fontSize: 22, color: '#ff1a3d', lineHeight: 1, textShadow: '0 0 14px rgba(255,26,61,.6)' }}>
+              {postsThisWeek}
+            </div>
+          </div>
+          <div style={{ textAlign: 'left', maxWidth: 130 }}>
+            <div style={{ fontFamily: '"Press Start 2P",monospace', fontSize: 5, color: '#3a0815', letterSpacing: 2, marginBottom: 3 }}>LAST RUN</div>
+            <div style={{ fontFamily: '"Press Start 2P",monospace', fontSize: 6, color: '#cc1433', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 130 }}>
+              {lastConceptTitle ? lastConceptTitle.toUpperCase() : '—'}
+            </div>
+          </div>
         </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 5,
-            color: '#004d3d',
-            letterSpacing: 2,
-            marginBottom: 4,
-          }}>LAST CONCEPT</div>
-          <div style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: 7,
-            color: '#00a882',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>{lastConceptTitle ? lastConceptTitle.toUpperCase() : '—'}</div>
+
+        {/* Robot */}
+        <div style={{ position: 'relative' }}>
+          <Robot room="boss" state={state} launching={launching} />
+          {state === 'done' && <div className="done-check-overlay">✓</div>}
         </div>
-      </div>
 
-      {/* Divider */}
-      <div style={{ width: 1, height: 60, background: '#0d3330', flexShrink: 0 }} />
-
-      {/* Generate button */}
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        {/* Generate */}
         <button
           className="btn-pixel"
           onClick={onGenerate}
           disabled={generating}
           style={{
-            color: generating ? '#004d3d' : '#00ffcc',
-            borderColor: generating ? '#0d3330' : '#00c4a0',
-            fontSize: 8,
-            padding: '11px 18px',
-            boxShadow: generating ? 'none' : '0 0 14px rgba(0,196,160,0.35)',
+            color: generating ? '#3a0815' : '#ff1a3d',
+            borderColor: generating ? '#3a0815' : '#ff1a3d',
+            fontSize: 7, padding: '9px 14px',
+            boxShadow: generating ? 'none' : '0 0 14px rgba(255,26,61,.35)',
             whiteSpace: 'nowrap',
           }}
         >
-          {generating ? (
-            <span className="loading-dots">
-              THINKING<span>.</span><span>.</span><span>.</span>
-            </span>
-          ) : (
-            '▶ GENERATE IDEAS'
-          )}
+          {generating
+            ? <span className="loading-dots">THINKING<span>.</span><span>.</span><span>.</span></span>
+            : '▶ GENERATE'}
         </button>
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 5,
-          color: '#004d3d',
-        }}>{new Date().toISOString().split('T')[0]}</div>
       </div>
 
-      {/* Status LED */}
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-        <div style={{
-          width: 8,
-          height: 8,
-          background: ledColor,
-          boxShadow: state !== 'idle' ? `0 0 8px ${ledColor}` : 'none',
-          animation: state === 'working' ? 'neonPulse 0.8s ease-in-out infinite' : 'none',
+      <div className="r-ftr">
+        <div className="r-led" style={{
+          background: led,
+          boxShadow: state !== 'idle' ? `0 0 6px ${led}` : 'none',
+          animation: state === 'working' ? 'neonPulse .8s ease-in-out infinite' : 'none',
         }} />
-        <div style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: 5,
-          color: ledColor,
-        }}>{state.toUpperCase()}</div>
+        <span className="r-status" style={{ color: led }}>{state.toUpperCase()}</span>
+        <span className="r-info">{new Date().toISOString().split('T')[0]}</span>
       </div>
+
+      <div className="r-pips">{[0,1,2,3,4].map(i => <div key={i} className="r-pip" />)}</div>
     </div>
   )
 }
