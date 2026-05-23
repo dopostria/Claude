@@ -465,22 +465,27 @@ body::after {
 }
 .sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
 
-/* DO NOT PUSH button - 140x145, no scale on hover */
+/* DO NOT PUSH button - 200px, no transform = zero movement on click */
 .do-not-push-btn {
-  position:absolute; right:6%; top:38%;
-  transform:translateY(-50%);
-  width:140px; height:145px;
-  background:url('/sprites/boton.png') 0 0/280px 145px no-repeat;
+  position:absolute; right:6%; top:calc(38% - 103px);
+  width:200px; height:207px;
+  background:url('/sprites/boton.png') 0 0/400px 207px no-repeat;
   image-rendering:auto; border:none; padding:0;
   cursor:pointer; z-index:10;
   transition:filter .15s ease;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  outline:none;
 }
 .do-not-push-btn:hover:not(:disabled) {
   filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7));
 }
+.do-not-push-btn:active:not(:disabled) {
+  filter:brightness(0.9);
+}
 .do-not-push-btn.is-busy,
 .do-not-push-btn:disabled {
-  background-position-x:-140px;
+  background-position-x:-200px;
   cursor:not-allowed;
   filter:brightness(0.85);
 }
