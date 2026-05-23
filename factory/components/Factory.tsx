@@ -3,9 +3,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import StarBackground from './StarBackground'
 import Sidebar from './Sidebar'
-import BossRoom from './rooms/BossRoom'
-import IdeasRoom from './rooms/IdeasRoom'
-import { ImagesRoom, VideoRoom } from './rooms/IdeasRoom'
 import IdeasOverlay from './overlays/IdeasOverlay'
 import ImagesOverlay from './overlays/ImagesOverlay'
 import VideoOverlay from './overlays/VideoOverlay'
@@ -28,6 +25,13 @@ interface GeneratedImage {
 
 function now(): string {
   return new Date().toLocaleTimeString('en-US', { hour12: false })
+}
+
+function getRoomClass(s: string) {
+  if (s === 'working') return 'is-working'
+  if (s === 'done')    return 'is-done'
+  if (s === 'error')   return 'is-error'
+  return ''
 }
 
 const INITIAL_STATE: FactoryState = {
@@ -300,7 +304,7 @@ export default function Factory() {
       setAnimationConcepts(data.animations ?? [])
       setState(s => ({
         ...s,
-        sessionLog: [...s.sessionLog, { time: now(), message: '3 conceptos de animación listos!', type: 'success' }],
+        sessionLog: [...s.sessionLog, { time: now(), message: '3 conceptos de animacion listos!', type: 'success' }],
       }))
     } catch {
       setAnimationConcepts([])
@@ -357,12 +361,12 @@ export default function Factory() {
     }
   }, [generatingVideo, generatedImages, selectedImageId])
 
-  const handleCloseOverlay  = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
-  const handleOpenIdeas     = useCallback(() => { if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' })) }, [state.concepts.length])
+  const handleCloseOverlay      = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
+  const handleOpenIdeas         = useCallback(() => { if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' })) }, [state.concepts.length])
   const handleOpenImagesOverlay = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' })) }, [state.selectedConceptIds.length])
 
   const selectedConcepts = state.concepts.filter(c => state.selectedConceptIds.includes(c.id))
-  const selectedImg = generatedImages.find(img => img.id === selectedImageId)
+  const selectedImg      = generatedImages.find(img => img.id === selectedImageId)
   const videoPromptForSelected = selectedImg
     ? state.videoPrompts[selectedImg.conceptId] ?? ''
     : state.videoPrompts[state.selectedConceptIds[0]] ?? ''
@@ -371,15 +375,13 @@ export default function Factory() {
     <div className="factory-root">
       <StarBackground />
 
-      {/* Pill arc */}
       {pillPath && (
         <div className="pill-fly" style={{ offsetPath: `path('${pillPath}')` } as React.CSSProperties} />
       )}
 
-      {/* Signal overlay */}
       {state.signal && <SignalLine signal={state.signal} />}
 
-      {/* HUD top */}
+      {/* HUD top bar */}
       <div className="hud-bar">
         <span className="hud-label">✦ CANTSLEEPT CONTENT FACTORY ✦</span>
         <div className="hud-sep" />
@@ -398,39 +400,34 @@ export default function Factory() {
         <span className="hud-label">{new Date().toISOString().split('T')[0]}</span>
       </div>
 
-      {/* Factory body: 2×2 grid + comms panel */}
+      {/* Main area: dungeon image + sidebar */}
       <div className="factory-body">
-        <div className="factory-grid">
-          <BossRoom
-            state={state.rooms.boss}
-            postsThisWeek={stats.postsThisWeek}
-            lastConceptTitle={stats.lastConceptTitle}
-            onGenerate={handleGenerate}
-            generating={generating}
-            launching={bossLaunching}
-          />
-          <IdeasRoom
-            state={state.rooms.ideas}
-            conceptCount={state.concepts.length}
-            selectedCount={state.selectedConceptIds.length}
-            onClick={handleOpenIdeas}
-          />
-          <ImagesRoom
-            state={state.rooms.images}
-            imageCount={generatedImages.length}
-            onClick={handleOpenImagesOverlay}
-          />
-          <VideoRoom
-            state={state.rooms.video}
-            videoReady={!!videoUri}
-            onClick={() => { if (videoUri) setState(s => ({ ...s, activeOverlay: 'video' })) }}
-          />
+        <div className="dungeon-stage">
+
+          {/* Transparent glow overlays, one per room */}
+          <div id="room-boss"   className={`room-overlay room-boss   ${getRoomClass(state.rooms.boss)}`}   />
+          <div id="room-ideas"  className={`room-overlay room-ideas  ${getRoomClass(state.rooms.ideas)}`}  />
+          <div id="room-images" className={`room-overlay room-images ${getRoomClass(state.rooms.images)}`} />
+          <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
+
+          {/* Dr. Adderall — patrols the boss room */}
+          <div className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}${bossLaunching ? ' launching' : ''}`} />
+
+          {/* The one button to rule them all */}
+          <button
+            className={`do-not-push-btn${generating ? ' is-busy' : ''}`}
+            onClick={handleGenerate}
+            disabled={generating}
+          >
+            {generating ? '[ PROCESSING... ]' : '[ DO NOT PUSH ]'}
+          </button>
+
         </div>
 
         <Sidebar log={state.sessionLog} />
       </div>
 
-      {/* Overlays */}
+      {/* ── Overlays (unchanged) ──────────────────────── */}
       {state.activeOverlay === 'ideas' && state.concepts.length > 0 && (
         <IdeasOverlay
           concepts={state.concepts}
@@ -481,10 +478,10 @@ export default function Factory() {
 
 function SignalLine({ signal }: { signal: { from: string; to: string } }) {
   const positions: Record<string, { x: string; y: string }> = {
-    boss:   { x: '25%', y: '30%' },
-    ideas:  { x: '75%', y: '30%' },
-    images: { x: '25%', y: '70%' },
-    video:  { x: '75%', y: '70%' },
+    boss:   { x: '38%', y: '26%' },
+    ideas:  { x: '12%', y: '74%' },
+    images: { x: '38%', y: '76%' },
+    video:  { x: '64%', y: '74%' },
   }
   const from = positions[signal.from]
   const to   = positions[signal.to]
