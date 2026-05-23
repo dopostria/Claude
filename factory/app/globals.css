@@ -1,341 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --teal-bright: #00ffcc;
-  --teal-mid:    #00c4a0;
-  --teal-dim:    #00a882;
-  --teal-dark:   #004d3d;
-  --orange:      #ff6b35;
-  --orange-lt:   #ff8c5a;
-  --bg-dark:     #020810;
-  --bg-mid:      #030d1a;
-  --border-idle: #0d2030;
-  --border-act:  #00c4a0;
-
-  --corridor:    #000a14;
-  --boss-c:      #ff1a3d;
-  --ideas-c:     #00ddff;
-  --images-c:    #cc33ff;
-  --video-c:     #ff9900;
-  --neon:        #00f5cc;
-  --neon-dim:    #0a2a22;
-}
-
-* { image-rendering: pixelated; box-sizing: border-box; }
-
-html, body {
-  background: #020810;
-  color: var(--teal-bright);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  overflow-x: hidden;
-  height: 100%;
-}
-
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
-  pointer-events: none; z-index: 9999;
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #020810; }
-::-webkit-scrollbar-thumb { background: var(--neon-dim); }
-::-webkit-scrollbar-thumb:hover { background: var(--teal-mid); }
-
-/* ─── STARS ────────────────────────────────────────── */
-.star { position: absolute; background: var(--teal-dim); border-radius: 0; }
-.animate-twinkle { animation: twinkle var(--duration,3s) var(--delay,0s) ease-in-out infinite; }
-@keyframes twinkle { 0%,100%{opacity:.08} 50%{opacity:.5} }
-
-/* ─── KEYFRAMES ────────────────────────────────────── */
-.robot.launching { animation: bossLaunch 0.15s ease-out; }
-@keyframes pillFly {
-  from { offset-distance:0%;  opacity:1; }
-  80%  {                       opacity:1; }
-  to   { offset-distance:100%;opacity:0; }
-}
-@keyframes bossLaunch  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
-@keyframes fadeInCheck { from{opacity:0;transform:scale(.6)} to{opacity:1;transform:scale(1)} }
-@keyframes neonPulse   { 0%,100%{opacity:1} 50%{opacity:.25} }
-@keyframes scanSweep   { from{top:-90px} to{top:calc(100% + 90px)} }
-@keyframes loadDot     { 0%,100%{opacity:0} 50%{opacity:1} }
-@keyframes signalMove  {
-  0%  {opacity:0;transform:translate(-50%,-50%) scale(0)}
-  20% {opacity:1;transform:translate(-50%,-50%) scale(1)}
-  80% {opacity:1;transform:translate(-50%,-50%) scale(1)}
-  100%{opacity:0;transform:translate(-50%,-50%) scale(0)}
-}
-@keyframes edgePulse {
-  0%,100%{opacity:.35} 50%{opacity:.9}
-}
-
-/* ─── PILL ─────────────────────────────────────────── */
-.pill-fly {
-  position:fixed; left:0; top:0; width:6px; height:12px; border-radius:3px;
-  background:linear-gradient(to bottom,#ff6b35 50%,#4a90d9 50%);
-  box-shadow:0 0 6px rgba(255,107,53,.9),0 0 12px rgba(74,144,217,.5);
-  z-index:30; pointer-events:none; transform:translate(-3px,-6px);
-  animation:pillFly 800ms ease-in-out forwards;
-}
-
-/* ─── DONE OVERLAY ─────────────────────────────────── */
-.done-check-overlay {
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  color:#00ff88; font-size:14px; font-family:monospace; font-weight:bold;
-  pointer-events:none; z-index:5;
-  animation:fadeInCheck .2s ease-out .3s both; text-shadow:0 0 8px #00ff88;
-}
-
-/* ─── BUTTONS ──────────────────────────────────────── */
-.btn-pixel {
-  font-family:'Press Start 2P',monospace; font-size:8px; padding:10px 16px;
-  border:2px solid currentColor; background:transparent;
-  cursor:pointer; text-transform:uppercase; letter-spacing:1px;
-  transition:background .08s,color .08s,transform .08s; outline:none;
-}
-.btn-pixel:hover:not(:disabled) { background:currentColor; color:#020810; }
-.btn-pixel:active:not(:disabled) { transform:translate(2px,2px); }
-.btn-pixel:disabled { opacity:.3; cursor:not-allowed; }
-
-/* ─── CONCEPT CARDS ────────────────────────────────── */
-.concept-card { border:2px solid var(--border-idle); background:#060f0e; transition:border-color .15s,box-shadow .15s; cursor:pointer; }
-.concept-card:hover { border-color:var(--orange); box-shadow:0 0 10px rgba(255,107,53,.15); }
-.concept-card.selected { border-color:var(--teal-mid); box-shadow:0 0 14px rgba(0,196,160,.25); background:#061310; }
-
-/* ─── SCORE BARS ───────────────────────────────────── */
-.score-bar  { height:3px; background:var(--border-idle); }
-.score-fill { height:100%; transition:width .6s ease-out; }
-
-/* ─── OVERLAY ──────────────────────────────────────── */
-.overlay-backdrop { position:fixed; inset:0; background:rgba(2,8,16,.96); z-index:50; display:flex; align-items:center; justify-content:center; padding:24px; }
-.overlay-panel { background:var(--bg-mid); border:2px solid var(--teal-mid); width:100%; max-width:1100px; max-height:90vh; overflow-y:auto; position:relative; }
-
-/* ─── LOADING DOTS ─────────────────────────────────── */
-.loading-dots span { animation:loadDot 1s ease-in-out infinite; opacity:0; }
-.loading-dots span:nth-child(1){animation-delay:0s}
-.loading-dots span:nth-child(2){animation-delay:.25s}
-.loading-dots span:nth-child(3){animation-delay:.5s}
-
-/* ─── SIGNAL ───────────────────────────────────────── */
-.signal-dot { position:absolute; width:6px; height:6px; background:var(--teal-mid); box-shadow:0 0 6px var(--teal-mid); animation:signalMove 1.2s ease-in-out forwards; }
-
-/* ─── TERMINAL ─────────────────────────────────────── */
-.terminal-error{color:#ff4444} .terminal-working{color:var(--orange)} .terminal-success{color:var(--teal-bright)} .terminal-info{color:var(--teal-dark)}
-
-/* ════════════════════════════════════════════════════
-   ISO FACTORY LAYOUT
-   ════════════════════════════════════════════════════ */
-
-.factory-root { height:100vh; display:flex; flex-direction:column; overflow:hidden; position:relative; z-index:1; }
-
-/* HUD bars */
-.hud-bar {
-  background:rgba(2,8,16,.98);
-  border-bottom:1px solid #0a1e30;
-  padding:0 14px; height:34px;
-  display:flex; align-items:center; gap:14px;
-  flex-shrink:0; z-index:10;
-}
-.hud-bar.bottom { border-top:1px solid #0a1e30; border-bottom:none; }
-.hud-label { font-family:'Press Start 2P',monospace; font-size:5px; color:#0a2030; letter-spacing:2px; white-space:nowrap; }
-.hud-value { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--neon); }
-.hud-sep { width:1px; height:16px; background:#0a1e30; flex-shrink:0; }
-.hud-spacer { flex:1; }
-
-/* Factory body */
-.factory-body { flex:1; display:flex; min-height:0; overflow:hidden; }
-
-/* 2×2 grid — corridors as circuit-dot pattern */
-.factory-grid {
-  flex:1;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:1fr 1fr;
-  gap:4px; padding:4px;
-  background:var(--corridor);
-  background-image:radial-gradient(circle, rgba(0,220,180,.12) 1px, transparent 1px);
-  background-size:12px 12px;
-  min-width:0;
-}
-
-/* ════════════════════════════════════════════════════
-   ISO ROOM
-   ════════════════════════════════════════════════════ */
-
-.iso-room {
-  position:relative; overflow:hidden;
-  display:flex; flex-direction:column;
-  border:2px solid var(--r-dim, #0a1a2a);
-  transition:border-color .3s, box-shadow .3s;
-}
-
-/* Per-room tinted backgrounds */
-.iso-room.boss   { background:#0d0308; }
-.iso-room.ideas  { background:#030c10; }
-.iso-room.images { background:#080310; }
-.iso-room.video  { background:#0e0700; }
-
-/* Floor tile grid — VISIBLE */
-.iso-room::before {
-  content:''; position:absolute; inset:0;
-  background-image:
-    linear-gradient(var(--r-grid,rgba(0,220,180,.12)) 1px, transparent 1px),
-    linear-gradient(90deg,var(--r-grid,rgba(0,220,180,.12)) 1px, transparent 1px);
-  background-size:24px 24px;
-  pointer-events:none; z-index:0;
-}
-
-/* Radial glow fill */
-.iso-room::after {
-  content:''; position:absolute; inset:0;
-  background:radial-gradient(ellipse at 50% 55%, var(--r-glow,transparent) 0%, transparent 60%);
-  pointer-events:none; z-index:0;
-  opacity:.6; transition:opacity .35s;
-}
-
-.iso-room > * { position:relative; z-index:1; }
-
-/* Per-room accent vars */
-.iso-room.boss   { --r-dim:#5a0015; --r-grid:rgba(255,26,61,.18);   --r-glow:rgba(255,26,61,.22);  --r-c:#ff1a3d; --r-mid:#dd1030; }
-.iso-room.ideas  { --r-dim:#0a2535; --r-grid:rgba(0,221,255,.16);   --r-glow:rgba(0,221,255,.20);  --r-c:#00ddff; --r-mid:#00aabb; }
-.iso-room.images { --r-dim:#220840; --r-grid:rgba(204,51,255,.16);  --r-glow:rgba(204,51,255,.20); --r-c:#cc33ff; --r-mid:#9922cc; }
-.iso-room.video  { --r-dim:#3a1500; --r-grid:rgba(255,153,0,.16);   --r-glow:rgba(255,153,0,.20);  --r-c:#ff9900; --r-mid:#cc7700; }
-
-/* Idle — dim but visible border */
-.iso-room { border-color:var(--r-dim); }
-
-/* Working */
-.iso-room.is-working {
-  border-color:var(--r-c);
-  box-shadow:0 0 0 1px var(--r-c), 0 0 24px var(--r-glow), inset 0 0 50px var(--r-glow);
-}
-.iso-room.is-working::after { opacity:1; }
-
-/* Done */
-.iso-room.is-done {
-  border-color:var(--r-mid);
-  box-shadow:0 0 12px var(--r-glow), inset 0 0 20px var(--r-glow);
-}
-/* Error */
-.iso-room.is-error { border-color:#ff3030; box-shadow:0 0 16px rgba(255,48,48,.35); }
-
-/* Clickable hover */
-.iso-room.clickable { cursor:pointer; }
-.iso-room.clickable:hover {
-  border-color:var(--r-c) !important;
-  box-shadow:0 0 0 1px var(--r-c), 0 0 28px var(--r-glow) !important;
-}
-
-/* Corner L-brackets — bigger, brighter */
-.r-cnr { position:absolute; width:16px; height:16px; z-index:5; pointer-events:none; }
-.r-cnr-tl { top:-2px;    left:-2px;   border-top:2px solid var(--r-c); border-left:2px solid var(--r-c);   filter:brightness(1.4); }
-.r-cnr-tr { top:-2px;    right:-2px;  border-top:2px solid var(--r-c); border-right:2px solid var(--r-c);  filter:brightness(1.4); }
-.r-cnr-bl { bottom:-2px; left:-2px;   border-bottom:2px solid var(--r-c); border-left:2px solid var(--r-c);  filter:brightness(1.4); }
-.r-cnr-br { bottom:-2px; right:-2px;  border-bottom:2px solid var(--r-c); border-right:2px solid var(--r-c); filter:brightness(1.4); }
-
-/* Scan sweep */
-.room-scan {
-  position:absolute; left:0; right:0; height:90px;
-  background:linear-gradient(to bottom,transparent,var(--r-glow,rgba(255,255,255,.04)),transparent);
-  top:-90px; pointer-events:none; z-index:2; opacity:0;
-}
-.is-working .room-scan { opacity:1; animation:scanSweep 2.2s linear infinite; }
-
-/* Room header */
-.r-hdr {
-  padding:8px 12px 6px;
-  border-bottom:1px solid var(--r-dim);
-  flex-shrink:0; display:flex; align-items:baseline; justify-content:space-between; gap:8px;
-  background:rgba(0,0,0,.3);
-}
-.r-node { font-family:'Press Start 2P',monospace; font-size:5px; color:var(--r-dim); letter-spacing:3px; }
-.r-name { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--r-c); letter-spacing:1px; text-shadow:0 0 10px var(--r-glow); }
-
-/* Room body */
-.r-body { flex:1; display:flex; align-items:center; justify-content:center; padding:8px; position:relative; min-height:0; overflow:hidden; }
-
-/* Room footer */
-.r-ftr { padding:6px 12px; border-top:1px solid var(--r-dim); flex-shrink:0; display:flex; align-items:center; gap:7px; background:rgba(0,0,0,.25); }
-.r-led { width:5px; height:5px; flex-shrink:0; transition:background .3s,box-shadow .3s; }
-.r-status { font-family:'Press Start 2P',monospace; font-size:5px; transition:color .3s; }
-.r-info   { font-family:'Press Start 2P',monospace; font-size:5px; color:var(--r-mid); margin-left:auto; }
-.r-hint   { font-family:'Press Start 2P',monospace; font-size:4px; color:var(--r-dim); margin-left:auto; animation:neonPulse 2s ease-in-out infinite; }
-
-/* ─── ROOM DECORATIONS ─────────────────────────────── */
-
-/* Inner nested frame — creates depth */
-.r-inner {
-  position:absolute; border:1px solid var(--r-c); pointer-events:none; z-index:1;
-  opacity:.18; transition:opacity .3s;
-}
-.is-working .r-inner, .is-done .r-inner { opacity:.45; }
-
-/* Equipment rack bars */
-.r-rack { position:absolute; display:flex; flex-direction:column; gap:2px; z-index:2; pointer-events:none; }
-.r-bar  { height:3px; opacity:.4; transition:opacity .3s, box-shadow .3s; }
-.is-working .r-bar, .is-done .r-bar { opacity:.8; }
-
-/* Corner dot */
-.r-dot {
-  position:absolute; width:4px; height:4px; z-index:3; pointer-events:none;
-  opacity:.4; transition:opacity .3s, box-shadow .3s;
-}
-.is-working .r-dot, .is-done .r-dot { opacity:1; }
-
-/* Edge accent line (thin bright line along one wall) */
-.r-edge {
-  position:absolute; pointer-events:none; z-index:2;
-  opacity:.3; animation:edgePulse 3s ease-in-out infinite;
-  transition:opacity .3s;
-}
-.is-working .r-edge { opacity:.8; animation-duration:1s; }
-
-/* Horizontal panels (machinery strip) */
-.r-panels { position:absolute; display:flex; gap:2px; pointer-events:none; z-index:2; }
-.r-panel  { height:100%; border:1px solid var(--r-c); opacity:.2; transition:opacity .3s; }
-.is-working .r-panel, .is-done .r-panel { opacity:.55; }
-
-/* ─── COMMS PANEL ──────────────────────────────────── */
-.comms-panel { width:188px; min-width:188px; background:#030c18; border-left:2px solid #0a1e30; display:flex; flex-direction:column; overflow:hidden; }
-.comms-hdr   { padding:9px 11px 7px; border-bottom:1px solid #0a1e30; background:#020810; flex-shrink:0; }
-.comms-body  { flex:1; overflow-y:auto; padding:6px 9px; display:flex; flex-direction:column; gap:5px; }
-.comms-entry { font-family:'Press Start 2P',monospace; font-size:6px; line-height:1.8; border-left:2px solid transparent; padding-left:7px; }
-.comms-entry.info    { color:#0a3028; border-color:#0a302844; }
-.comms-entry.working { color:#ff6b35; border-color:#ff6b3544; }
-.comms-entry.success { color:#00f5cc; border-color:#00f5cc44; }
-.comms-entry.error   { color:#ff4444; border-color:#ff444444; }
-.comms-ftr { padding:7px 11px; border-top:1px solid #0a1e30; background:#020810; flex-shrink:0; }
-
-/* ─── LEGACY room-card ─────────────────────────────── */
-.room-card { border:2px solid var(--border-idle); background:var(--bg-mid); transition:border-color .3s,box-shadow .3s; position:relative; overflow:hidden; }
-.room-card.working { border-color:var(--orange); box-shadow:0 0 16px rgba(255,107,53,.2); }
-.room-card.done    { border-color:var(--teal-mid); box-shadow:0 0 12px rgba(0,196,160,.2); }
-.room-card.error   { border-color:#ff3030; box-shadow:0 0 12px rgba(255,48,48,.2); }
-.room-card.working::after { content:''; position:absolute; top:-60px; left:0; right:0; height:60px; background:linear-gradient(to bottom,transparent,rgba(255,107,53,.04),transparent); animation:scanSweep 2.5s linear infinite; pointer-events:none; z-index:5; }
-.px-corner { position:absolute; width:5px; height:5px; background:var(--teal-mid); z-index:2; pointer-events:none; }
-.px-tl{top:-1px;left:-1px} .px-tr{top:-1px;right:-1px} .px-bl{bottom:-1px;left:-1px} .px-br{bottom:-1px;right:-1px}
-
 /* ═══════════════════════════════════════════════════════
-   DUNGEON STAGE v2 — full image, precise overlays
+   DUNGEON STAGE v3
    ═══════════════════════════════════════════════════════ */
 
+/* Shell: dark background behind any letterbox */
 .dungeon-stage {
   flex:1; min-width:0; background:#020810;
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 }
+
+/* Inner: always fits the viewport without cutting
+   Uses min() to choose the tighter constraint (width vs height).
+   188px = sidebar width | 34px = HUD height                      */
 .dungeon-inner {
   position:relative;
-  width:100%; max-height:100%;
-  aspect-ratio:1672/941;
+  width:  min(calc(100vw - 188px), calc((100vh - 34px) * 1672 / 941));
+  height: min(calc(100vh - 34px),  calc((100vw - 188px) * 941 / 1672));
   overflow:hidden;
+  flex-shrink:0;
 }
+
 .dungeon-bg {
   position:absolute; inset:0;
   background:url('/sprites/dungeon.png') center/cover no-repeat;
@@ -361,13 +45,24 @@ body::after {
 @keyframes room-pulse { 0%,100%{opacity:.80} 50%{opacity:1} }
 
 /* ═══════════════════════════════════════════════════════
-   CHARACTER SPRITES — one keyframe controls movement + facing
-   No looping walk-cycle: frame = direction, not animation step
+   CHARACTER SPRITES — v3 fixes
+   
+   Each animation controls BOTH transform (movement) AND
+   background-position-x (facing frame) in ONE keyframe.
+   
+   KEY TRICK: "animation-timing-function: step-end" on a
+   keyframe makes bg-position-x snap INSTANTLY to the next
+   value instead of interpolating through all frames.
+   It only applies when transform is also stationary at that
+   point (same value both sides), so movement stays smooth.
+   
+   Characters STAY in their arrival frame while working —
+   no snap back to frame 0.
    ═══════════════════════════════════════════════════════ */
 
-/* DR. ADDERALL — boss room
-   992x397 · 4 frames 248x397 · display 84x135
-   bg-size 336x135 · frame-px: 0 | -84 | -168 | -252     */
+/* ── DR. ADDERALL — boss room ─────────────────────────
+   992×397 · 4 frames 248×397 · display 84×135
+   bg-size 336×135 · frame-px: 0 | -84 | -168 | -252    */
 .sprite-boss {
   position:absolute; width:84px; height:135px;
   background:url('/sprites/dr%20adderall.png') 0 0/336px 135px no-repeat;
@@ -376,27 +71,37 @@ body::after {
   animation:patrol-boss 22s linear infinite;
 }
 @keyframes patrol-boss {
-  0%  {transform:translate(  0px,  0px);background-position-x:   0}
-  8%  {transform:translate(  0px,  0px);background-position-x:   0}
-  9%  {transform:translate(  0px,  0px);background-position-x:-168px}
-  23% {transform:translate( 55px, 35px);background-position-x:-168px}
-  24% {transform:translate( 55px, 35px);background-position-x:   0}
-  34% {transform:translate( 55px, 35px);background-position-x:   0}
-  35% {transform:translate( 55px, 35px);background-position-x:-252px}
-  51% {transform:translate(-40px, 55px);background-position-x:-252px}
-  52% {transform:translate(-40px, 55px);background-position-x:   0}
-  62% {transform:translate(-40px, 55px);background-position-x:   0}
-  63% {transform:translate(-40px, 55px);background-position-x: -84px}
-  79% {transform:translate(-55px, -5px);background-position-x: -84px}
-  83% {transform:translate(-55px, -5px);background-position-x:   0}
-  97% {transform:translate(  0px,  0px);background-position-x:   0}
-  100%{transform:translate(  0px,  0px);background-position-x:   0}
+  /* Idle center, front frame */
+  0%   {transform:translate(  0px,  0px);background-position-x:   0}
+  8%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
+  /* SNAP to right-facing, begin moving right */
+  9%   {transform:translate(  0px,  0px);background-position-x:-168px}
+  /* Arrive right — stay in right frame, work here */
+  23%  {transform:translate( 55px, 35px);background-position-x:-168px}
+  33%  {transform:translate( 55px, 35px);background-position-x:-168px;animation-timing-function:step-end}
+  /* SNAP to side-right, begin moving left-down */
+  34%  {transform:translate( 55px, 35px);background-position-x:-252px}
+  /* Arrive lower-left — stay in side frame, work here */
+  50%  {transform:translate(-40px, 55px);background-position-x:-252px}
+  60%  {transform:translate(-40px, 55px);background-position-x:-252px;animation-timing-function:step-end}
+  /* SNAP to back frame, move toward home */
+  61%  {transform:translate(-40px, 55px);background-position-x: -84px}
+  /* Mid-transit pause */
+  77%  {transform:translate(-55px, -5px);background-position-x: -84px}
+  82%  {transform:translate(-55px, -5px);background-position-x: -84px;animation-timing-function:step-end}
+  /* SNAP to front, final leg home */
+  83%  {transform:translate(-55px, -5px);background-position-x:   0}
+  97%  {transform:translate(  0px,  0px);background-position-x:   0}
+  100% {transform:translate(  0px,  0px);background-position-x:   0}
 }
-.sprite-boss.is-working { animation:patrol-boss 12s linear infinite; filter:drop-shadow(0 0 8px rgba(0,200,255,.85)); }
+.sprite-boss.is-working {
+  animation:patrol-boss 12s linear infinite;
+  filter:drop-shadow(0 0 8px rgba(0,200,255,.85));
+}
 
-/* 3AM THOUGHTS — ideas room
-   768x512 · 4 frames 192x512 · display 55x147
-   bg-size 220x147 · frame-px: 0 | -55 | -110 | -165     */
+/* ── 3AM THOUGHTS — ideas room ───────────────────────
+   768×512 · 4 frames 192×512 · display 55×147
+   bg-size 220×147 · frame-px: 0 | -55 | -110 | -165   */
 .sprite-ideas {
   position:absolute; width:55px; height:147px;
   background:url('/sprites/3am%20thoughts.png') 0 0/220px 147px no-repeat;
@@ -405,27 +110,33 @@ body::after {
   animation:patrol-ideas 20s linear infinite;
 }
 @keyframes patrol-ideas {
-  0%  {transform:translate(  0px,  0px);background-position-x:   0}
-  10% {transform:translate(  0px,  0px);background-position-x:   0}
-  11% {transform:translate(  0px,  0px);background-position-x:-110px}
-  25% {transform:translate( 28px, 18px);background-position-x:-110px}
-  26% {transform:translate( 28px, 18px);background-position-x:   0}
-  38% {transform:translate( 28px, 18px);background-position-x:   0}
-  39% {transform:translate( 28px, 18px);background-position-x: -55px}
-  54% {transform:translate(-25px, 22px);background-position-x: -55px}
-  55% {transform:translate(-25px, 22px);background-position-x:   0}
-  67% {transform:translate(-25px, 22px);background-position-x:   0}
-  68% {transform:translate(-25px, 22px);background-position-x:-165px}
-  82% {transform:translate(-10px,-10px);background-position-x:-165px}
-  83% {transform:translate(-10px,-10px);background-position-x:   0}
-  97% {transform:translate(  0px,  0px);background-position-x:   0}
-  100%{transform:translate(  0px,  0px);background-position-x:   0}
+  0%   {transform:translate(  0px,  0px);background-position-x:   0}
+  10%  {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
+  /* SNAP right-lean, drift right */
+  11%  {transform:translate(  0px,  0px);background-position-x:-110px}
+  25%  {transform:translate( 28px, 18px);background-position-x:-110px}
+  37%  {transform:translate( 28px, 18px);background-position-x:-110px;animation-timing-function:step-end}
+  /* SNAP left-lean, drift left */
+  38%  {transform:translate( 28px, 18px);background-position-x: -55px}
+  53%  {transform:translate(-25px, 22px);background-position-x: -55px}
+  65%  {transform:translate(-25px, 22px);background-position-x: -55px;animation-timing-function:step-end}
+  /* SNAP side-right, return */
+  66%  {transform:translate(-25px, 22px);background-position-x:-165px}
+  80%  {transform:translate(-10px,-10px);background-position-x:-165px}
+  81%  {transform:translate(-10px,-10px);background-position-x:-165px;animation-timing-function:step-end}
+  /* SNAP front, final return */
+  82%  {transform:translate(-10px,-10px);background-position-x:   0}
+  97%  {transform:translate(  0px,  0px);background-position-x:   0}
+  100% {transform:translate(  0px,  0px);background-position-x:   0}
 }
-.sprite-ideas.is-working { animation:patrol-ideas 11s linear infinite; filter:drop-shadow(0 0 8px rgba(155,60,255,.85)); }
+.sprite-ideas.is-working {
+  animation:patrol-ideas 11s linear infinite;
+  filter:drop-shadow(0 0 8px rgba(155,60,255,.85));
+}
 
-/* PIXEL DAMAGE — images room
-   768x286 · 4 frames 192x286 · display 80x119
-   bg-size 320x119 · frame-px: 0 | -80 | -160 | -240     */
+/* ── PIXEL DAMAGE — images room ──────────────────────
+   768×286 · 4 frames 192×286 · display 80×119
+   bg-size 320×119 · frame-px: 0 | -80 | -160 | -240   */
 .sprite-images {
   position:absolute; width:80px; height:119px;
   background:url('/sprites/pixel%20damage.png') 0 0/320px 119px no-repeat;
@@ -434,30 +145,36 @@ body::after {
   animation:patrol-images 19s linear infinite;
 }
 @keyframes patrol-images {
-  0%  {transform:translate(  0px,  0px);background-position-x:   0}
-  8%  {transform:translate(  0px,  0px);background-position-x:   0}
-  9%  {transform:translate(  0px,  0px);background-position-x:-240px}
-  22% {transform:translate( 38px, 14px);background-position-x:-240px}
-  23% {transform:translate( 38px, 14px);background-position-x:   0}
-  33% {transform:translate( 38px, 14px);background-position-x:   0}
-  34% {transform:translate( 38px, 14px);background-position-x: -80px}
-  47% {transform:translate( 18px, 38px);background-position-x: -80px}
-  48% {transform:translate( 18px, 38px);background-position-x:   0}
-  57% {transform:translate( 18px, 38px);background-position-x:   0}
-  58% {transform:translate( 18px, 38px);background-position-x:-160px}
-  72% {transform:translate(-33px, 20px);background-position-x:-160px}
-  73% {transform:translate(-33px, 20px);background-position-x:   0}
-  84% {transform:translate(-33px, 20px);background-position-x:   0}
-  85% {transform:translate(-33px, 20px);background-position-x: -80px}
-  97% {transform:translate(  0px,  0px);background-position-x: -80px}
-  98% {transform:translate(  0px,  0px);background-position-x:   0}
-  100%{transform:translate(  0px,  0px);background-position-x:   0}
+  0%   {transform:translate(  0px,  0px);background-position-x:   0}
+  8%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
+  /* SNAP side-right, skate right */
+  9%   {transform:translate(  0px,  0px);background-position-x:-240px}
+  22%  {transform:translate( 38px, 14px);background-position-x:-240px}
+  32%  {transform:translate( 38px, 14px);background-position-x:-240px;animation-timing-function:step-end}
+  /* SNAP fwd-right, push forward */
+  33%  {transform:translate( 38px, 14px);background-position-x: -80px}
+  46%  {transform:translate( 18px, 38px);background-position-x: -80px}
+  56%  {transform:translate( 18px, 38px);background-position-x: -80px;animation-timing-function:step-end}
+  /* SNAP back-right, skate left */
+  57%  {transform:translate( 18px, 38px);background-position-x:-160px}
+  71%  {transform:translate(-33px, 20px);background-position-x:-160px}
+  81%  {transform:translate(-33px, 20px);background-position-x:-160px;animation-timing-function:step-end}
+  /* SNAP fwd-right for return trip */
+  82%  {transform:translate(-33px, 20px);background-position-x: -80px}
+  96%  {transform:translate(  0px,  0px);background-position-x: -80px}
+  97%  {transform:translate(  0px,  0px);background-position-x: -80px;animation-timing-function:step-end}
+  /* SNAP front at home */
+  98%  {transform:translate(  0px,  0px);background-position-x:   0}
+  100% {transform:translate(  0px,  0px);background-position-x:   0}
 }
-.sprite-images.is-working { animation:patrol-images 11s linear infinite; filter:drop-shadow(0 0 8px rgba(255,115,0,.85)); }
+.sprite-images.is-working {
+  animation:patrol-images 11s linear infinite;
+  filter:drop-shadow(0 0 8px rgba(255,115,0,.85));
+}
 
-/* MOTION SICK / DRONE — video room
-   768x286 · 4 frames 192x286 · display 80x119
-   bg-size 320x119 · frame-px: 0 | -80 | -160 | -240     */
+/* ── MOTION SICK / DRONE — video room ────────────────
+   768×286 · 4 frames 192×286 · display 80×119
+   bg-size 320×119 · frame-px: 0=level | -80=bank1 | -160=bank2 | -240=hard */
 .sprite-video {
   position:absolute; width:80px; height:119px;
   background:url('/sprites/motion%20sick.png') 0 0/320px 119px no-repeat;
@@ -466,41 +183,47 @@ body::after {
   animation:patrol-video 17s linear infinite;
 }
 @keyframes patrol-video {
-  0%  {transform:translate(  0px,  0px);background-position-x:   0}
-  7%  {transform:translate(  0px,  0px);background-position-x:   0}
-  8%  {transform:translate(  0px,  0px);background-position-x: -80px}
-  20% {transform:translate( 36px, 12px);background-position-x: -80px}
-  21% {transform:translate( 36px, 12px);background-position-x:   0}
-  30% {transform:translate( 36px, 12px);background-position-x:   0}
-  31% {transform:translate( 36px, 12px);background-position-x:-160px}
-  44% {transform:translate(-30px, 24px);background-position-x:-160px}
-  45% {transform:translate(-30px, 24px);background-position-x:   0}
-  54% {transform:translate(-30px, 24px);background-position-x:   0}
-  55% {transform:translate(-30px, 24px);background-position-x:-240px}
-  67% {transform:translate( 10px,-10px);background-position-x:-240px}
-  68% {transform:translate( 10px,-10px);background-position-x:   0}
-  78% {transform:translate( 10px,-10px);background-position-x:   0}
-  79% {transform:translate( 10px,-10px);background-position-x: -80px}
-  94% {transform:translate(  0px,  0px);background-position-x: -80px}
-  95% {transform:translate(  0px,  0px);background-position-x:   0}
-  100%{transform:translate(  0px,  0px);background-position-x:   0}
+  0%   {transform:translate(  0px,  0px);background-position-x:   0}
+  7%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
+  /* SNAP bank-right, fly right */
+  8%   {transform:translate(  0px,  0px);background-position-x: -80px}
+  20%  {transform:translate( 36px, 12px);background-position-x: -80px}
+  29%  {transform:translate( 36px, 12px);background-position-x: -80px;animation-timing-function:step-end}
+  /* SNAP bank-left, fly left */
+  30%  {transform:translate( 36px, 12px);background-position-x:-160px}
+  43%  {transform:translate(-30px, 24px);background-position-x:-160px}
+  53%  {transform:translate(-30px, 24px);background-position-x:-160px;animation-timing-function:step-end}
+  /* SNAP hard-bank, sweep up-right */
+  54%  {transform:translate(-30px, 24px);background-position-x:-240px}
+  67%  {transform:translate( 10px,-10px);background-position-x:-240px}
+  77%  {transform:translate( 10px,-10px);background-position-x:-240px;animation-timing-function:step-end}
+  /* SNAP gentle bank, return home */
+  78%  {transform:translate( 10px,-10px);background-position-x: -80px}
+  93%  {transform:translate(  0px,  0px);background-position-x: -80px}
+  94%  {transform:translate(  0px,  0px);background-position-x: -80px;animation-timing-function:step-end}
+  /* SNAP level at home */
+  95%  {transform:translate(  0px,  0px);background-position-x:   0}
+  100% {transform:translate(  0px,  0px);background-position-x:   0}
 }
-.sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
+.sprite-video.is-working {
+  animation:patrol-video 9s linear infinite;
+  filter:drop-shadow(0 0 8px rgba(50,255,100,.85));
+}
 
 /* ── DO NOT PUSH — image button ──────────────────────
-   boton.png 550x285 · 2 states 275x285 · display 110x114
-   bg-size 220x114 · Normal: x=0 | Busy: x=-110px        */
+   boton.png 550×285 · 2 states 275×285 · display 140×145
+   bg-size 280×145 · Normal: x=0 | Busy/pressed: x=-140px
+   No scale on hover → no movement on click              */
 .do-not-push-btn {
   position:absolute; right:6%; top:38%;
   transform:translateY(-50%);
-  width:110px; height:114px;
-  background:url('/sprites/boton.png') 0 0/220px 114px no-repeat;
+  width:140px; height:145px;
+  background:url('/sprites/boton.png') 0 0/280px 145px no-repeat;
   image-rendering:auto; border:none; padding:0; cursor:pointer; z-index:10;
-  transition:filter .15s ease,transform .15s ease;
+  transition:filter .15s ease;
 }
 .do-not-push-btn:hover:not(:disabled) {
-  filter:brightness(1.15) drop-shadow(0 0 14px rgba(255,200,0,.65));
-  transform:translateY(-50%) scale(1.07);
+  filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7));
 }
 .do-not-push-btn.is-busy,
-.do-not-push-btn:disabled { background-position-x:-110px; cursor:not-allowed; filter:none; }
+.do-not-push-btn:disabled { background-position-x:-140px; cursor:not-allowed; filter:brightness(0.85); }
