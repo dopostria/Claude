@@ -322,157 +322,185 @@ body::after {
 .px-tl{top:-1px;left:-1px} .px-tr{top:-1px;right:-1px} .px-bl{bottom:-1px;left:-1px} .px-br{bottom:-1px;right:-1px}
 
 /* ═══════════════════════════════════════════════════════
-   DUNGEON STAGE — full image background
+   DUNGEON STAGE v2 — full image, precise overlays
    ═══════════════════════════════════════════════════════ */
 
 .dungeon-stage {
-  flex: 1;
-  position: relative;
-  background: url('/sprites/dungeon.png') center / cover no-repeat, #020810;
-  min-width: 0;
-  overflow: hidden;
-  image-rendering: auto;
+  flex:1; min-width:0; background:#020810;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.dungeon-inner {
+  position:relative;
+  width:100%; max-height:100%;
+  aspect-ratio:1672/941;
+  overflow:hidden;
+}
+.dungeon-bg {
+  position:absolute; inset:0;
+  background:url('/sprites/dungeon.png') center/cover no-repeat;
+  image-rendering:auto;
 }
 
-/* ── Room glow overlays ───────────────────────────────── */
-/* Transparent divs positioned over each room in dungeon.png */
+/* ── Room glow overlays ─────────────────────────────── */
+.room-overlay { position:absolute; pointer-events:none; transition:box-shadow .45s ease,opacity .45s ease; }
+.room-boss   { left:18%;right:18%;top:1%;bottom:48%;border-radius:28%; }
+.room-ideas  { left:0%;width:36%;top:50%;bottom:0%;border-radius:18%; }
+.room-images { left:33%;right:33%;top:53%;bottom:0%;border-radius:18%; }
+.room-video  { right:0%;width:36%;top:50%;bottom:0%;border-radius:18%; }
 
-.room-overlay {
-  position: absolute;
-  pointer-events: none;
-  transition: box-shadow .45s ease, background .45s ease, opacity .45s ease;
-}
+.room-boss.is-working   { box-shadow:0 0 80px 30px rgba(0,200,255,.40),inset 0 0 90px rgba(0,200,255,.12); animation:room-pulse 1.3s ease-in-out infinite; }
+.room-ideas.is-working  { box-shadow:0 0 80px 30px rgba(155,60,255,.40),inset 0 0 90px rgba(155,60,255,.12); animation:room-pulse 1.3s ease-in-out infinite; }
+.room-images.is-working { box-shadow:0 0 80px 30px rgba(255,115,0,.40),inset 0 0 90px rgba(255,115,0,.12); animation:room-pulse 1.3s ease-in-out infinite; }
+.room-video.is-working  { box-shadow:0 0 80px 30px rgba(50,255,100,.40),inset 0 0 90px rgba(50,255,100,.12); animation:room-pulse 1.3s ease-in-out infinite; }
+.room-boss.is-done      { box-shadow:0 0 35px 10px rgba(0,200,255,.25); }
+.room-ideas.is-done     { box-shadow:0 0 35px 10px rgba(155,60,255,.25); }
+.room-images.is-done    { box-shadow:0 0 35px 10px rgba(255,115,0,.25); }
+.room-video.is-done     { box-shadow:0 0 35px 10px rgba(50,255,100,.25); }
+.room-overlay.is-error  { box-shadow:0 0 50px 15px rgba(255,35,35,.55); animation:room-pulse .65s ease-in-out infinite; }
+@keyframes room-pulse { 0%,100%{opacity:.80} 50%{opacity:1} }
 
-/* Boss — top-center octagonal blue room */
-.room-boss {
-  left: 18%; right: 18%;
-  top: 1%; bottom: 48%;
-  border-radius: 28%;
-}
+/* ═══════════════════════════════════════════════════════
+   CHARACTER SPRITES — one keyframe controls movement + facing
+   No looping walk-cycle: frame = direction, not animation step
+   ═══════════════════════════════════════════════════════ */
 
-/* Ideas — bottom-left purple room */
-.room-ideas {
-  left: 0%; width: 36%;
-  top: 50%; bottom: 0%;
-  border-radius: 18%;
-}
-
-/* Images — bottom-center orange room */
-.room-images {
-  left: 33%; right: 33%;
-  top: 53%; bottom: 0%;
-  border-radius: 18%;
-}
-
-/* Video — bottom-right green room */
-.room-video {
-  right: 0%; width: 36%;
-  top: 50%; bottom: 0%;
-  border-radius: 18%;
-}
-
-/* Working */
-.room-boss.is-working   { box-shadow: 0 0 80px 30px rgba(0,200,255,.40), inset 0 0 90px rgba(0,200,255,.12); animation: room-pulse 1.3s ease-in-out infinite; }
-.room-ideas.is-working  { box-shadow: 0 0 80px 30px rgba(155,60,255,.40), inset 0 0 90px rgba(155,60,255,.12); animation: room-pulse 1.3s ease-in-out infinite; }
-.room-images.is-working { box-shadow: 0 0 80px 30px rgba(255,115,0,.40), inset 0 0 90px rgba(255,115,0,.12); animation: room-pulse 1.3s ease-in-out infinite; }
-.room-video.is-working  { box-shadow: 0 0 80px 30px rgba(50,255,100,.40), inset 0 0 90px rgba(50,255,100,.12); animation: room-pulse 1.3s ease-in-out infinite; }
-
-/* Done */
-.room-boss.is-done   { box-shadow: 0 0 35px 10px rgba(0,200,255,.25); }
-.room-ideas.is-done  { box-shadow: 0 0 35px 10px rgba(155,60,255,.25); }
-.room-images.is-done { box-shadow: 0 0 35px 10px rgba(255,115,0,.25); }
-.room-video.is-done  { box-shadow: 0 0 35px 10px rgba(50,255,100,.25); }
-
-/* Error */
-.room-overlay.is-error { box-shadow: 0 0 50px 15px rgba(255,35,35,.55); animation: room-pulse .65s ease-in-out infinite; }
-
-@keyframes room-pulse {
-  0%, 100% { opacity: .80; }
-  50%       { opacity: 1;   }
-}
-
-/* ── Dr. Adderall sprite ──────────────────────────────── */
-/* Original: 992×397 · 4 frames · each 248×397            */
-/* Displayed at 84×135 (scale ≈ 0.34)                     */
-
+/* DR. ADDERALL — boss room
+   992x397 · 4 frames 248x397 · display 84x135
+   bg-size 336x135 · frame-px: 0 | -84 | -168 | -252     */
 .sprite-boss {
-  position: absolute;
-  width: 84px;
-  height: 135px;
-  /* 4 frames side by side → total background-size: 336×135 */
-  background: url('/sprites/dr%20adderall.png') 0 0 / 336px 135px no-repeat;
-  image-rendering: auto;
-  animation:
-    sprite-frames .85s steps(4) infinite,
-    patrol-boss   12s ease-in-out infinite;
-  /* Start at boss room center (~50% x, ~25% y) */
-  left: calc(50% - 42px);
-  top:  calc(24% - 68px);
-  z-index: 5;
+  position:absolute; width:84px; height:135px;
+  background:url('/sprites/dr%20adderall.png') 0 0/336px 135px no-repeat;
+  image-rendering:auto; z-index:5;
+  left:calc(50% - 42px); top:calc(25% - 68px);
+  animation:patrol-boss 22s linear infinite;
 }
-
-@keyframes sprite-frames {
-  from { background-position-x:    0; }
-  to   { background-position-x: -336px; }
-}
-
-/* Patrol path inside the boss room */
 @keyframes patrol-boss {
-  0%   { transform: translate(   0px,   0px ); }
-  12%  { transform: translate(  55px,  18px ); }
-  25%  { transform: translate(  45px,  52px ); }
-  40%  { transform: translate(   5px,  68px ); }
-  55%  { transform: translate( -50px,  55px ); }
-  70%  { transform: translate( -65px,  18px ); }
-  85%  { transform: translate( -30px, -22px ); }
-  100% { transform: translate(   0px,   0px ); }
+  0%  {transform:translate(  0px,  0px);background-position-x:   0}
+  8%  {transform:translate(  0px,  0px);background-position-x:   0}
+  9%  {transform:translate(  0px,  0px);background-position-x:-168px}
+  23% {transform:translate( 55px, 35px);background-position-x:-168px}
+  24% {transform:translate( 55px, 35px);background-position-x:   0}
+  34% {transform:translate( 55px, 35px);background-position-x:   0}
+  35% {transform:translate( 55px, 35px);background-position-x:-252px}
+  51% {transform:translate(-40px, 55px);background-position-x:-252px}
+  52% {transform:translate(-40px, 55px);background-position-x:   0}
+  62% {transform:translate(-40px, 55px);background-position-x:   0}
+  63% {transform:translate(-40px, 55px);background-position-x: -84px}
+  79% {transform:translate(-55px, -5px);background-position-x: -84px}
+  83% {transform:translate(-55px, -5px);background-position-x:   0}
+  97% {transform:translate(  0px,  0px);background-position-x:   0}
+  100%{transform:translate(  0px,  0px);background-position-x:   0}
 }
+.sprite-boss.is-working { animation:patrol-boss 12s linear infinite; filter:drop-shadow(0 0 8px rgba(0,200,255,.85)); }
 
-/* Active: faster cycle + cyan glow */
-.sprite-boss.is-working {
-  animation:
-    sprite-frames .5s steps(4) infinite,
-    patrol-boss   7s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px rgba(0,200,255,.85));
+/* 3AM THOUGHTS — ideas room
+   768x512 · 4 frames 192x512 · display 55x147
+   bg-size 220x147 · frame-px: 0 | -55 | -110 | -165     */
+.sprite-ideas {
+  position:absolute; width:55px; height:147px;
+  background:url('/sprites/3am%20thoughts.png') 0 0/220px 147px no-repeat;
+  image-rendering:auto; z-index:5;
+  left:calc(18% - 28px); top:calc(70% - 74px);
+  animation:patrol-ideas 20s linear infinite;
 }
+@keyframes patrol-ideas {
+  0%  {transform:translate(  0px,  0px);background-position-x:   0}
+  10% {transform:translate(  0px,  0px);background-position-x:   0}
+  11% {transform:translate(  0px,  0px);background-position-x:-110px}
+  25% {transform:translate( 28px, 18px);background-position-x:-110px}
+  26% {transform:translate( 28px, 18px);background-position-x:   0}
+  38% {transform:translate( 28px, 18px);background-position-x:   0}
+  39% {transform:translate( 28px, 18px);background-position-x: -55px}
+  54% {transform:translate(-25px, 22px);background-position-x: -55px}
+  55% {transform:translate(-25px, 22px);background-position-x:   0}
+  67% {transform:translate(-25px, 22px);background-position-x:   0}
+  68% {transform:translate(-25px, 22px);background-position-x:-165px}
+  82% {transform:translate(-10px,-10px);background-position-x:-165px}
+  83% {transform:translate(-10px,-10px);background-position-x:   0}
+  97% {transform:translate(  0px,  0px);background-position-x:   0}
+  100%{transform:translate(  0px,  0px);background-position-x:   0}
+}
+.sprite-ideas.is-working { animation:patrol-ideas 11s linear infinite; filter:drop-shadow(0 0 8px rgba(155,60,255,.85)); }
 
-/* ── DO NOT PUSH button ───────────────────────────────── */
+/* PIXEL DAMAGE — images room
+   768x286 · 4 frames 192x286 · display 80x119
+   bg-size 320x119 · frame-px: 0 | -80 | -160 | -240     */
+.sprite-images {
+  position:absolute; width:80px; height:119px;
+  background:url('/sprites/pixel%20damage.png') 0 0/320px 119px no-repeat;
+  image-rendering:auto; z-index:5;
+  left:calc(50% - 40px); top:calc(73% - 60px);
+  animation:patrol-images 19s linear infinite;
+}
+@keyframes patrol-images {
+  0%  {transform:translate(  0px,  0px);background-position-x:   0}
+  8%  {transform:translate(  0px,  0px);background-position-x:   0}
+  9%  {transform:translate(  0px,  0px);background-position-x:-240px}
+  22% {transform:translate( 38px, 14px);background-position-x:-240px}
+  23% {transform:translate( 38px, 14px);background-position-x:   0}
+  33% {transform:translate( 38px, 14px);background-position-x:   0}
+  34% {transform:translate( 38px, 14px);background-position-x: -80px}
+  47% {transform:translate( 18px, 38px);background-position-x: -80px}
+  48% {transform:translate( 18px, 38px);background-position-x:   0}
+  57% {transform:translate( 18px, 38px);background-position-x:   0}
+  58% {transform:translate( 18px, 38px);background-position-x:-160px}
+  72% {transform:translate(-33px, 20px);background-position-x:-160px}
+  73% {transform:translate(-33px, 20px);background-position-x:   0}
+  84% {transform:translate(-33px, 20px);background-position-x:   0}
+  85% {transform:translate(-33px, 20px);background-position-x: -80px}
+  97% {transform:translate(  0px,  0px);background-position-x: -80px}
+  98% {transform:translate(  0px,  0px);background-position-x:   0}
+  100%{transform:translate(  0px,  0px);background-position-x:   0}
+}
+.sprite-images.is-working { animation:patrol-images 11s linear infinite; filter:drop-shadow(0 0 8px rgba(255,115,0,.85)); }
 
+/* MOTION SICK / DRONE — video room
+   768x286 · 4 frames 192x286 · display 80x119
+   bg-size 320x119 · frame-px: 0 | -80 | -160 | -240     */
+.sprite-video {
+  position:absolute; width:80px; height:119px;
+  background:url('/sprites/motion%20sick.png') 0 0/320px 119px no-repeat;
+  image-rendering:auto; z-index:5;
+  left:calc(80% - 40px); top:calc(72% - 60px);
+  animation:patrol-video 17s linear infinite;
+}
+@keyframes patrol-video {
+  0%  {transform:translate(  0px,  0px);background-position-x:   0}
+  7%  {transform:translate(  0px,  0px);background-position-x:   0}
+  8%  {transform:translate(  0px,  0px);background-position-x: -80px}
+  20% {transform:translate( 36px, 12px);background-position-x: -80px}
+  21% {transform:translate( 36px, 12px);background-position-x:   0}
+  30% {transform:translate( 36px, 12px);background-position-x:   0}
+  31% {transform:translate( 36px, 12px);background-position-x:-160px}
+  44% {transform:translate(-30px, 24px);background-position-x:-160px}
+  45% {transform:translate(-30px, 24px);background-position-x:   0}
+  54% {transform:translate(-30px, 24px);background-position-x:   0}
+  55% {transform:translate(-30px, 24px);background-position-x:-240px}
+  67% {transform:translate( 10px,-10px);background-position-x:-240px}
+  68% {transform:translate( 10px,-10px);background-position-x:   0}
+  78% {transform:translate( 10px,-10px);background-position-x:   0}
+  79% {transform:translate( 10px,-10px);background-position-x: -80px}
+  94% {transform:translate(  0px,  0px);background-position-x: -80px}
+  95% {transform:translate(  0px,  0px);background-position-x:   0}
+  100%{transform:translate(  0px,  0px);background-position-x:   0}
+}
+.sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
+
+/* ── DO NOT PUSH — image button ──────────────────────
+   boton.png 550x285 · 2 states 275x285 · display 110x114
+   bg-size 220x114 · Normal: x=0 | Busy: x=-110px        */
 .do-not-push-btn {
-  position: absolute;
-  left: 50%;
-  top: 53%;
-  transform: translate(-50%, -50%);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
-  letter-spacing: 2px;
-  white-space: nowrap;
-  color: #ff1a3d;
-  background: rgba(8, 0, 3, .92);
-  border: 1px solid #ff1a3d;
-  padding: 10px 20px;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow:
-    0 0 16px rgba(255,26,61,.65),
-    inset 0 0 10px rgba(255,26,61,.10);
-  text-shadow: 0 0 10px rgba(255,26,61,.9);
-  transition: all .2s ease;
+  position:absolute; right:6%; top:38%;
+  transform:translateY(-50%);
+  width:110px; height:114px;
+  background:url('/sprites/boton.png') 0 0/220px 114px no-repeat;
+  image-rendering:auto; border:none; padding:0; cursor:pointer; z-index:10;
+  transition:filter .15s ease,transform .15s ease;
 }
-
 .do-not-push-btn:hover:not(:disabled) {
-  background: rgba(255,26,61,.14);
-  box-shadow:
-    0 0 32px rgba(255,26,61,.95),
-    inset 0 0 20px rgba(255,26,61,.18);
-  transform: translate(-50%, -50%) scale(1.06);
+  filter:brightness(1.15) drop-shadow(0 0 14px rgba(255,200,0,.65));
+  transform:translateY(-50%) scale(1.07);
 }
-
 .do-not-push-btn.is-busy,
-.do-not-push-btn:disabled {
-  color: #3a3a3a;
-  border-color: #2a2a2a;
-  box-shadow: none;
-  text-shadow: none;
-  cursor: not-allowed;
-}
+.do-not-push-btn:disabled { background-position-x:-110px; cursor:not-allowed; filter:none; }
