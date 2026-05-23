@@ -1,23 +1,20 @@
 /* ═══════════════════════════════════════════════════════
-   DUNGEON STAGE v3
+   DUNGEON STAGE v3 — full-fit layout, fixed sprites
    ═══════════════════════════════════════════════════════ */
 
-/* Shell: dark background behind any letterbox */
+/* Centering shell */
 .dungeon-stage {
   flex:1; min-width:0; background:#020810;
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 }
 
-/* Inner: always fits the viewport without cutting
-   Uses min() to choose the tighter constraint (width vs height).
-   188px = sidebar width | 34px = HUD height                      */
+/* Maintains exact 1672:941 ratio, always fits viewport.
+   188px = sidebar | 34px = HUD                          */
 .dungeon-inner {
-  position:relative;
+  position:relative; flex-shrink:0; overflow:hidden;
   width:  min(calc(100vw - 188px), calc((100vh - 34px) * 1672 / 941));
   height: min(calc(100vh - 34px),  calc((100vw - 188px) * 941 / 1672));
-  overflow:hidden;
-  flex-shrink:0;
 }
 
 .dungeon-bg {
@@ -45,24 +42,19 @@
 @keyframes room-pulse { 0%,100%{opacity:.80} 50%{opacity:1} }
 
 /* ═══════════════════════════════════════════════════════
-   CHARACTER SPRITES — v3 fixes
+   CHARACTER SPRITES v3
    
-   Each animation controls BOTH transform (movement) AND
-   background-position-x (facing frame) in ONE keyframe.
+   ONE keyframe controls both transform (movement) AND
+   background-position-x (facing frame).
    
-   KEY TRICK: "animation-timing-function: step-end" on a
-   keyframe makes bg-position-x snap INSTANTLY to the next
-   value instead of interpolating through all frames.
-   It only applies when transform is also stationary at that
-   point (same value both sides), so movement stays smooth.
-   
-   Characters STAY in their arrival frame while working —
-   no snap back to frame 0.
+   animation-timing-function:step-end on a stationary
+   keyframe snaps bg-position-x INSTANTLY — no frame parade.
+   Characters STAY in their arrival frame while working.
    ═══════════════════════════════════════════════════════ */
 
-/* ── DR. ADDERALL — boss room ─────────────────────────
-   992×397 · 4 frames 248×397 · display 84×135
-   bg-size 336×135 · frame-px: 0 | -84 | -168 | -252    */
+/* DR. ADDERALL — boss room (top center blue)
+   992x397, 4 frames 248x397, display 84x135
+   bg-size:336x135  frames: 0 -84 -168 -252            */
 .sprite-boss {
   position:absolute; width:84px; height:135px;
   background:url('/sprites/dr%20adderall.png') 0 0/336px 135px no-repeat;
@@ -71,37 +63,26 @@
   animation:patrol-boss 22s linear infinite;
 }
 @keyframes patrol-boss {
-  /* Idle center, front frame */
-  0%   {transform:translate(  0px,  0px);background-position-x:   0}
-  8%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
-  /* SNAP to right-facing, begin moving right */
-  9%   {transform:translate(  0px,  0px);background-position-x:-168px}
-  /* Arrive right — stay in right frame, work here */
-  23%  {transform:translate( 55px, 35px);background-position-x:-168px}
-  33%  {transform:translate( 55px, 35px);background-position-x:-168px;animation-timing-function:step-end}
-  /* SNAP to side-right, begin moving left-down */
-  34%  {transform:translate( 55px, 35px);background-position-x:-252px}
-  /* Arrive lower-left — stay in side frame, work here */
-  50%  {transform:translate(-40px, 55px);background-position-x:-252px}
-  60%  {transform:translate(-40px, 55px);background-position-x:-252px;animation-timing-function:step-end}
-  /* SNAP to back frame, move toward home */
-  61%  {transform:translate(-40px, 55px);background-position-x: -84px}
-  /* Mid-transit pause */
-  77%  {transform:translate(-55px, -5px);background-position-x: -84px}
-  82%  {transform:translate(-55px, -5px);background-position-x: -84px;animation-timing-function:step-end}
-  /* SNAP to front, final leg home */
-  83%  {transform:translate(-55px, -5px);background-position-x:   0}
-  97%  {transform:translate(  0px,  0px);background-position-x:   0}
-  100% {transform:translate(  0px,  0px);background-position-x:   0}
+  0%   { transform:translate(  0px,  0px); background-position-x:    0 }
+  8%   { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
+  9%   { transform:translate(  0px,  0px); background-position-x: -168px }
+  23%  { transform:translate( 55px, 35px); background-position-x: -168px }
+  33%  { transform:translate( 55px, 35px); background-position-x: -168px; animation-timing-function:step-end }
+  34%  { transform:translate( 55px, 35px); background-position-x: -252px }
+  50%  { transform:translate(-40px, 55px); background-position-x: -252px }
+  60%  { transform:translate(-40px, 55px); background-position-x: -252px; animation-timing-function:step-end }
+  61%  { transform:translate(-40px, 55px); background-position-x:  -84px }
+  77%  { transform:translate(-55px, -5px); background-position-x:  -84px }
+  82%  { transform:translate(-55px, -5px); background-position-x:  -84px; animation-timing-function:step-end }
+  83%  { transform:translate(-55px, -5px); background-position-x:    0 }
+  97%  { transform:translate(  0px,  0px); background-position-x:    0 }
+  100% { transform:translate(  0px,  0px); background-position-x:    0 }
 }
-.sprite-boss.is-working {
-  animation:patrol-boss 12s linear infinite;
-  filter:drop-shadow(0 0 8px rgba(0,200,255,.85));
-}
+.sprite-boss.is-working { animation:patrol-boss 12s linear infinite; filter:drop-shadow(0 0 8px rgba(0,200,255,.85)); }
 
-/* ── 3AM THOUGHTS — ideas room ───────────────────────
-   768×512 · 4 frames 192×512 · display 55×147
-   bg-size 220×147 · frame-px: 0 | -55 | -110 | -165   */
+/* 3AM THOUGHTS — ideas room (bottom left purple)
+   768x512, 4 frames 192x512, display 55x147
+   bg-size:220x147  frames: 0 -55 -110 -165            */
 .sprite-ideas {
   position:absolute; width:55px; height:147px;
   background:url('/sprites/3am%20thoughts.png') 0 0/220px 147px no-repeat;
@@ -110,33 +91,26 @@
   animation:patrol-ideas 20s linear infinite;
 }
 @keyframes patrol-ideas {
-  0%   {transform:translate(  0px,  0px);background-position-x:   0}
-  10%  {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
-  /* SNAP right-lean, drift right */
-  11%  {transform:translate(  0px,  0px);background-position-x:-110px}
-  25%  {transform:translate( 28px, 18px);background-position-x:-110px}
-  37%  {transform:translate( 28px, 18px);background-position-x:-110px;animation-timing-function:step-end}
-  /* SNAP left-lean, drift left */
-  38%  {transform:translate( 28px, 18px);background-position-x: -55px}
-  53%  {transform:translate(-25px, 22px);background-position-x: -55px}
-  65%  {transform:translate(-25px, 22px);background-position-x: -55px;animation-timing-function:step-end}
-  /* SNAP side-right, return */
-  66%  {transform:translate(-25px, 22px);background-position-x:-165px}
-  80%  {transform:translate(-10px,-10px);background-position-x:-165px}
-  81%  {transform:translate(-10px,-10px);background-position-x:-165px;animation-timing-function:step-end}
-  /* SNAP front, final return */
-  82%  {transform:translate(-10px,-10px);background-position-x:   0}
-  97%  {transform:translate(  0px,  0px);background-position-x:   0}
-  100% {transform:translate(  0px,  0px);background-position-x:   0}
+  0%   { transform:translate(  0px,  0px); background-position-x:    0 }
+  10%  { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
+  11%  { transform:translate(  0px,  0px); background-position-x: -110px }
+  25%  { transform:translate( 28px, 18px); background-position-x: -110px }
+  37%  { transform:translate( 28px, 18px); background-position-x: -110px; animation-timing-function:step-end }
+  38%  { transform:translate( 28px, 18px); background-position-x:  -55px }
+  53%  { transform:translate(-25px, 22px); background-position-x:  -55px }
+  65%  { transform:translate(-25px, 22px); background-position-x:  -55px; animation-timing-function:step-end }
+  66%  { transform:translate(-25px, 22px); background-position-x: -165px }
+  80%  { transform:translate(-10px,-10px); background-position-x: -165px }
+  81%  { transform:translate(-10px,-10px); background-position-x: -165px; animation-timing-function:step-end }
+  82%  { transform:translate(-10px,-10px); background-position-x:    0 }
+  97%  { transform:translate(  0px,  0px); background-position-x:    0 }
+  100% { transform:translate(  0px,  0px); background-position-x:    0 }
 }
-.sprite-ideas.is-working {
-  animation:patrol-ideas 11s linear infinite;
-  filter:drop-shadow(0 0 8px rgba(155,60,255,.85));
-}
+.sprite-ideas.is-working { animation:patrol-ideas 11s linear infinite; filter:drop-shadow(0 0 8px rgba(155,60,255,.85)); }
 
-/* ── PIXEL DAMAGE — images room ──────────────────────
-   768×286 · 4 frames 192×286 · display 80×119
-   bg-size 320×119 · frame-px: 0 | -80 | -160 | -240   */
+/* PIXEL DAMAGE — images room (bottom center orange)
+   768x286, 4 frames 192x286, display 80x119
+   bg-size:320x119  frames: 0 -80 -160 -240            */
 .sprite-images {
   position:absolute; width:80px; height:119px;
   background:url('/sprites/pixel%20damage.png') 0 0/320px 119px no-repeat;
@@ -145,36 +119,28 @@
   animation:patrol-images 19s linear infinite;
 }
 @keyframes patrol-images {
-  0%   {transform:translate(  0px,  0px);background-position-x:   0}
-  8%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
-  /* SNAP side-right, skate right */
-  9%   {transform:translate(  0px,  0px);background-position-x:-240px}
-  22%  {transform:translate( 38px, 14px);background-position-x:-240px}
-  32%  {transform:translate( 38px, 14px);background-position-x:-240px;animation-timing-function:step-end}
-  /* SNAP fwd-right, push forward */
-  33%  {transform:translate( 38px, 14px);background-position-x: -80px}
-  46%  {transform:translate( 18px, 38px);background-position-x: -80px}
-  56%  {transform:translate( 18px, 38px);background-position-x: -80px;animation-timing-function:step-end}
-  /* SNAP back-right, skate left */
-  57%  {transform:translate( 18px, 38px);background-position-x:-160px}
-  71%  {transform:translate(-33px, 20px);background-position-x:-160px}
-  81%  {transform:translate(-33px, 20px);background-position-x:-160px;animation-timing-function:step-end}
-  /* SNAP fwd-right for return trip */
-  82%  {transform:translate(-33px, 20px);background-position-x: -80px}
-  96%  {transform:translate(  0px,  0px);background-position-x: -80px}
-  97%  {transform:translate(  0px,  0px);background-position-x: -80px;animation-timing-function:step-end}
-  /* SNAP front at home */
-  98%  {transform:translate(  0px,  0px);background-position-x:   0}
-  100% {transform:translate(  0px,  0px);background-position-x:   0}
+  0%   { transform:translate(  0px,  0px); background-position-x:    0 }
+  8%   { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
+  9%   { transform:translate(  0px,  0px); background-position-x: -240px }
+  22%  { transform:translate( 38px, 14px); background-position-x: -240px }
+  32%  { transform:translate( 38px, 14px); background-position-x: -240px; animation-timing-function:step-end }
+  33%  { transform:translate( 38px, 14px); background-position-x:  -80px }
+  46%  { transform:translate( 18px, 38px); background-position-x:  -80px }
+  56%  { transform:translate( 18px, 38px); background-position-x:  -80px; animation-timing-function:step-end }
+  57%  { transform:translate( 18px, 38px); background-position-x: -160px }
+  71%  { transform:translate(-33px, 20px); background-position-x: -160px }
+  81%  { transform:translate(-33px, 20px); background-position-x: -160px; animation-timing-function:step-end }
+  82%  { transform:translate(-33px, 20px); background-position-x:  -80px }
+  96%  { transform:translate(  0px,  0px); background-position-x:  -80px }
+  97%  { transform:translate(  0px,  0px); background-position-x:  -80px; animation-timing-function:step-end }
+  98%  { transform:translate(  0px,  0px); background-position-x:    0 }
+  100% { transform:translate(  0px,  0px); background-position-x:    0 }
 }
-.sprite-images.is-working {
-  animation:patrol-images 11s linear infinite;
-  filter:drop-shadow(0 0 8px rgba(255,115,0,.85));
-}
+.sprite-images.is-working { animation:patrol-images 11s linear infinite; filter:drop-shadow(0 0 8px rgba(255,115,0,.85)); }
 
-/* ── MOTION SICK / DRONE — video room ────────────────
-   768×286 · 4 frames 192×286 · display 80×119
-   bg-size 320×119 · frame-px: 0=level | -80=bank1 | -160=bank2 | -240=hard */
+/* MOTION SICK / DRONE — video room (bottom right green)
+   768x286, 4 frames 192x286, display 80x119
+   bg-size:320x119  frames: 0 -80 -160 -240            */
 .sprite-video {
   position:absolute; width:80px; height:119px;
   background:url('/sprites/motion%20sick.png') 0 0/320px 119px no-repeat;
@@ -183,47 +149,44 @@
   animation:patrol-video 17s linear infinite;
 }
 @keyframes patrol-video {
-  0%   {transform:translate(  0px,  0px);background-position-x:   0}
-  7%   {transform:translate(  0px,  0px);background-position-x:   0;animation-timing-function:step-end}
-  /* SNAP bank-right, fly right */
-  8%   {transform:translate(  0px,  0px);background-position-x: -80px}
-  20%  {transform:translate( 36px, 12px);background-position-x: -80px}
-  29%  {transform:translate( 36px, 12px);background-position-x: -80px;animation-timing-function:step-end}
-  /* SNAP bank-left, fly left */
-  30%  {transform:translate( 36px, 12px);background-position-x:-160px}
-  43%  {transform:translate(-30px, 24px);background-position-x:-160px}
-  53%  {transform:translate(-30px, 24px);background-position-x:-160px;animation-timing-function:step-end}
-  /* SNAP hard-bank, sweep up-right */
-  54%  {transform:translate(-30px, 24px);background-position-x:-240px}
-  67%  {transform:translate( 10px,-10px);background-position-x:-240px}
-  77%  {transform:translate( 10px,-10px);background-position-x:-240px;animation-timing-function:step-end}
-  /* SNAP gentle bank, return home */
-  78%  {transform:translate( 10px,-10px);background-position-x: -80px}
-  93%  {transform:translate(  0px,  0px);background-position-x: -80px}
-  94%  {transform:translate(  0px,  0px);background-position-x: -80px;animation-timing-function:step-end}
-  /* SNAP level at home */
-  95%  {transform:translate(  0px,  0px);background-position-x:   0}
-  100% {transform:translate(  0px,  0px);background-position-x:   0}
+  0%   { transform:translate(  0px,  0px); background-position-x:    0 }
+  7%   { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
+  8%   { transform:translate(  0px,  0px); background-position-x:  -80px }
+  20%  { transform:translate( 36px, 12px); background-position-x:  -80px }
+  29%  { transform:translate( 36px, 12px); background-position-x:  -80px; animation-timing-function:step-end }
+  30%  { transform:translate( 36px, 12px); background-position-x: -160px }
+  43%  { transform:translate(-30px, 24px); background-position-x: -160px }
+  53%  { transform:translate(-30px, 24px); background-position-x: -160px; animation-timing-function:step-end }
+  54%  { transform:translate(-30px, 24px); background-position-x: -240px }
+  67%  { transform:translate( 10px,-10px); background-position-x: -240px }
+  77%  { transform:translate( 10px,-10px); background-position-x: -240px; animation-timing-function:step-end }
+  78%  { transform:translate( 10px,-10px); background-position-x:  -80px }
+  93%  { transform:translate(  0px,  0px); background-position-x:  -80px }
+  94%  { transform:translate(  0px,  0px); background-position-x:  -80px; animation-timing-function:step-end }
+  95%  { transform:translate(  0px,  0px); background-position-x:    0 }
+  100% { transform:translate(  0px,  0px); background-position-x:    0 }
 }
-.sprite-video.is-working {
-  animation:patrol-video 9s linear infinite;
-  filter:drop-shadow(0 0 8px rgba(50,255,100,.85));
-}
+.sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
 
-/* ── DO NOT PUSH — image button ──────────────────────
-   boton.png 550×285 · 2 states 275×285 · display 140×145
-   bg-size 280×145 · Normal: x=0 | Busy/pressed: x=-140px
-   No scale on hover → no movement on click              */
+/* DO NOT PUSH — image button
+   boton.png 550x285, 2 states 275x285, display 140x145
+   bg-size:280x145  Normal:x=0  Pressed:x=-140px
+   No scale on hover = no position jump on click        */
 .do-not-push-btn {
   position:absolute; right:6%; top:38%;
   transform:translateY(-50%);
   width:140px; height:145px;
   background:url('/sprites/boton.png') 0 0/280px 145px no-repeat;
-  image-rendering:auto; border:none; padding:0; cursor:pointer; z-index:10;
+  image-rendering:auto; border:none; padding:0;
+  cursor:pointer; z-index:10;
   transition:filter .15s ease;
 }
 .do-not-push-btn:hover:not(:disabled) {
   filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7));
 }
 .do-not-push-btn.is-busy,
-.do-not-push-btn:disabled { background-position-x:-140px; cursor:not-allowed; filter:brightness(0.85); }
+.do-not-push-btn:disabled {
+  background-position-x:-140px;
+  cursor:not-allowed;
+  filter:brightness(0.85);
+}
