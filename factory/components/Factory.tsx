@@ -77,7 +77,7 @@ export default function Factory() {
     fireSignal('boss', 'ideas')
     try {
       const res = await fetch('/api/ideas', { method: 'POST' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
       const { concepts }: { concepts: Concept[] } = await res.json()
       setState(s => ({ ...s, concepts, rooms: { ...s.rooms, boss: 'done', ideas: 'done' },
         activeOverlay: 'ideas',
@@ -107,7 +107,7 @@ export default function Factory() {
       const res = await fetch('/api/sessions', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'select_concepts', concept_ids: ids, concepts: state.concepts }) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
       const { imagePrompts, videoPrompts }: { imagePrompts: Record<string, string>; videoPrompts: Record<string, string> } = await res.json()
       setState(s => ({ ...s, imagePrompts: { ...s.imagePrompts, ...imagePrompts },
         videoPrompts: { ...s.videoPrompts, ...videoPrompts },
@@ -174,7 +174,7 @@ export default function Factory() {
       const res = await fetch('/api/animation-concepts', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ concept, imagePrompt: selectedImg?.prompt ?? '' }) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
       const data = await res.json()
       setAnimationConcepts(data.animations ?? [])
       setState(s => ({ ...s, sessionLog: [...s.sessionLog, { time: now(), message: '3 conceptos de animacion listos!', type: 'success' }] }))
