@@ -467,11 +467,11 @@ body::after {
 }
 .sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
 
-/* DO NOT PUSH button - 400px display (2x), no transform = zero movement on click */
+/* DO NOT PUSH button - no transform = zero movement on click */
 .do-not-push-btn {
-  position:absolute; right:4%; top:calc(38% - 207px);
-  width:400px; height:414px;
-  background:url('/sprites/boton.png') 0 0/800px 414px no-repeat;
+  position:absolute; right:6%; top:calc(38% - 103px);
+  width:200px; height:207px;
+  background:url('/sprites/boton.png') 0 0/400px 207px no-repeat;
   image-rendering:auto; border:none; padding:0;
   cursor:pointer; z-index:10;
   transition:filter .15s ease;
@@ -491,7 +491,7 @@ body::after {
 }
 .do-not-push-btn.is-busy,
 .do-not-push-btn:disabled {
-  background-position-x:-400px;
+  background-position-x:-200px;
   cursor:not-allowed;
   filter:brightness(0.85);
 }
