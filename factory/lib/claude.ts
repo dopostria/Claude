@@ -332,9 +332,14 @@ Ordenados de mayor a menor calidad combinada.`)
 export async function generateConcepts(
   brandContext: Record<string, unknown>,
   recentHistory: HistorySelection[],
-  date: string
+  date: string,
+  additionalContext?: string
 ): Promise<Concept[]> {
   const client = getClient()
+
+  const userMsg = additionalContext
+    ? `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.\n\nInstrucciones adicionales del Dr. Adderall:\n${additionalContext}`
+    : `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.`
 
   const response = await client.messages.create({
     model: MODEL,
@@ -342,7 +347,7 @@ export async function generateConcepts(
     system: buildIdeaSystemPrompt(brandContext, recentHistory),
     messages: [{
       role: 'user',
-      content: `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.`,
+      content: userMsg,
     }],
   })
 

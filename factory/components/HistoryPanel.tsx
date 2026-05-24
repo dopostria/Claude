@@ -37,7 +37,7 @@ export default function HistoryPanel({
     <div className="history-top">
       <div className="history-section">
         <button className="history-hdr" onClick={() => setHoyOpen(o => !o)}>
-          <span className="history-arrow">{hoyOpen ? '▼' : '▶'}</span>
+          <span className="history-arrow">{hoyOpen ? '▾' : '▸'}</span>
           <span className="history-label">HOY</span>
           <span className="history-date">{today}</span>
           <span className="history-count">{hoyCount > 0 ? `${hoyCount} items` : 'vacío'}</span>
@@ -46,7 +46,7 @@ export default function HistoryPanel({
           <div className="history-items">
             {hasConcepts && (
               <div className="history-item">
-                <span className="history-item-icon" style={{ color: 'var(--sc-blue-bright)' }}>★</span>
+                <span className="history-item-icon" style={{ color: 'var(--sc-blue-bright)' }}>💡</span>
                 <span className="history-item-text">
                   {concepts.length} concepto{concepts.length !== 1 ? 's' : ''}
                   {selectedConceptIds.length > 0 && ` · ${selectedConceptIds.length} sel.`}
@@ -56,7 +56,7 @@ export default function HistoryPanel({
             )}
             {hasImages && (
               <div className="history-item">
-                <span className="history-item-icon" style={{ color: 'var(--images-c)' }}>■</span>
+                <span className="history-item-icon" style={{ color: 'var(--images-c)' }}>📸</span>
                 <span className="history-item-text">
                   {generatedImages.length} imagen{generatedImages.length !== 1 ? 'es' : ''}
                 </span>
@@ -65,7 +65,7 @@ export default function HistoryPanel({
             )}
             {hasVideo && (
               <div className="history-item">
-                <span className="history-item-icon" style={{ color: 'var(--sc-orange)' }}>▶</span>
+                <span className="history-item-icon" style={{ color: 'var(--sc-orange)' }}>🎬</span>
                 <span className="history-item-text">Video generado</span>
                 <button className="history-open-btn" onClick={onOpenVideo}>→ ABRIR</button>
               </div>
@@ -79,7 +79,7 @@ export default function HistoryPanel({
 
       <div className="history-section">
         <button className="history-hdr" onClick={() => setAyerOpen(o => !o)}>
-          <span className="history-arrow">{ayerOpen ? '▼' : '▶'}</span>
+          <span className="history-arrow">{ayerOpen ? '▾' : '▸'}</span>
           <span className="history-label">AYER</span>
           <span className="history-count">sin datos persistidos</span>
         </button>

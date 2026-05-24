@@ -2,17 +2,23 @@ import { NextResponse } from 'next/server'
 import { generateConcepts } from '@/lib/claude'
 import { readBrandContext, getRecentSelections, getTodayDate, getOrCreateTodaySession, writeSession } from '@/lib/storage'
 
-export async function POST() {
+export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY no está configurada en Vercel → Settings → Environment Variables' }, { status: 500 })
   }
 
   try {
+    let additionalContext: string | undefined
+    try {
+      const body = await req.json()
+      additionalContext = body?.additionalContext ?? undefined
+    } catch { /* body empty — fine */ }
+
     const brandContext = readBrandContext()
     const recentHistory = getRecentSelections(7)
     const date = getTodayDate()
 
-    const concepts = await generateConcepts(brandContext, recentHistory, date)
+    const concepts = await generateConcepts(brandContext, recentHistory, date, additionalContext)
 
     const session = getOrCreateTodaySession()
     session.concepts = concepts

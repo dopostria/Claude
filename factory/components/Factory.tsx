@@ -9,6 +9,7 @@ import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept, AnimationConcept } from '@/lib/types'
 import HistoryPanel from './HistoryPanel'
 import QuickNav from './QuickNav'
+import ChatOverlay from './overlays/ChatOverlay'
 
 interface GeneratedImage {
   id: string; conceptId: string; tool: string; imagePath: string
@@ -44,6 +45,8 @@ export default function Factory() {
   const [loadingAnimations, setLoadingAnimations] = useState(false)
   const [bossLaunching, setBossLaunching] = useState(false)
   const [pillPath, setPillPath] = useState<string | null>(null)
+  const [drChatOpen, setDrChatOpen] = useState(false)
+  const [chatContext, setChatContext] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     fetch('/api/sessions').then(r => r.json())
@@ -73,12 +76,18 @@ export default function Factory() {
   const handleGenerate = useCallback(async () => {
     if (generating) return
     setGenerating(true)
+    const ctx = chatContext
+    setChatContext(undefined)
     setState(s => ({ ...s, rooms: { ...s.rooms, boss: 'working', ideas: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando conceptos...', type: 'working' }] }))
+      sessionLog: [...s.sessionLog, { time: now(), message: ctx ? 'Generando con contexto del Dr...' : 'Generando conceptos...', type: 'working' }] }))
     fireSignal('boss', 'ideas')
     try {
       await fetch('/api/trends', { method: 'POST' }).catch(() => {})
-      const res = await fetch('/api/ideas', { method: 'POST' })
+      const res = await fetch('/api/ideas', {
+        method: 'POST',
+        headers: ctx ? { 'Content-Type': 'application/json' } : {},
+        body: ctx ? JSON.stringify({ additionalContext: ctx }) : undefined,
+      })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
       const { concepts }: { concepts: Concept[] } = await res.json()
       setState(s => ({ ...s, concepts, rooms: { ...s.rooms, boss: 'done', ideas: 'done' },
@@ -264,7 +273,12 @@ export default function Factory() {
               <div id="room-images" className={`room-overlay room-images ${getRoomClass(state.rooms.images)}`} />
               <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
 
-              <div className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`} />
+              <div
+                role="button" tabIndex={0} aria-label="Hablar con Dr. Adderall"
+                className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`}
+                onClick={() => setDrChatOpen(true)}
+                onKeyDown={e => e.key === 'Enter' && setDrChatOpen(true)}
+              />
               <div role="button" tabIndex={0} className={`sprite-ideas${state.rooms.ideas === 'working' ? ' is-working' : ''}`}
                 style={{ cursor: state.concepts.length > 0 ? 'pointer' : 'default' }}
                 onClick={handleOpenIdeas} onKeyDown={e => e.key === 'Enter' && handleOpenIdeas()} />
@@ -318,6 +332,13 @@ export default function Factory() {
           onContinueToVideo={handleContinueToVideo} onClose={handleCloseOverlay}
           generating={generatingImage} generatingFor={generatingFor} />
       )}
+      {drChatOpen && (
+        <ChatOverlay
+          onClose={() => setDrChatOpen(false)}
+          onGenerateWithContext={ctx => { setChatContext(ctx); setDrChatOpen(false) }}
+        />
+      )}
+
       {state.activeOverlay === 'video' && (
         <VideoOverlay selectedConcepts={selectedConcepts}
           selectedImage={generatedImages.find(img => img.id === selectedImageId) ?? null}

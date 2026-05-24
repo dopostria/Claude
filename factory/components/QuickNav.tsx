@@ -24,7 +24,7 @@ export default function QuickNav({
         onClick={onOpenIdeas}
         disabled={!hasConcepts}
       >
-        <span className="qnav-icon">★</span>
+        <span className="qnav-icon">💡</span>
         <span className="qnav-label">IDEAS</span>
         {rooms.ideas === 'done' && <span className="qnav-badge">✓</span>}
       </button>
@@ -33,7 +33,7 @@ export default function QuickNav({
         onClick={onOpenImages}
         disabled={!hasSelectedConcepts}
       >
-        <span className="qnav-icon">■</span>
+        <span className="qnav-icon">📸</span>
         <span className="qnav-label">FOTOS</span>
         {hasImages && <span className="qnav-badge">✓</span>}
       </button>
@@ -42,7 +42,7 @@ export default function QuickNav({
         onClick={onOpenVideo}
         disabled={!hasSelectedConcepts}
       >
-        <span className="qnav-icon">▶</span>
+        <span className="qnav-icon">🎬</span>
         <span className="qnav-label">VIDEOS</span>
         {hasVideo && <span className="qnav-badge">✓</span>}
       </button>
