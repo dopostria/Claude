@@ -5,7 +5,7 @@ const IS_VERCEL = process.env.VERCEL === '1'
 const MUTABLE_DIR = IS_VERCEL ? '/tmp/factory-data' : path.join(process.cwd(), 'data')
 const TREND_PATH = path.join(MUTABLE_DIR, 'trend_feed.json')
 
-const CACHE_TTL_MS = 3 * 60 * 60 * 1000 // 3 hours
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours — once per day
 
 function buildTrendPrompt(): string {
   const today = new Date().toISOString().split('T')[0]

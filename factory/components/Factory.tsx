@@ -49,7 +49,6 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => { fetch('/api/trends', { method: 'POST' }).catch(() => {}) }, [])
 
   const fireSignal = useCallback((from: string, to: string) => {
     setState(s => ({ ...s, signal: { from, to } }))
@@ -76,6 +75,7 @@ export default function Factory() {
       sessionLog: [...s.sessionLog, { time: now(), message: 'Generando conceptos...', type: 'working' }] }))
     fireSignal('boss', 'ideas')
     try {
+      await fetch('/api/trends', { method: 'POST' }).catch(() => {})
       const res = await fetch('/api/ideas', { method: 'POST' })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
       const { concepts }: { concepts: Concept[] } = await res.json()
