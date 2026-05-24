@@ -359,27 +359,27 @@ body::after {
 .room-overlay.is-error { box-shadow:0 0 50px 15px rgba(255,35,35,.55); animation:room-pulse .65s ease-in-out infinite; }
 @keyframes room-pulse { 0%,100%{opacity:.80} 50%{opacity:1} }
 
-/* SPRITES v3 - step-end for instant frame snaps, stay in arrival frame */
+/* SPRITES v4 - all sheets 992x397, 4 frames of 248px each, display 80x128 */
 
 .sprite-boss {
-  position:absolute; width:84px; height:135px;
-  background:url('/sprites/dr%20adderall.png') 0 0/336px 135px no-repeat;
+  position:absolute; width:80px; height:128px;
+  background:url('/sprites/dr%20adderall.png') 0 0/320px 128px no-repeat;
   image-rendering:auto; z-index:5;
-  left:calc(50% - 42px); top:calc(25% - 68px);
+  left:calc(50% - 40px); top:calc(25% - 64px);
   animation:patrol-boss 22s linear infinite;
 }
 @keyframes patrol-boss {
   0%   { transform:translate(  0px,  0px); background-position-x:    0 }
   8%   { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
-  9%   { transform:translate(  0px,  0px); background-position-x: -168px }
-  23%  { transform:translate( 55px, 35px); background-position-x: -168px }
-  33%  { transform:translate( 55px, 35px); background-position-x: -168px; animation-timing-function:step-end }
-  34%  { transform:translate( 55px, 35px); background-position-x: -252px }
-  50%  { transform:translate(-40px, 55px); background-position-x: -252px }
-  60%  { transform:translate(-40px, 55px); background-position-x: -252px; animation-timing-function:step-end }
-  61%  { transform:translate(-40px, 55px); background-position-x:  -84px }
-  77%  { transform:translate(-55px, -5px); background-position-x:  -84px }
-  82%  { transform:translate(-55px, -5px); background-position-x:  -84px; animation-timing-function:step-end }
+  9%   { transform:translate(  0px,  0px); background-position-x: -160px }
+  23%  { transform:translate( 55px, 35px); background-position-x: -160px }
+  33%  { transform:translate( 55px, 35px); background-position-x: -160px; animation-timing-function:step-end }
+  34%  { transform:translate( 55px, 35px); background-position-x: -240px }
+  50%  { transform:translate(-40px, 55px); background-position-x: -240px }
+  60%  { transform:translate(-40px, 55px); background-position-x: -240px; animation-timing-function:step-end }
+  61%  { transform:translate(-40px, 55px); background-position-x:  -80px }
+  77%  { transform:translate(-55px, -5px); background-position-x:  -80px }
+  82%  { transform:translate(-55px, -5px); background-position-x:  -80px; animation-timing-function:step-end }
   83%  { transform:translate(-55px, -5px); background-position-x:    0 }
   97%  { transform:translate(  0px,  0px); background-position-x:    0 }
   100% { transform:translate(  0px,  0px); background-position-x:    0 }
@@ -387,24 +387,24 @@ body::after {
 .sprite-boss.is-working { animation:patrol-boss 12s linear infinite; filter:drop-shadow(0 0 8px rgba(0,200,255,.85)); }
 
 .sprite-ideas {
-  position:absolute; width:55px; height:147px;
-  background:url('/sprites/3am%20thoughts.png') 0 0/220px 147px no-repeat;
+  position:absolute; width:80px; height:128px;
+  background:url('/sprites/3am%20thoughts.png') 0 0/320px 128px no-repeat;
   image-rendering:auto; z-index:5;
-  left:calc(18% - 28px); top:calc(70% - 74px);
+  left:calc(18% - 40px); top:calc(70% - 64px);
   animation:patrol-ideas 20s linear infinite;
 }
 @keyframes patrol-ideas {
   0%   { transform:translate(  0px,  0px); background-position-x:    0 }
   10%  { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
-  11%  { transform:translate(  0px,  0px); background-position-x: -110px }
-  25%  { transform:translate( 28px, 18px); background-position-x: -110px }
-  37%  { transform:translate( 28px, 18px); background-position-x: -110px; animation-timing-function:step-end }
-  38%  { transform:translate( 28px, 18px); background-position-x:  -55px }
-  53%  { transform:translate(-25px, 22px); background-position-x:  -55px }
-  65%  { transform:translate(-25px, 22px); background-position-x:  -55px; animation-timing-function:step-end }
-  66%  { transform:translate(-25px, 22px); background-position-x: -165px }
-  80%  { transform:translate(-10px,-10px); background-position-x: -165px }
-  81%  { transform:translate(-10px,-10px); background-position-x: -165px; animation-timing-function:step-end }
+  11%  { transform:translate(  0px,  0px); background-position-x: -160px }
+  25%  { transform:translate( 28px, 18px); background-position-x: -160px }
+  37%  { transform:translate( 28px, 18px); background-position-x: -160px; animation-timing-function:step-end }
+  38%  { transform:translate( 28px, 18px); background-position-x:  -80px }
+  53%  { transform:translate(-25px, 22px); background-position-x:  -80px }
+  65%  { transform:translate(-25px, 22px); background-position-x:  -80px; animation-timing-function:step-end }
+  66%  { transform:translate(-25px, 22px); background-position-x: -240px }
+  80%  { transform:translate(-10px,-10px); background-position-x: -240px }
+  81%  { transform:translate(-10px,-10px); background-position-x: -240px; animation-timing-function:step-end }
   82%  { transform:translate(-10px,-10px); background-position-x:    0 }
   97%  { transform:translate(  0px,  0px); background-position-x:    0 }
   100% { transform:translate(  0px,  0px); background-position-x:    0 }
@@ -412,10 +412,10 @@ body::after {
 .sprite-ideas.is-working { animation:patrol-ideas 11s linear infinite; filter:drop-shadow(0 0 8px rgba(155,60,255,.85)); }
 
 .sprite-images {
-  position:absolute; width:80px; height:119px;
-  background:url('/sprites/pixel%20damage.png') 0 0/320px 119px no-repeat;
+  position:absolute; width:80px; height:128px;
+  background:url('/sprites/pixel%20damage.png') 0 0/320px 128px no-repeat;
   image-rendering:auto; z-index:5;
-  left:calc(50% - 40px); top:calc(73% - 60px);
+  left:calc(50% - 40px); top:calc(73% - 64px);
   animation:patrol-images 19s linear infinite;
 }
 @keyframes patrol-images {
@@ -439,10 +439,10 @@ body::after {
 .sprite-images.is-working { animation:patrol-images 11s linear infinite; filter:drop-shadow(0 0 8px rgba(255,115,0,.85)); }
 
 .sprite-video {
-  position:absolute; width:80px; height:119px;
-  background:url('/sprites/motion%20sick.png') 0 0/320px 119px no-repeat;
+  position:absolute; width:80px; height:128px;
+  background:url('/sprites/motion%20sick.png') 0 0/320px 128px no-repeat;
   image-rendering:auto; z-index:5;
-  left:calc(80% - 40px); top:calc(72% - 60px);
+  left:calc(80% - 40px); top:calc(72% - 64px);
   animation:patrol-video 17s linear infinite;
 }
 @keyframes patrol-video {
