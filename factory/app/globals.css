@@ -143,8 +143,8 @@ body::after {
   flex-shrink:0; z-index:10;
 }
 .hud-bar.bottom { border-top:1px solid #0a1e30; border-bottom:none; }
-.hud-label { font-family:'Press Start 2P',monospace; font-size:5px; color:#0a2030; letter-spacing:2px; white-space:nowrap; }
-.hud-value { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--neon); }
+.hud-label { font-family:'Press Start 2P',monospace; font-size:9px; color:#0a2030; letter-spacing:2px; white-space:nowrap; }
+.hud-value { font-family:'Press Start 2P',monospace; font-size:11px; color:var(--neon); }
 .hud-sep { width:1px; height:16px; background:#0a1e30; flex-shrink:0; }
 .hud-spacer { flex:1; }
 
@@ -302,10 +302,10 @@ body::after {
 .is-working .r-panel, .is-done .r-panel { opacity:.55; }
 
 /* ─── COMMS PANEL ──────────────────────────────────── */
-.comms-panel { width:188px; min-width:188px; background:#030c18; border-left:2px solid #0a1e30; display:flex; flex-direction:column; overflow:hidden; }
+.comms-panel { width:280px; min-width:280px; background:#030c18; border-left:2px solid #0a1e30; display:flex; flex-direction:column; overflow:hidden; }
 .comms-hdr   { padding:9px 11px 7px; border-bottom:1px solid #0a1e30; background:#020810; flex-shrink:0; }
 .comms-body  { flex:1; overflow-y:auto; padding:6px 9px; display:flex; flex-direction:column; gap:5px; }
-.comms-entry { font-family:'Press Start 2P',monospace; font-size:6px; line-height:1.8; border-left:2px solid transparent; padding-left:7px; }
+.comms-entry { font-family:'Press Start 2P',monospace; font-size:8px; line-height:1.8; border-left:2px solid transparent; padding-left:7px; }
 .comms-entry.info    { color:#0a3028; border-color:#0a302844; }
 .comms-entry.working { color:#ff6b35; border-color:#ff6b3544; }
 .comms-entry.success { color:#00f5cc; border-color:#00f5cc44; }
@@ -332,8 +332,8 @@ body::after {
 
 .dungeon-inner {
   position:relative; flex-shrink:0; overflow:hidden;
-  width:  min(calc(100vw - 188px), calc((100vh - 34px) * 1672 / 941));
-  height: min(calc(100vh - 34px),  calc((100vw - 188px) * 941 / 1672));
+  width:  min(calc(100vw - 280px), calc((100vh - 34px) * 1672 / 941));
+  height: min(calc(100vh - 34px),  calc((100vw - 280px) * 941 / 1672));
 }
 
 .dungeon-bg {
@@ -485,9 +485,6 @@ body::after {
 }
 .do-not-push-btn:hover:not(:disabled) {
   filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7));
-}
-.do-not-push-btn:active:not(:disabled) {
-  filter:brightness(0.9);
 }
 .do-not-push-btn.is-busy,
 .do-not-push-btn:disabled {

@@ -208,6 +208,7 @@ export default function Factory() {
   const handleCloseOverlay      = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
   const handleOpenIdeas         = useCallback(() => { if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' })) }, [state.concepts.length])
   const handleOpenImagesOverlay = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' })) }, [state.selectedConceptIds.length])
+  const handleOpenVideoOverlay  = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'video' })) }, [state.selectedConceptIds.length])
 
   const selectedConcepts = state.concepts.filter(c => state.selectedConceptIds.includes(c.id))
   const selectedImg      = generatedImages.find(img => img.id === selectedImageId)
@@ -253,10 +254,16 @@ export default function Factory() {
             <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
 
             {/* Characters */}
-            <div className={`sprite-boss${state.rooms.boss     === 'working' ? ' is-working' : ''}`} />
-            <div className={`sprite-ideas${state.rooms.ideas   === 'working' ? ' is-working' : ''}`} />
-            <div className={`sprite-images${state.rooms.images === 'working' ? ' is-working' : ''}`} />
-            <div className={`sprite-video${state.rooms.video   === 'working' ? ' is-working' : ''}`} />
+            <div className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`} />
+            <div role="button" tabIndex={0} className={`sprite-ideas${state.rooms.ideas === 'working' ? ' is-working' : ''}`}
+              style={{ cursor: state.concepts.length > 0 ? 'pointer' : 'default' }}
+              onClick={handleOpenIdeas} onKeyDown={e => e.key === 'Enter' && handleOpenIdeas()} />
+            <div role="button" tabIndex={0} className={`sprite-images${state.rooms.images === 'working' ? ' is-working' : ''}`}
+              style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
+              onClick={handleOpenImagesOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenImagesOverlay()} />
+            <div role="button" tabIndex={0} className={`sprite-video${state.rooms.video === 'working' ? ' is-working' : ''}`}
+              style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
+              onClick={handleOpenVideoOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenVideoOverlay()} />
 
             {/* DO NOT PUSH — image button, upper-right above green room */}
             <button
