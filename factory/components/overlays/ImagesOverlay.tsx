@@ -49,7 +49,7 @@ export default function ImagesOverlay({
 }: ImagesOverlayProps) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0].id)
-  const [provider, setProvider] = useState<'gemini' | 'higgsfield'>('gemini')
+  const [provider, setProvider] = useState<'gemini' | 'higgsfield'>('higgsfield')
   // Local editable base prompt per concept
   const [editedBase, setEditedBase] = useState<Record<string, string>>({})
 
@@ -219,7 +219,7 @@ export default function ImagesOverlay({
                   : `▶ GENERAR ${style.label}`}
               </button>
               <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
-                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · nano_banana (higgs)'}
+                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · soul_2 (higgs)'}
               </div>
             </div>
           </div>

@@ -119,10 +119,10 @@ async function generateWithHiggsfield(
 
   // Step 3: create video job
   const jobPayload: Record<string, unknown> = {
-    job_set_type: 'veo3_1_lite',
+    job_set_type: 'grok_video',
     prompt,
     aspect_ratio: '9:16',
-    duration: 6,
+    duration: 3,
   }
   if (mediaId) jobPayload.media_ids = [mediaId]
 
@@ -170,7 +170,7 @@ async function generateWithHiggsfield(
       const first = results[0]
       const videoUrl = typeof first === 'string' ? first : first?.url
       if (!videoUrl) throw new Error('Higgsfield: no video URL in completed job')
-      return { videoUri: videoUrl, model: 'higgsfield/veo3_1_lite' }
+      return { videoUri: videoUrl, model: 'higgsfield/grok_video' }
     }
 
     if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {

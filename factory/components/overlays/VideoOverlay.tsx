@@ -46,7 +46,7 @@ export default function VideoOverlay({
 }: VideoOverlayProps) {
   const [selectedAnimation, setSelectedAnimation] = useState<AnimationConcept | null>(null)
   const [prompt, setPrompt] = useState(defaultVideoPrompt)
-  const [provider, setProvider] = useState<'google' | 'higgsfield'>('google')
+  const [provider, setProvider] = useState<'google' | 'higgsfield'>('higgsfield')
 
   // Sync default prompt when it arrives
   useEffect(() => {
@@ -176,7 +176,7 @@ export default function VideoOverlay({
                   ? 'no cierres esta ventana...'
                   : provider === 'google'
                     ? 'veo-3.1-generate-preview (~7 min)'
-                    : 'higgs veo3_1_lite (~3-5 min)'}
+                    : 'grok_video · 9:16 · 3s'}
               </div>
             </div>
           </div>
