@@ -3,6 +3,7 @@ import { GoogleGenAI } from '@google/genai'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import sharp from 'sharp'
+import { withHiggsfieldToken } from '@/lib/higgsfield-auth'
 
 const TMP_DIR = '/tmp/cantsleept-images'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
@@ -199,14 +200,14 @@ export async function POST(req: NextRequest) {
     }
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
-    const higgsfieldToken = process.env.HIGGSFIELD_API_TOKEN
     const geminiKey = process.env.GEMINI_API_KEY
 
     let raw: { base64: string; mime: string; model: string }
 
     if (provider === 'higgsfield') {
-      if (!higgsfieldToken) return NextResponse.json({ error: 'HIGGSFIELD_API_TOKEN not set' }, { status: 500 })
-      raw = await generateWithHiggsfield(prompt, higgsfieldToken, 'text2image_soul_v2')
+      raw = await withHiggsfieldToken(token =>
+        generateWithHiggsfield(prompt, token, 'text2image_soul_v2')
+      )
     } else {
       if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
       raw = await generateWithGemini(prompt, geminiKey)

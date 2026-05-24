@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withHiggsfieldToken } from '@/lib/higgsfield-auth'
 
 const GOOGLE_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
@@ -199,9 +200,9 @@ export async function POST(req: NextRequest) {
     let result: { videoUri: string; model: string }
 
     if (provider === 'higgsfield') {
-      const apiToken = process.env.HIGGSFIELD_API_TOKEN
-      if (!apiToken) return NextResponse.json({ error: 'HIGGSFIELD_API_TOKEN not set' }, { status: 500 })
-      result = await generateWithHiggsfield(prompt, apiToken, imageBase64, imageMime)
+      result = await withHiggsfieldToken(token =>
+        generateWithHiggsfield(prompt, token, imageBase64, imageMime)
+      )
     } else {
       const apiKey = process.env.GEMINI_API_KEY
       if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
