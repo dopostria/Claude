@@ -139,14 +139,14 @@ export default function Factory() {
   }, [fireSignal])
 
   // ── NODO 3 ──────────────────────────────────────────────────────────
-  const handleGenerateImage = useCallback(async (conceptId: string, prompt: string) => {
+  const handleGenerateImage = useCallback(async (conceptId: string, prompt: string, provider: 'gemini' | 'higgsfield' = 'gemini') => {
     if (generatingImage) return
     setGeneratingImage(true); setGeneratingFor(conceptId)
     setState(s => ({ ...s, rooms: { ...s.rooms, images: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando imagen...', type: 'working' }] }))
+      sessionLog: [...s.sessionLog, { time: now(), message: `Generando imagen (${provider})...`, type: 'working' }] }))
     try {
       const res = await fetch('/api/generate-image', { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, conceptId }) })
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, conceptId, provider }) })
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
       const data = await res.json()
       const native916 = data.native916 as boolean | undefined
@@ -194,16 +194,16 @@ export default function Factory() {
   }, [fireSignal, generatedImages, selectedImageId, state.concepts, state.selectedConceptIds])
 
   // ── NODO 5 ──────────────────────────────────────────────────────────
-  const handleGenerateVideo = useCallback(async (prompt: string) => {
+  const handleGenerateVideo = useCallback(async (prompt: string, provider: 'google' | 'higgsfield' = 'google') => {
     if (generatingVideo) return
     const selectedImg = generatedImages.find(img => img.id === selectedImageId)
     setGeneratingVideo(true); setVideoUri(null); setVideoModel(null)
     setState(s => ({ ...s, rooms: { ...s.rooms, video: 'working' },
-      sessionLog: [...s.sessionLog, { time: now(), message: 'Generando video con Veo 3...', type: 'working' }] }))
+      sessionLog: [...s.sessionLog, { time: now(), message: `Generando video (${provider})...`, type: 'working' }] }))
     try {
       const res = await fetch('/api/generate-video', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, imageBase64: selectedImg?.base64, imageMime: selectedImg?.mime }) })
+        body: JSON.stringify({ prompt, imageBase64: selectedImg?.base64, imageMime: selectedImg?.mime, provider }) })
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
       const data = await res.json()
       setVideoUri(data.videoUri); setVideoModel(data.model)

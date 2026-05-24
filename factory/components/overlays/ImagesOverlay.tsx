@@ -17,7 +17,7 @@ interface ImagesOverlayProps {
   imagePrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
-  onGenerate: (conceptId: string, prompt: string) => void
+  onGenerate: (conceptId: string, prompt: string, provider: 'gemini' | 'higgsfield') => void
   onSelectImage: (id: string) => void
   onContinueToVideo: () => void
   onClose: () => void
@@ -49,6 +49,7 @@ export default function ImagesOverlay({
 }: ImagesOverlayProps) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0].id)
+  const [provider, setProvider] = useState<'gemini' | 'higgsfield'>('gemini')
   // Local editable base prompt per concept
   const [editedBase, setEditedBase] = useState<Record<string, string>>({})
 
@@ -71,7 +72,7 @@ export default function ImagesOverlay({
           background: '#050e0d', position: 'sticky', top: 0, zIndex: 10,
         }}>
           <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#ff6b35', letterSpacing: 3 }}>
-            NODE_02 — PIXEL DAMAGE · GEMINI 2.5 FLASH
+            NODE_02 — PIXEL DAMAGE · {provider === 'gemini' ? 'GEMINI' : 'HIGGSFIELD'}
           </div>
           <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
             {selectedImageId && (
@@ -181,10 +182,30 @@ export default function ImagesOverlay({
             </div>
 
             <div style={{ padding: 12, borderTop: '1px solid #0d3330' }}>
+              {/* Provider toggle */}
+              <div style={{ display: 'flex', marginBottom: 9, gap: 4 }}>
+                {(['gemini', 'higgsfield'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setProvider(p)}
+                    style={{
+                      flex: 1,
+                      fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                      padding: '5px 0',
+                      background: provider === p ? '#07201e' : 'transparent',
+                      border: `1px solid ${provider === p ? '#00c4a0' : '#0d3330'}`,
+                      color: provider === p ? '#00ffcc' : '#0d3330',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {p === 'gemini' ? 'GEMINI' : 'HIGGS'}
+                  </button>
+                ))}
+              </div>
               <button
                 className="btn-pixel"
                 disabled={isGeneratingThis || !finalPrompt}
-                onClick={() => activeConcept && onGenerate(activeConcept.id, finalPrompt)}
+                onClick={() => activeConcept && onGenerate(activeConcept.id, finalPrompt, provider)}
                 style={{
                   width: '100%',
                   color: isGeneratingThis ? '#004d3d' : style.color,
@@ -198,7 +219,7 @@ export default function ImagesOverlay({
                   : `▶ GENERAR ${style.label}`}
               </button>
               <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
-                9:16 · gemini-2.5-flash
+                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · nano_banana (higgs)'}
               </div>
             </div>
           </div>

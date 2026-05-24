@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BASE = 'https://generativelanguage.googleapis.com/v1beta'
-const HEADERS = (apiKey: string) => ({ 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' })
+const GOOGLE_BASE = 'https://generativelanguage.googleapis.com/v1beta'
+const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
 
-// veo-3.0-generate-preview → 404 on AI Studio. veo-2.0-generate-001 is Vertex AI only.
-const MODELS = ['veo-3.1-generate-preview']
+// ---------------------------------------------------------------------------
+// Google Veo (AI Studio direct)
+// ---------------------------------------------------------------------------
 
-async function pollOperation(operationName: string, apiKey: string, maxAttempts = 40): Promise<string> {
+async function pollGoogleOperation(operationName: string, apiKey: string, maxAttempts = 40): Promise<string> {
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(r => setTimeout(r, 10000))
-    const res = await fetch(`${BASE}/${operationName}`, { headers: { 'x-goog-api-key': apiKey } })
+    const res = await fetch(`${GOOGLE_BASE}/${operationName}`, {
+      headers: { 'x-goog-api-key': apiKey },
+    })
     if (!res.ok) continue
     const data = await res.json()
     if (data.error) throw new Error(`Veo error: ${data.error.message}`)
@@ -28,56 +31,184 @@ async function pollOperation(operationName: string, apiKey: string, maxAttempts 
   throw new Error('Veo timed out after ~7 minutes')
 }
 
+async function generateWithGoogle(
+  prompt: string,
+  apiKey: string,
+  imageBase64?: string,
+  imageMime?: string
+): Promise<{ videoUri: string; model: string }> {
+  const instance: Record<string, unknown> = { prompt }
+  if (imageBase64 && imageMime) {
+    instance.image = { bytesBase64Encoded: imageBase64, mimeType: imageMime }
+  }
+
+  const body = {
+    instances: [instance],
+    parameters: { sampleCount: 1, durationSeconds: 8, aspectRatio: '9:16' },
+  }
+
+  const res = await fetch(
+    `${GOOGLE_BASE}/models/veo-3.1-generate-preview:predictLongRunning`,
+    {
+      method: 'POST',
+      headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  )
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Veo ${res.status}: ${err.slice(0, 200)}`)
+  }
+
+  const operation = await res.json()
+  if (!operation.name) throw new Error('Veo: no operation name')
+
+  const videoUri = await pollGoogleOperation(operation.name, apiKey)
+  return { videoUri, model: 'veo-3.1-generate-preview' }
+}
+
+// ---------------------------------------------------------------------------
+// Higgsfield — veo3_1_lite (cheapest / fast)
+// ---------------------------------------------------------------------------
+
+async function generateWithHiggsfield(
+  prompt: string,
+  apiToken: string,
+  imageBase64?: string,
+  imageMime?: string
+): Promise<{ videoUri: string; model: string }> {
+  let mediaId: string | undefined
+
+  if (imageBase64 && imageMime) {
+    // Step 1: request upload slot
+    const uploadInitRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ filename: 'reference.jpg', content_type: imageMime }),
+    })
+    if (!uploadInitRes.ok) {
+      const body = await uploadInitRes.text().catch(() => '')
+      throw new Error(`Higgsfield upload init failed ${uploadInitRes.status}: ${body.slice(0, 200)}`)
+    }
+    const uploadData = await uploadInitRes.json() as {
+      id?: string; upload_id?: string; url?: string; upload_url?: string
+    }
+    console.log('[generate-video] Higgsfield upload response:', JSON.stringify(uploadData).slice(0, 200))
+
+    const uploadUrl = uploadData.url ?? uploadData.upload_url
+    mediaId = uploadData.id ?? uploadData.upload_id
+
+    if (uploadUrl) {
+      // Step 2: PUT image bytes to presigned URL
+      const imgBuf = Buffer.from(imageBase64, 'base64')
+      const putRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: imgBuf,
+        headers: { 'Content-Type': imageMime },
+      })
+      if (!putRes.ok) {
+        console.warn(`[generate-video] Higgsfield upload PUT failed ${putRes.status}, proceeding without image`)
+        mediaId = undefined
+      }
+    }
+  }
+
+  // Step 3: create video job
+  const jobPayload: Record<string, unknown> = {
+    job_set_type: 'veo3_1_lite',
+    prompt,
+    aspect_ratio: '9:16',
+    duration: 6,
+  }
+  if (mediaId) jobPayload.media_ids = [mediaId]
+
+  const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(jobPayload),
+  })
+
+  if (!createRes.ok) {
+    const body = await createRes.text().catch(() => '')
+    throw new Error(`Higgsfield video create failed ${createRes.status}: ${body.slice(0, 200)}`)
+  }
+
+  const job = await createRes.json() as { id?: string; job_id?: string }
+  const jobId = job.id ?? job.job_id
+  if (!jobId) throw new Error('Higgsfield: no job ID in video response')
+  console.log(`[generate-video] Higgsfield video job created: ${jobId}`)
+
+  // Poll until done (max 10 min)
+  const TIMEOUT = 600_000
+  const INTERVAL = 8_000
+  const deadline = Date.now() + TIMEOUT
+
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, INTERVAL))
+
+    const pollRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs/${jobId}`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    })
+    if (!pollRes.ok) continue
+
+    const status = await pollRes.json() as {
+      status?: string
+      results?: Array<{ url?: string } | string>
+      error?: unknown
+    }
+    console.log(`[generate-video] Higgsfield job ${jobId} status: ${status.status}`)
+
+    if (['completed', 'done', 'succeeded'].includes(status.status ?? '')) {
+      const results = status.results ?? []
+      const first = results[0]
+      const videoUrl = typeof first === 'string' ? first : first?.url
+      if (!videoUrl) throw new Error('Higgsfield: no video URL in completed job')
+      return { videoUri: videoUrl, model: 'higgsfield/veo3_1_lite' }
+    }
+
+    if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {
+      throw new Error(`Higgsfield video job ${status.status}: ${JSON.stringify(status.error ?? '')}`)
+    }
+  }
+
+  throw new Error('Higgsfield video: job timed out after 10 minutes')
+}
+
+// ---------------------------------------------------------------------------
+// Route
+// ---------------------------------------------------------------------------
+
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, imageBase64, imageMime } = await req.json() as {
+    const { prompt, imageBase64, imageMime, provider = 'google' } = await req.json() as {
       prompt: string
       imageBase64?: string
       imageMime?: string
+      provider?: 'higgsfield' | 'google'
     }
 
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
-    // Build instance — image is optional reference frame
-    const instance: Record<string, unknown> = { prompt }
-    if (imageBase64 && imageMime) {
-      instance.image = { bytesBase64Encoded: imageBase64, mimeType: imageMime }
+    let result: { videoUri: string; model: string }
+
+    if (provider === 'higgsfield') {
+      const apiToken = process.env.HIGGSFIELD_API_TOKEN
+      if (!apiToken) return NextResponse.json({ error: 'HIGGSFIELD_API_TOKEN not set' }, { status: 500 })
+      result = await generateWithHiggsfield(prompt, apiToken, imageBase64, imageMime)
+    } else {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
+      result = await generateWithGoogle(prompt, apiKey, imageBase64, imageMime)
     }
 
-    const body = {
-      instances: [instance],
-      parameters: { sampleCount: 1, durationSeconds: 8, aspectRatio: '9:16' },
-    }
-
-    const errors: string[] = []
-
-    for (const model of MODELS) {
-      try {
-        const res = await fetch(`${BASE}/models/${model}:predictLongRunning`, {
-          method: 'POST',
-          headers: HEADERS(apiKey),
-          body: JSON.stringify(body),
-        })
-
-        if (!res.ok) {
-          const err = await res.text()
-          errors.push(`${model} ${res.status}: ${err.slice(0, 200)}`)
-          continue
-        }
-
-        const operation = await res.json()
-        if (!operation.name) { errors.push(`${model}: no operation name`); continue }
-
-        const videoUri = await pollOperation(operation.name, apiKey)
-        return NextResponse.json({ success: true, videoUri, model, timestamp: new Date().toISOString() })
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : String(e))
-      }
-    }
-
-    return NextResponse.json({ error: `Video generation failed:\n${errors.join('\n')}` }, { status: 500 })
+    return NextResponse.json({ success: true, ...result, timestamp: new Date().toISOString() })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[/api/generate-video]', err)

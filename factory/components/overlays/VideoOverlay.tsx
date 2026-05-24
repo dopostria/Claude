@@ -19,7 +19,7 @@ interface VideoOverlayProps {
   videoUri: string | null
   videoModel: string | null
   defaultVideoPrompt: string
-  onGenerateVideo: (prompt: string) => void
+  onGenerateVideo: (prompt: string, provider: 'google' | 'higgsfield') => void
   onBack: () => void
   onClose: () => void
   generating: boolean
@@ -46,6 +46,7 @@ export default function VideoOverlay({
 }: VideoOverlayProps) {
   const [selectedAnimation, setSelectedAnimation] = useState<AnimationConcept | null>(null)
   const [prompt, setPrompt] = useState(defaultVideoPrompt)
+  const [provider, setProvider] = useState<'google' | 'higgsfield'>('google')
 
   // Sync default prompt when it arrives
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function VideoOverlay({
         }}>
           <div>
             <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 5 }}>
-              NODE_03 — MOTION SICK · VEO 3.1
+              NODE_03 — MOTION SICK · {provider === 'google' ? 'GOOGLE VEO' : 'HIGGSFIELD'}
             </div>
             <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 9, color: '#fff' }}>
               {activeConcept?.title ?? 'Sin concepto'}
@@ -134,10 +135,30 @@ export default function VideoOverlay({
 
             {/* Generate button */}
             <div style={{ padding: 11, borderTop: '1px solid #0d3330' }}>
+              {/* Provider toggle */}
+              <div style={{ display: 'flex', marginBottom: 9, gap: 4 }}>
+                {(['google', 'higgsfield'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setProvider(p)}
+                    style={{
+                      flex: 1,
+                      fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                      padding: '5px 0',
+                      background: provider === p ? '#07201e' : 'transparent',
+                      border: `1px solid ${provider === p ? '#48cae4' : '#0d3330'}`,
+                      color: provider === p ? '#48cae4' : '#0d3330',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {p === 'google' ? 'GOOGLE' : 'HIGGS'}
+                  </button>
+                ))}
+              </div>
               <button
                 className="btn-pixel"
                 disabled={generating || !prompt.trim()}
-                onClick={() => onGenerateVideo(prompt)}
+                onClick={() => onGenerateVideo(prompt, provider)}
                 style={{
                   width: '100%',
                   color: generating ? '#004d3d' : (prompt ? '#48cae4' : '#0d3330'),
@@ -147,11 +168,15 @@ export default function VideoOverlay({
                 }}
               >
                 {generating
-                  ? <span className="loading-dots">VEO PROCESANDO<span>.</span><span>.</span><span>.</span></span>
+                  ? <span className="loading-dots">PROCESANDO<span>.</span><span>.</span><span>.</span></span>
                   : '▶ GENERAR VIDEO'}
               </button>
               <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 5 }}>
-                {generating ? 'tarda ~3-7 min · no cierres' : 'veo-3.1 · veo-3.0 fallback'}
+                {generating
+                  ? 'no cierres esta ventana...'
+                  : provider === 'google'
+                    ? 'veo-3.1-generate-preview (~7 min)'
+                    : 'higgs veo3_1_lite (~3-5 min)'}
               </div>
             </div>
           </div>

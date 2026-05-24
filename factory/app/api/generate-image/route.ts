@@ -8,14 +8,14 @@ const TMP_DIR = '/tmp/cantsleept-images'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
 
 // ---------------------------------------------------------------------------
-// Higgsfield (primary — unlimited on nano_banana_pro)
+// Higgsfield — nano_banana (budget) or nano_banana_pro (unlimited sub)
 // ---------------------------------------------------------------------------
 
 async function generateWithHiggsfield(
   prompt: string,
-  apiToken: string
+  apiToken: string,
+  model = 'nano_banana'
 ): Promise<{ base64: string; mime: string; model: string }> {
-  // 1. Create job
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',
     headers: {
@@ -23,7 +23,7 @@ async function generateWithHiggsfield(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      job_set_type: 'nano_banana_pro',
+      job_set_type: model,
       prompt,
       aspect_ratio: '9:16',
     }),
@@ -39,7 +39,6 @@ async function generateWithHiggsfield(
   if (!jobId) throw new Error('Higgsfield: no job ID in response')
   console.log(`[generate-image] Higgsfield job created: ${jobId}`)
 
-  // 2. Poll until done (max 3 min)
   const TIMEOUT = 180_000
   const INTERVAL = 4_000
   const deadline = Date.now() + TIMEOUT
@@ -50,20 +49,16 @@ async function generateWithHiggsfield(
     const pollRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${apiToken}` },
     })
-
-    if (!pollRes.ok) {
-      throw new Error(`Higgsfield poll failed ${pollRes.status}`)
-    }
+    if (!pollRes.ok) throw new Error(`Higgsfield poll failed ${pollRes.status}`)
 
     const status = await pollRes.json() as {
       status?: string
       results?: Array<{ url?: string } | string>
       error?: unknown
     }
-
     console.log(`[generate-image] Higgsfield job ${jobId} status: ${status.status}`)
 
-    if (status.status === 'completed' || status.status === 'done' || status.status === 'succeeded') {
+    if (['completed', 'done', 'succeeded'].includes(status.status ?? '')) {
       const results = status.results ?? []
       const first = results[0]
       const imageUrl = typeof first === 'string' ? first : first?.url
@@ -74,24 +69,19 @@ async function generateWithHiggsfield(
       const buf = await imgRes.arrayBuffer()
       const mime = imgRes.headers.get('content-type') ?? 'image/jpeg'
 
-      return {
-        base64: Buffer.from(buf).toString('base64'),
-        mime,
-        model: 'higgsfield/nano_banana_pro',
-      }
+      return { base64: Buffer.from(buf).toString('base64'), mime, model: `higgsfield/${model}` }
     }
 
-    if (status.status === 'failed' || status.status === 'error' || status.status === 'cancelled') {
+    if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {
       throw new Error(`Higgsfield job ${status.status}: ${JSON.stringify(status.error ?? '')}`)
     }
-    // queued / processing — keep polling
   }
 
   throw new Error('Higgsfield: job timed out after 3 minutes')
 }
 
 // ---------------------------------------------------------------------------
-// Gemini (fallback)
+// Gemini — free experimental model first
 // ---------------------------------------------------------------------------
 
 async function generateWithGemini(
@@ -162,13 +152,11 @@ async function toPortrait916(
     const originalDimensions = `${w}x${h}`
 
     if (Math.abs(w / h - 9 / 16) < 0.05) {
-      console.log(`[generate-image] ✓ native 9:16 — ${originalDimensions}`)
       return { base64, mime, native916: true, originalDimensions }
     }
 
     const targetW = Math.round((h * 9) / 16)
     const targetH = h
-    console.log(`[generate-image] sharp crop ${originalDimensions} → ${targetW}x${targetH}`)
 
     let processed: Buffer
     if (targetW <= w) {
@@ -204,32 +192,24 @@ async function saveToTmp(base64: string, mime: string, conceptId: string): Promi
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, conceptId } = (await req.json()) as { prompt: string; conceptId: string }
+    const { prompt, conceptId, provider = 'gemini' } = (await req.json()) as {
+      prompt: string
+      conceptId: string
+      provider?: 'higgsfield' | 'gemini'
+    }
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
     const higgsfieldToken = process.env.HIGGSFIELD_API_TOKEN
     const geminiKey = process.env.GEMINI_API_KEY
 
-    if (!higgsfieldToken && !geminiKey) {
-      return NextResponse.json(
-        { error: 'No image provider configured. Set HIGGSFIELD_API_TOKEN or GEMINI_API_KEY.' },
-        { status: 500 }
-      )
-    }
-
     let raw: { base64: string; mime: string; model: string }
 
-    if (higgsfieldToken) {
-      try {
-        raw = await generateWithHiggsfield(prompt, higgsfieldToken)
-      } catch (higgsfieldErr) {
-        const msg = higgsfieldErr instanceof Error ? higgsfieldErr.message : String(higgsfieldErr)
-        console.warn('[generate-image] Higgsfield failed, falling back to Gemini:', msg)
-        if (!geminiKey) throw higgsfieldErr
-        raw = await generateWithGemini(prompt, geminiKey)
-      }
+    if (provider === 'higgsfield') {
+      if (!higgsfieldToken) return NextResponse.json({ error: 'HIGGSFIELD_API_TOKEN not set' }, { status: 500 })
+      raw = await generateWithHiggsfield(prompt, higgsfieldToken, 'nano_banana')
     } else {
-      raw = await generateWithGemini(prompt, geminiKey!)
+      if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
+      raw = await generateWithGemini(prompt, geminiKey)
     }
 
     const portrait = await toPortrait916(raw.base64, raw.mime)
