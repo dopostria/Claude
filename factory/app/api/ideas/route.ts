@@ -3,6 +3,10 @@ import { generateConcepts } from '@/lib/claude'
 import { readBrandContext, getRecentSelections, getTodayDate, getOrCreateTodaySession, writeSession } from '@/lib/storage'
 
 export async function POST() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'ANTHROPIC_API_KEY no está configurada en Vercel → Settings → Environment Variables' }, { status: 500 })
+  }
+
   try {
     const brandContext = readBrandContext()
     const recentHistory = getRecentSelections(7)
