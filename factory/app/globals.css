@@ -387,27 +387,27 @@ body::after {
 .sprite-boss.is-working { animation:patrol-boss 12s linear infinite; filter:drop-shadow(0 0 8px rgba(0,200,255,.85)); }
 
 .sprite-ideas {
-  position:absolute; width:80px; height:128px;
-  background:url('/sprites/3am%20thoughts.png') 0 0/320px 128px no-repeat;
+  position:absolute; width:66px; height:106px;
+  background:url('/sprites/3am%20thoughts.png') 0 0/264px 106px no-repeat;
   image-rendering:auto; z-index:5;
-  left:calc(18% - 40px); top:calc(70% - 64px);
+  left:calc(18% - 33px); top:calc(70% - 53px);
   animation:patrol-ideas 19s linear infinite;
 }
 @keyframes patrol-ideas {
   0%   { transform:translate(  0px,  0px); background-position-x:    0 }
   8%   { transform:translate(  0px,  0px); background-position-x:    0; animation-timing-function:step-end }
-  9%   { transform:translate(  0px,  0px); background-position-x: -240px }
-  22%  { transform:translate( 28px, 18px); background-position-x: -240px }
-  32%  { transform:translate( 28px, 18px); background-position-x: -240px; animation-timing-function:step-end }
-  33%  { transform:translate( 28px, 18px); background-position-x:  -80px }
-  46%  { transform:translate(-25px, 22px); background-position-x:  -80px }
-  56%  { transform:translate(-25px, 22px); background-position-x:  -80px; animation-timing-function:step-end }
-  57%  { transform:translate(-25px, 22px); background-position-x: -160px }
-  71%  { transform:translate(-10px,-10px); background-position-x: -160px }
-  81%  { transform:translate(-10px,-10px); background-position-x: -160px; animation-timing-function:step-end }
-  82%  { transform:translate(-10px,-10px); background-position-x:  -80px }
-  96%  { transform:translate(  0px,  0px); background-position-x:  -80px }
-  97%  { transform:translate(  0px,  0px); background-position-x:  -80px; animation-timing-function:step-end }
+  9%   { transform:translate(  0px,  0px); background-position-x: -198px }
+  22%  { transform:translate( 28px, 18px); background-position-x: -198px }
+  32%  { transform:translate( 28px, 18px); background-position-x: -198px; animation-timing-function:step-end }
+  33%  { transform:translate( 28px, 18px); background-position-x:  -66px }
+  46%  { transform:translate(-25px, 22px); background-position-x:  -66px }
+  56%  { transform:translate(-25px, 22px); background-position-x:  -66px; animation-timing-function:step-end }
+  57%  { transform:translate(-25px, 22px); background-position-x: -132px }
+  71%  { transform:translate(-10px,-10px); background-position-x: -132px }
+  81%  { transform:translate(-10px,-10px); background-position-x: -132px; animation-timing-function:step-end }
+  82%  { transform:translate(-10px,-10px); background-position-x:  -66px }
+  96%  { transform:translate(  0px,  0px); background-position-x:  -66px }
+  97%  { transform:translate(  0px,  0px); background-position-x:  -66px; animation-timing-function:step-end }
   98%  { transform:translate(  0px,  0px); background-position-x:    0 }
   100% { transform:translate(  0px,  0px); background-position-x:    0 }
 }
