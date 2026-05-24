@@ -1,8 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
-import fs from 'fs'
-import path from 'path'
 import type { Concept, AnimationConcept, HistorySelection, UsedCombination } from './types'
 import { getTodayUsedCombinations } from './storage'
+import { readTrendFeed } from './trending'
 
 const MODEL = 'claude-sonnet-4-6'
 
@@ -37,12 +36,10 @@ function buildIdeaSystemPrompt(
   const punchList       = (punches.formats        as Record<string, unknown>[])
   const humorEngines    = (humorDna.humor_engines       as Record<string, unknown>[])
 
-  // ── TREND FEED — lectura directa desde disco ─────────────────────────────
-  const trendFeedPath = path.join(process.cwd(), 'data', 'trend_feed.json')
+  // ── TREND FEED — leer desde la misma ruta que usa trending.ts ───────────
   let trendFeedBlock = ''
   try {
-    const trendRaw = fs.readFileSync(trendFeedPath, 'utf-8')
-    const trendData = JSON.parse(trendRaw) as { trends: Array<{ topic: string; summary: string; humor_angle: string; tags: string[] }> }
+    const trendData = readTrendFeed()
     if (trendData.trends && trendData.trends.length > 0) {
       trendFeedBlock = `=== ACTUALIDAD BOLIVIANA HOY — OBLIGATORIO ===
 ${trendData.trends.map(t => `

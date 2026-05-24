@@ -5,12 +5,12 @@ const IS_VERCEL = process.env.VERCEL === '1'
 const MUTABLE_DIR = IS_VERCEL ? '/tmp/factory-data' : path.join(process.cwd(), 'data')
 const TREND_PATH = path.join(MUTABLE_DIR, 'trend_feed.json')
 
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000 // 3 hours
 
 function buildTrendPrompt(): string {
   const today = new Date().toISOString().split('T')[0]
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  return `Today is ${today}. Search for the top 5 most talked-about news or events in Bolivia from the LAST 7 DAYS ONLY (between ${weekAgo} and ${today}). Ignore anything older than 7 days.
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  return `Today is ${today}. Search for the top 5 most talked-about news or events in Bolivia from the LAST 2 DAYS ONLY (between ${twoDaysAgo} and ${today}). Ignore ANYTHING older than 2 days — no sports results, no political events, nothing from more than 48 hours ago.
 For each one, return ONLY a JSON array with this structure, nothing else:
 [
   {
