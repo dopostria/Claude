@@ -219,7 +219,7 @@ export default function ImagesOverlay({
                   : `▶ GENERAR ${style.label}`}
               </button>
               <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
-                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · soul_2 (higgs)'}
+                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · soul_v2 (higgs)'}
               </div>
             </div>
           </div>
