@@ -11,32 +11,52 @@ async function generateWithSDK(
   apiKey: string
 ): Promise<{ base64: string; mime: string; model: string }> {
   const ai = new GoogleGenAI({ apiKey })
-  const model = 'gemini-2.5-flash-image'
 
-  const stream = await ai.models.generateContentStream({
-    model,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      responseModalities: ['IMAGE', 'TEXT'],
-      imageConfig: { aspectRatio: '9:16' },
-    } as Record<string, unknown>,
-  })
+  // Try models in order: experimental (free tier) → preview (requires billing)
+  const candidates = [
+    'gemini-2.0-flash-exp-image-generation',
+    'gemini-2.0-flash-preview-image-generation',
+    'gemini-2.5-flash-image',
+  ]
 
-  for await (const chunk of stream) {
-    const parts = (chunk as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string }; text?: string }> } }> })
-      .candidates?.[0]?.content?.parts ?? []
+  let lastError: Error | null = null
 
-    const imgPart = parts.find(p => p.inlineData?.data)
-    if (imgPart?.inlineData?.data) {
-      return {
-        base64: imgPart.inlineData.data,
-        mime: imgPart.inlineData.mimeType ?? 'image/jpeg',
+  for (const model of candidates) {
+    try {
+      const stream = await ai.models.generateContentStream({
         model,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          responseModalities: ['IMAGE', 'TEXT'],
+          imageConfig: { aspectRatio: '9:16' },
+        } as Record<string, unknown>,
+      })
+
+      for await (const chunk of stream) {
+        const parts = (chunk as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string }; text?: string }> } }> })
+          .candidates?.[0]?.content?.parts ?? []
+
+        const imgPart = parts.find(p => p.inlineData?.data)
+        if (imgPart?.inlineData?.data) {
+          console.log(`[generate-image] ✓ model: ${model}`)
+          return {
+            base64: imgPart.inlineData.data,
+            mime: imgPart.inlineData.mimeType ?? 'image/jpeg',
+            model,
+          }
+        }
       }
+      throw new Error(`${model}: no image returned`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      const isQuota = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')
+      console.warn(`[generate-image] ${model} failed${isQuota ? ' (quota)' : ''}: ${msg.slice(0, 120)}`)
+      lastError = err instanceof Error ? err : new Error(msg)
+      if (!isQuota) break // non-quota errors won't improve with another model
     }
   }
 
-  throw new Error(`${model}: no image returned. Check that GEMINI_API_KEY has image generation access.`)
+  throw lastError ?? new Error('All image generation models failed. Check GEMINI_API_KEY billing or quota.')
 }
 
 async function toPortrait916(
