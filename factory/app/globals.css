@@ -23,6 +23,17 @@
   --video-c:     #ff9900;
   --neon:        #00f5cc;
   --neon-dim:    #0a2a22;
+  --sc-bg:          #060d1c;
+  --sc-bg-hi:       #0a1628;
+  --sc-border:      #1a3354;
+  --sc-border-hi:   #2a5a90;
+  --sc-blue:        #2299cc;
+  --sc-blue-bright: #55bbee;
+  --sc-orange:      #ff8800;
+  --sc-orange-dim:  #994400;
+  --sc-text:        #7ab8d8;
+  --sc-text-dim:    #2a4a60;
+  --sc-green:       #33cc55;
 }
 
 * { image-rendering: pixelated; box-sizing: border-box; }
@@ -143,8 +154,8 @@ body::after {
   flex-shrink:0; z-index:10;
 }
 .hud-bar.bottom { border-top:1px solid #0a1e30; border-bottom:none; }
-.hud-label { font-family:'Press Start 2P',monospace; font-size:9px; color:#0a2030; letter-spacing:2px; white-space:nowrap; }
-.hud-value { font-family:'Press Start 2P',monospace; font-size:11px; color:var(--neon); }
+.hud-label { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--sc-text-dim); letter-spacing:2px; white-space:nowrap; }
+.hud-value { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--sc-blue-bright); }
 .hud-sep { width:1px; height:16px; background:#0a1e30; flex-shrink:0; }
 .hud-spacer { flex:1; }
 
@@ -301,16 +312,23 @@ body::after {
 .r-panel  { height:100%; border:1px solid var(--r-c); opacity:.2; transition:opacity .3s; }
 .is-working .r-panel, .is-done .r-panel { opacity:.55; }
 
-/* ─── COMMS PANEL ──────────────────────────────────── */
-.comms-panel { width:280px; min-width:280px; background:#030c18; border-left:2px solid #0a1e30; display:flex; flex-direction:column; overflow:hidden; }
-.comms-hdr   { padding:9px 11px 7px; border-bottom:1px solid #0a1e30; background:#020810; flex-shrink:0; }
-.comms-body  { flex:1; overflow-y:auto; padding:6px 9px; display:flex; flex-direction:column; gap:5px; }
-.comms-entry { font-family:'Press Start 2P',monospace; font-size:8px; line-height:1.8; border-left:2px solid transparent; padding-left:7px; }
-.comms-entry.info    { color:#0a3028; border-color:#0a302844; }
-.comms-entry.working { color:#ff6b35; border-color:#ff6b3544; }
-.comms-entry.success { color:#00f5cc; border-color:#00f5cc44; }
-.comms-entry.error   { color:#ff4444; border-color:#ff444444; }
-.comms-ftr { padding:7px 11px; border-top:1px solid #0a1e30; background:#020810; flex-shrink:0; }
+/* ─── COMMS PANEL (Starcraft style) ───────────────── */
+.comms-panel { width:320px; min-width:320px; background:var(--sc-bg); border-left:2px solid var(--sc-border); display:flex; flex-direction:column; overflow:hidden; }
+.comms-hdr   { padding:8px 12px 6px; border-bottom:2px solid var(--sc-border-hi); background:var(--sc-bg-hi); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
+.comms-title { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--sc-blue-bright); letter-spacing:2px; }
+.comms-date  { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-orange); }
+.comms-body  { flex:1; overflow-y:auto; padding:6px 10px; display:flex; flex-direction:column; gap:4px; }
+.comms-entry { font-family:'Courier New',monospace; font-size:13px; line-height:1.5; border-left:3px solid transparent; padding-left:8px; padding-top:2px; padding-bottom:2px; background:rgba(0,0,0,.2); }
+.comms-ts    { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-text-dim); margin-bottom:2px; }
+.comms-msg   { }
+.comms-entry.info    { color:var(--sc-text-dim); border-color:var(--sc-border); }
+.comms-entry.working { color:var(--sc-orange); border-color:var(--sc-orange-dim); }
+.comms-entry.success { color:var(--sc-green); border-color:#1a5530; }
+.comms-entry.error   { color:#ff5555; border-color:#551515; }
+.comms-empty { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--sc-text-dim); padding:8px 0; }
+.comms-ftr   { padding:6px 12px; border-top:2px solid var(--sc-border); background:var(--sc-bg-hi); flex-shrink:0; display:flex; justify-content:space-between; align-items:center; }
+.comms-ver   { font-family:'Press Start 2P',monospace; font-size:6px; color:var(--sc-text-dim); }
+.comms-status{ font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-green); }
 
 /* ─── LEGACY room-card ─────────────────────────────── */
 .room-card { border:2px solid var(--border-idle); background:var(--bg-mid); transition:border-color .3s,box-shadow .3s; position:relative; overflow:hidden; }
@@ -322,18 +340,24 @@ body::after {
 .px-tl{top:-1px;left:-1px} .px-tr{top:-1px;right:-1px} .px-bl{bottom:-1px;left:-1px} .px-br{bottom:-1px;right:-1px}
 
 
-/* DUNGEON STAGE v3 - full-fit layout, fixed sprites */
+/* DUNGEON COLUMN + STAGE v4 */
+
+.dungeon-col {
+  flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; overflow:hidden;
+}
 
 .dungeon-stage {
-  flex:1; min-width:0; background:#020810;
+  flex:1; min-width:0; min-height:0; background:#020810;
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
+  container-type:size;
 }
 
 .dungeon-inner {
   position:relative; flex-shrink:0; overflow:hidden;
-  width:  min(calc(100vw - 280px), calc((100vh - 34px) * 1672 / 941));
-  height: min(calc(100vh - 34px),  calc((100vw - 280px) * 941 / 1672));
+  width:  min(100cqw, calc(100cqh * 1672 / 941));
+  height: min(100cqh, calc(100cqw * 941 / 1672));
 }
 
 .dungeon-bg {
@@ -467,28 +491,92 @@ body::after {
 }
 .sprite-video.is-working { animation:patrol-video 9s linear infinite; filter:drop-shadow(0 0 8px rgba(50,255,100,.85)); }
 
-/* DO NOT PUSH button - no transform = zero movement on click */
-.do-not-push-btn {
+/* DO NOT PUSH — wrapper owns position, inner fills it: zero movement guaranteed */
+.btn-wrap-donotpush {
   position:absolute; right:6%; top:calc(38% - 103px);
-  width:200px; height:207px;
+  width:200px; height:207px; z-index:10; overflow:hidden;
+  pointer-events:auto;
+}
+.do-not-push-btn {
+  position:absolute; inset:0; width:100%; height:100%;
   background:url('/sprites/boton.png') 0 0/400px 207px no-repeat;
-  image-rendering:auto; border:none; padding:0;
-  cursor:pointer; z-index:10;
-  transition:filter .15s ease;
+  image-rendering:auto; border:none; padding:0; margin:0;
+  cursor:pointer;
   user-select:none;
   -webkit-tap-highlight-color:transparent;
   outline:none;
   appearance:none;
   -webkit-appearance:none;
   background-color:transparent;
+  display:block;
+}
+.do-not-push-btn:hover { filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7)); }
+.do-not-push-btn.is-busy { background-position-x:-200px; cursor:not-allowed; filter:brightness(0.85); }
+
+/* ─── HISTORY PANEL (Starcraft style) ────────────── */
+.history-top {
+  flex-shrink:0;
+  background:var(--sc-bg);
+  border-bottom:2px solid var(--sc-border-hi);
   overflow:hidden;
 }
-.do-not-push-btn:hover:not(:disabled) {
-  filter:brightness(1.2) drop-shadow(0 0 16px rgba(255,200,0,.7));
+.history-section { border-bottom:1px solid var(--sc-border); }
+.history-section:last-child { border-bottom:none; }
+.history-hdr {
+  width:100%; display:flex; align-items:center; gap:10px; padding:5px 12px;
+  background:var(--sc-bg-hi); border:none; cursor:pointer; text-align:left;
+  font-family:'Press Start 2P',monospace; font-size:8px;
+  border-bottom:1px solid var(--sc-border);
 }
-.do-not-push-btn.is-busy,
-.do-not-push-btn:disabled {
-  background-position-x:-200px;
-  cursor:not-allowed;
-  filter:brightness(0.85);
+.history-hdr:hover { background:#0e1e34; }
+.history-arrow { font-size:7px; color:var(--sc-blue); flex-shrink:0; }
+.history-label { color:var(--sc-blue-bright); letter-spacing:2px; }
+.history-date  { color:var(--sc-orange); font-size:7px; }
+.history-count { margin-left:auto; color:var(--sc-text-dim); font-size:7px; white-space:nowrap; }
+.history-items { padding:4px 12px 6px; display:flex; flex-direction:column; gap:2px; background:var(--sc-bg); }
+.history-item  { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--sc-border); }
+.history-item:last-child { border-bottom:none; }
+.history-item-icon { font-size:11px; flex-shrink:0; width:16px; }
+.history-item-text {
+  font-family:'Courier New',monospace; font-size:13px; color:var(--sc-text);
+  flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+.history-open-btn {
+  font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-blue-bright);
+  background:rgba(34,153,204,.12); border:1px solid var(--sc-border-hi); padding:3px 8px;
+  cursor:pointer; flex-shrink:0; white-space:nowrap;
+  transition:background .1s,border-color .1s;
+}
+.history-open-btn:hover { background:rgba(85,187,238,.25); border-color:var(--sc-blue-bright); }
+.history-empty { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-text-dim); padding:5px 0; }
+
+/* ─── QUICKNAV BAR (Starcraft style) ──────────────── */
+.quicknav-bar {
+  flex-shrink:0; height:58px;
+  background:var(--sc-bg-hi);
+  border-top:2px solid var(--sc-border-hi);
+  display:flex; align-items:stretch;
+}
+.qnav-btn {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+  background:transparent; border:none; border-right:1px solid var(--sc-border);
+  cursor:pointer; opacity:.35; transition:opacity .15s,background .15s,box-shadow .15s;
+  position:relative; padding:0 10px;
+  font-family:'Press Start 2P',monospace;
+}
+.qnav-btn:last-child { border-right:none; }
+.qnav-btn.active { opacity:1; }
+.qnav-btn:hover:not(:disabled) { background:rgba(34,153,204,.1); opacity:1; }
+.qnav-btn:disabled { cursor:not-allowed; }
+.qnav-btn.ideas:hover:not(:disabled)  { box-shadow:inset 0 0 20px rgba(85,187,238,.1); }
+.qnav-btn.fotos:hover:not(:disabled)  { box-shadow:inset 0 0 20px rgba(204,51,255,.1); }
+.qnav-btn.videos:hover:not(:disabled) { box-shadow:inset 0 0 20px rgba(255,136,0,.1); }
+.qnav-btn.ideas  .qnav-icon  { color:var(--sc-blue-bright); }
+.qnav-btn.fotos  .qnav-icon  { color:var(--images-c); }
+.qnav-btn.videos .qnav-icon  { color:var(--sc-orange); }
+.qnav-btn.ideas  .qnav-label { color:var(--sc-blue-bright); }
+.qnav-btn.fotos  .qnav-label { color:var(--images-c); }
+.qnav-btn.videos .qnav-label { color:var(--sc-orange); }
+.qnav-icon  { font-size:18px; flex-shrink:0; }
+.qnav-label { font-size:10px; letter-spacing:2px; }
+.qnav-badge { position:absolute; top:6px; right:10px; font-size:8px; color:var(--sc-green); }

@@ -7,6 +7,8 @@ import IdeasOverlay from './overlays/IdeasOverlay'
 import ImagesOverlay from './overlays/ImagesOverlay'
 import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept, AnimationConcept } from '@/lib/types'
+import HistoryPanel from './HistoryPanel'
+import QuickNav from './QuickNav'
 
 interface GeneratedImage {
   id: string; conceptId: string; tool: string; imagePath: string
@@ -242,37 +244,61 @@ export default function Factory() {
 
       {/* Main */}
       <div className="factory-body">
-        <div className="dungeon-stage">
-          <div className="dungeon-inner">
-            {/* Background image */}
-            <div className="dungeon-bg" />
+        <div className="dungeon-col">
+          <HistoryPanel
+            concepts={state.concepts}
+            selectedConceptIds={state.selectedConceptIds}
+            generatedImages={generatedImages}
+            videoUri={videoUri}
+            onOpenIdeas={handleOpenIdeas}
+            onOpenImages={handleOpenImagesOverlay}
+            onOpenVideo={handleOpenVideoOverlay}
+          />
 
-            {/* Room glow overlays */}
-            <div id="room-boss"   className={`room-overlay room-boss   ${getRoomClass(state.rooms.boss)}`}   />
-            <div id="room-ideas"  className={`room-overlay room-ideas  ${getRoomClass(state.rooms.ideas)}`}  />
-            <div id="room-images" className={`room-overlay room-images ${getRoomClass(state.rooms.images)}`} />
-            <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
+          <div className="dungeon-stage">
+            <div className="dungeon-inner">
+              <div className="dungeon-bg" />
 
-            {/* Characters */}
-            <div className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`} />
-            <div role="button" tabIndex={0} className={`sprite-ideas${state.rooms.ideas === 'working' ? ' is-working' : ''}`}
-              style={{ cursor: state.concepts.length > 0 ? 'pointer' : 'default' }}
-              onClick={handleOpenIdeas} onKeyDown={e => e.key === 'Enter' && handleOpenIdeas()} />
-            <div role="button" tabIndex={0} className={`sprite-images${state.rooms.images === 'working' ? ' is-working' : ''}`}
-              style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
-              onClick={handleOpenImagesOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenImagesOverlay()} />
-            <div role="button" tabIndex={0} className={`sprite-video${state.rooms.video === 'working' ? ' is-working' : ''}`}
-              style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
-              onClick={handleOpenVideoOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenVideoOverlay()} />
+              <div id="room-boss"   className={`room-overlay room-boss   ${getRoomClass(state.rooms.boss)}`}   />
+              <div id="room-ideas"  className={`room-overlay room-ideas  ${getRoomClass(state.rooms.ideas)}`}  />
+              <div id="room-images" className={`room-overlay room-images ${getRoomClass(state.rooms.images)}`} />
+              <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
 
-            {/* DO NOT PUSH — image button, upper-right above green room */}
-            <button
-              className={`do-not-push-btn${generating ? ' is-busy' : ''}`}
-              onClick={handleGenerate}
-              disabled={generating}
-              aria-label="DO NOT PUSH"
-            />
+              <div className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`} />
+              <div role="button" tabIndex={0} className={`sprite-ideas${state.rooms.ideas === 'working' ? ' is-working' : ''}`}
+                style={{ cursor: state.concepts.length > 0 ? 'pointer' : 'default' }}
+                onClick={handleOpenIdeas} onKeyDown={e => e.key === 'Enter' && handleOpenIdeas()} />
+              <div role="button" tabIndex={0} className={`sprite-images${state.rooms.images === 'working' ? ' is-working' : ''}`}
+                style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
+                onClick={handleOpenImagesOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenImagesOverlay()} />
+              <div role="button" tabIndex={0} className={`sprite-video${state.rooms.video === 'working' ? ' is-working' : ''}`}
+                style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
+                onClick={handleOpenVideoOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenVideoOverlay()} />
+
+              {/* Button: wrapper div owns position, inner div fills it — zero movement on click */}
+              <div className="btn-wrap-donotpush">
+                <div
+                  role="button"
+                  tabIndex={generating ? -1 : 0}
+                  className={`do-not-push-btn${generating ? ' is-busy' : ''}`}
+                  onClick={!generating ? handleGenerate : undefined}
+                  onKeyDown={e => { if (e.key === 'Enter' && !generating) handleGenerate() }}
+                  aria-label="DO NOT PUSH"
+                />
+              </div>
+            </div>
           </div>
+
+          <QuickNav
+            rooms={state.rooms}
+            hasConcepts={state.concepts.length > 0}
+            hasSelectedConcepts={state.selectedConceptIds.length > 0}
+            hasImages={generatedImages.length > 0}
+            hasVideo={!!videoUri}
+            onOpenIdeas={handleOpenIdeas}
+            onOpenImages={handleOpenImagesOverlay}
+            onOpenVideo={handleOpenVideoOverlay}
+          />
         </div>
 
         <Sidebar log={state.sessionLog} />
