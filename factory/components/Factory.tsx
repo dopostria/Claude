@@ -9,9 +9,9 @@ import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept, AnimationConcept } from '@/lib/types'
 import HistoryPanel from './HistoryPanel'
 import {
-  loadDay, patchToday, triggerDownload,
+  loadDay, saveDay, triggerDownload,
   todayStr, yesterdayStr,
-  type PersistedDay,
+  type PersistedDay, type PersistedVideo,
 } from '@/lib/persistence'
 import QuickNav from './QuickNav'
 import ChatOverlay from './overlays/ChatOverlay'
@@ -54,6 +54,8 @@ export default function Factory() {
   const [chatContext, setChatContext] = useState<string | undefined>(undefined)
   const [persistedToday, setPersistedToday] = useState<PersistedDay | null>(null)
   const [persistedYesterday, setPersistedYesterday] = useState<PersistedDay | null>(null)
+  const [sessionVideos, setSessionVideos] = useState<PersistedVideo[]>([])
+  const [isRestored, setIsRestored] = useState(false)
 
   useEffect(() => {
     fetch('/api/sessions').then(r => r.json())
@@ -61,40 +63,59 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
-  // Restore today's session from localStorage on mount
+  // Restore today's session from localStorage, then mark ready for syncing
   useEffect(() => {
     const today = loadDay(todayStr())
     const yesterday = loadDay(yesterdayStr())
     setPersistedYesterday(yesterday)
-    if (today) {
+    if (today && today.concepts.length > 0) {
       setPersistedToday(today)
-      if (today.concepts.length > 0) {
-        setState(s => ({
-          ...s,
-          concepts: today.concepts,
-          imagePrompts: today.imagePrompts,
-          selectedConceptIds: today.selectedConceptIds,
-          rooms: {
-            ...s.rooms,
-            ideas: 'done',
-            images: today.images.length > 0 ? 'done' : s.rooms.images,
-          },
-        }))
-        if (today.images.length > 0) {
-          setGeneratedImages(today.images.map(img => ({
-            id: img.id, conceptId: img.conceptId, tool: img.model,
-            imagePath: '', base64: img.base64, mime: img.mime,
-            prompt: img.prompt, timestamp: img.timestamp,
-          })))
-        }
-        if (today.videos.length > 0) {
-          const last = today.videos[today.videos.length - 1]
-          setVideoUri(last.uri)
-          setVideoModel(last.model)
-        }
+      setState(s => ({
+        ...s,
+        concepts: today.concepts,
+        imagePrompts: today.imagePrompts,
+        selectedConceptIds: today.selectedConceptIds,
+        rooms: {
+          ...s.rooms,
+          ideas: 'done',
+          images: today.images.length > 0 ? 'done' : s.rooms.images,
+        },
+      }))
+      if (today.images.length > 0) {
+        setGeneratedImages(today.images.map(img => ({
+          id: img.id, conceptId: img.conceptId, tool: img.model,
+          imagePath: '', base64: img.base64, mime: img.mime,
+          prompt: img.prompt, timestamp: img.timestamp,
+        })))
+      }
+      if (today.videos.length > 0) {
+        setSessionVideos(today.videos)
+        const last = today.videos[today.videos.length - 1]
+        setVideoUri(last.uri)
+        setVideoModel(last.model)
       }
     }
+    setIsRestored(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Single reactive sync — runs whenever content changes, AFTER restoration
+  useEffect(() => {
+    if (!isRestored) return
+    if (state.concepts.length === 0 && generatedImages.length === 0 && sessionVideos.length === 0) return
+    const day: PersistedDay = {
+      date: todayStr(),
+      concepts: state.concepts,
+      imagePrompts: state.imagePrompts,
+      selectedConceptIds: state.selectedConceptIds,
+      images: generatedImages.map(img => ({
+        id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
+        prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
+      })),
+      videos: sessionVideos,
+    }
+    saveDay(day)
+    setPersistedToday(day)
+  }, [isRestored, state.concepts, state.imagePrompts, state.selectedConceptIds, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
   const fireSignal = useCallback((from: string, to: string) => {
@@ -135,8 +156,6 @@ export default function Factory() {
       setState(s => ({ ...s, concepts, rooms: { ...s.rooms, boss: 'done', ideas: 'done' },
         activeOverlay: 'ideas',
         sessionLog: [...s.sessionLog, { time: now(), message: `${concepts.length} conceptos listos!`, type: 'success' }] }))
-      const saved = patchToday({ concepts, selectedConceptIds: [] })
-      setPersistedToday(saved)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setState(s => ({ ...s, rooms: { ...s.rooms, boss: 'error', ideas: 'error' },
@@ -147,9 +166,7 @@ export default function Factory() {
   const handleSelectConcept = useCallback((id: string) => {
     setState(s => {
       const already = s.selectedConceptIds.includes(id)
-      const next = already ? s.selectedConceptIds.filter(x => x !== id) : [...s.selectedConceptIds, id]
-      patchToday({ selectedConceptIds: next })
-      return { ...s, selectedConceptIds: next }
+      return { ...s, selectedConceptIds: already ? s.selectedConceptIds.filter(x => x !== id) : [...s.selectedConceptIds, id] }
     })
   }, [])
 
@@ -171,7 +188,6 @@ export default function Factory() {
         videoPrompts: { ...s.videoPrompts, ...videoPrompts },
         rooms: { ...s.rooms, ideas: 'done' },
         sessionLog: [...s.sessionLog, { time: now(), message: 'Prompts listos! Revisa y edita.', type: 'success' }] }))
-      patchToday({ imagePrompts: mergedPrompts })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setState(s => ({ ...s, rooms: { ...s.rooms, ideas: 'error' },
@@ -204,16 +220,7 @@ export default function Factory() {
         id: `${conceptId}-${Date.now()}`, conceptId, tool: data.model ?? 'gemini',
         imagePath: data.imagePath ?? '', base64: data.base64, mime: data.mime,
         prompt, timestamp: data.timestamp }
-      setGeneratedImages(prev => {
-        const updated = [...prev, newImage]
-        const persisted = updated.map(img => ({
-          id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
-          prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
-        }))
-        const saved = patchToday({ images: persisted })
-        setPersistedToday(saved)
-        return updated
-      })
+      setGeneratedImages(prev => [...prev, newImage])
       setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' },
         sessionLog: [...s.sessionLog, { time: now(), message: `Imagen lista! ${data.model} · ${aspectLabel}`, type: 'success' }] }))
       // auto-download so the file is always saved locally
@@ -267,12 +274,9 @@ export default function Factory() {
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
       const data = await res.json()
       setVideoUri(data.videoUri); setVideoModel(data.model)
+      setSessionVideos(prev => [...prev, { uri: data.videoUri, model: data.model, prompt, timestamp: data.timestamp }])
       setState(s => ({ ...s, rooms: { ...s.rooms, video: 'done' },
         sessionLog: [...s.sessionLog, { time: now(), message: `Video listo con ${data.model}!`, type: 'success' }] }))
-      const existing = loadDay(todayStr())
-      const newVideo = { uri: data.videoUri, model: data.model, prompt, timestamp: data.timestamp }
-      const saved = patchToday({ videos: [...(existing?.videos ?? []), newVideo] })
-      setPersistedToday(saved)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setState(s => ({ ...s, rooms: { ...s.rooms, video: 'error' },
@@ -290,6 +294,7 @@ export default function Factory() {
       selectedConceptIds: day.selectedConceptIds,
       rooms: { ...s.rooms, ideas: 'done', images: day.images.length > 0 ? 'done' : s.rooms.images },
     }))
+    setSessionVideos(day.videos)
     if (day.images.length > 0) {
       setGeneratedImages(day.images.map(img => ({
         id: img.id, conceptId: img.conceptId, tool: img.model,
