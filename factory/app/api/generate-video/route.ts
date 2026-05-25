@@ -119,13 +119,13 @@ async function generateWithHiggsfield(
   }
 
   // Step 3: create video job
-  const jobPayload: Record<string, unknown> = {
-    job_set_type: 'grok_video',
+  const params: Record<string, unknown> = {
     prompt,
     aspect_ratio: '9:16',
     duration: 3,
   }
-  if (mediaId) jobPayload.media_ids = [mediaId]
+  if (mediaId) params.media_ids = [mediaId]
+  const jobPayload = { job_set_type: 'grok_video', params }
 
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',

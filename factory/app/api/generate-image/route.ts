@@ -25,8 +25,7 @@ async function generateWithHiggsfield(
     },
     body: JSON.stringify({
       job_set_type: model,
-      prompt,
-      aspect_ratio: '9:16',
+      params: { prompt, aspect_ratio: '9:16' },
     }),
   })
 
