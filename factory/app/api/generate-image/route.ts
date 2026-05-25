@@ -63,10 +63,11 @@ async function generateWithHiggsfield(
     console.log(`[generate-image] Higgsfield job ${jobId} status: ${status.status}`)
 
     if (['completed', 'done', 'succeeded'].includes(status.status ?? '')) {
+      console.log('[generate-image] Higgsfield completed response:', JSON.stringify(status).slice(0, 500))
       const results = status.results ?? []
       const first = results[0]
       const imageUrl = typeof first === 'string' ? first : first?.url
-      if (!imageUrl) throw new Error('Higgsfield: no image URL in completed job')
+      if (!imageUrl) throw new Error(`Higgsfield: no image URL — completed body: ${JSON.stringify(status).slice(0, 300)}`)
 
       const imgRes = await fetch(imageUrl)
       if (!imgRes.ok) throw new Error(`Higgsfield image download failed ${imgRes.status}`)
