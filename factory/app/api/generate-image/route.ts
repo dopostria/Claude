@@ -34,9 +34,10 @@ async function generateWithHiggsfield(
     throw new Error(`Higgsfield create failed ${createRes.status}: ${body.slice(0, 200)}`)
   }
 
-  const job = await createRes.json() as { id?: string; job_id?: string }
-  const jobId = job.id ?? job.job_id
-  if (!jobId) throw new Error('Higgsfield: no job ID in response')
+  const job = await createRes.json() as Record<string, unknown>
+  console.log('[generate-image] Higgsfield create response:', JSON.stringify(job))
+  const jobId = (job.id ?? job.job_id ?? job.jobId ?? job.request_id ?? job.requestId) as string | undefined
+  if (!jobId) throw new Error(`Higgsfield: no job ID in response — keys: ${Object.keys(job).join(', ')}`)
   console.log(`[generate-image] Higgsfield job created: ${jobId}`)
 
   const TIMEOUT = 180_000
