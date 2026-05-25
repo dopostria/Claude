@@ -58,13 +58,19 @@ export function saveDay(day: PersistedDay): void {
     const trimmed = { ...day, images: day.images.slice(-3) }
     try { attempt(trimmed) } catch { /* give up */ }
   }
-  // clean up anything older than yesterday
-  const cutoff = yesterdayStr()
+}
+
+export function loadAllDays(): PersistedDay[] {
+  if (typeof window === 'undefined') return []
+  const days: PersistedDay[] = []
   for (const k of Object.keys(localStorage)) {
-    if (k.startsWith('cantsleept_') && k.replace('cantsleept_', '') < cutoff) {
-      localStorage.removeItem(k)
-    }
+    if (!k.startsWith('cantsleept_')) continue
+    try {
+      const raw = localStorage.getItem(k)
+      if (raw) days.push(JSON.parse(raw) as PersistedDay)
+    } catch { /* skip corrupt entry */ }
   }
+  return days.sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export function patchToday(patch: Partial<Omit<PersistedDay, 'date'>>): PersistedDay {

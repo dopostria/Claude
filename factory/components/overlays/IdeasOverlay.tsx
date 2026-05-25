@@ -208,7 +208,7 @@ export default function IdeasOverlay({
                       marginBottom: 5,
                       letterSpacing: 2,
                     }}>SETUP VISUAL</div>
-                    <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00a882', lineHeight: 1.8 }}>
+                    <div style={{ fontFamily: '"Courier New", monospace', fontSize: 13, color: '#00d4a8', lineHeight: 1.6 }}>
                       {concept.setup}
                     </div>
                   </div>
@@ -221,7 +221,7 @@ export default function IdeasOverlay({
                       marginBottom: 5,
                       letterSpacing: 2,
                     }}>PUNCHLINE</div>
-                    <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#ff6b35', lineHeight: 1.8 }}>
+                    <div style={{ fontFamily: '"Courier New", monospace', fontSize: 13, color: '#ff6b35', lineHeight: 1.6 }}>
                       {concept.punchline}
                     </div>
                   </div>
@@ -406,9 +406,9 @@ function EditablePrompt({
           width: '100%',
           background: '#060f0e',
           border: `1px solid ${color}22`,
-          color: '#00a882',
-          fontFamily: 'monospace',
-          fontSize: 8,
+          color: '#00d4a8',
+          fontFamily: '"Courier New", monospace',
+          fontSize: 13,
           lineHeight: 1.6,
           padding: '6px 8px',
           resize: 'vertical',

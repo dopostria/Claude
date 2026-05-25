@@ -345,8 +345,6 @@ export default function Factory() {
       <div className="factory-body">
         <div className="dungeon-col">
           <HistoryPanel
-            todayData={persistedToday}
-            yesterdayData={persistedYesterday}
             onOpenIdeas={handleOpenIdeas}
             onOpenImages={handleOpenImagesOverlay}
             onOpenVideo={handleOpenVideoOverlay}

@@ -228,10 +228,9 @@ body::after {
 }
 .iso-room.is-working::after { opacity:1; }
 
-/* Done */
+/* Done — subtle border only, no glow */
 .iso-room.is-done {
   border-color:var(--r-mid);
-  box-shadow:0 0 12px var(--r-glow), inset 0 0 20px var(--r-glow);
 }
 /* Error */
 .iso-room.is-error { border-color:#ff3030; box-shadow:0 0 16px rgba(255,48,48,.35); }

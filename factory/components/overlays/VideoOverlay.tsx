@@ -62,7 +62,11 @@ export default function VideoOverlay({
     setPrompt(anim.video_prompt)
   }
 
-  const proxyUrl = videoUri ? `/api/video-proxy?uri=${encodeURIComponent(videoUri)}` : null
+  const proxyUrl = videoUri
+    ? videoUri.includes('googleapis.com')
+      ? `/api/video-proxy?uri=${encodeURIComponent(videoUri)}`
+      : videoUri
+    : null
 
   return (
     <div className="overlay-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -125,8 +129,8 @@ export default function VideoOverlay({
                 style={{
                   flex: 1, minHeight: 80,
                   background: '#060f0e', border: '1px solid #0d3330',
-                  color: prompt ? '#00a882' : '#0d3330',
-                  fontFamily: 'monospace', fontSize: 8, lineHeight: 1.6,
+                  color: prompt ? '#00d4a8' : '#0d3330',
+                  fontFamily: '"Courier New", monospace', fontSize: 13, lineHeight: 1.6,
                   padding: 8, resize: 'none', outline: 'none',
                   width: '100%', boxSizing: 'border-box',
                 }}
