@@ -57,17 +57,16 @@ async function generateWithHiggsfield(
     const pollRaw = await pollRes.json()
     const status = (Array.isArray(pollRaw) ? pollRaw[0] : pollRaw) as {
       status?: string
-      results?: Array<{ url?: string } | string>
+      result_url?: string
+      min_result_url?: string
       error?: unknown
     }
     console.log(`[generate-image] Higgsfield job ${jobId} status: ${status.status}`)
 
     if (['completed', 'done', 'succeeded'].includes(status.status ?? '')) {
-      console.log('[generate-image] Higgsfield completed response:', JSON.stringify(status).slice(0, 500))
-      const results = status.results ?? []
-      const first = results[0]
-      const imageUrl = typeof first === 'string' ? first : first?.url
-      if (!imageUrl) throw new Error(`Higgsfield: no image URL — completed body: ${JSON.stringify(status).slice(0, 300)}`)
+      const s = status as Record<string, unknown>
+      const imageUrl = (s.result_url ?? s.min_result_url) as string | undefined
+      if (!imageUrl) throw new Error(`Higgsfield: no image URL — keys: ${Object.keys(s).join(', ')}`)
 
       const imgRes = await fetch(imageUrl)
       if (!imgRes.ok) throw new Error(`Higgsfield image download failed ${imgRes.status}`)
