@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Concept } from '@/lib/types'
+import { loadAllDays, type PersistedDay } from '@/lib/persistence'
 
 interface GeneratedImage {
   id: string
@@ -23,6 +24,7 @@ interface ImagesOverlayProps {
   onClose: () => void
   generating: boolean
   generatingFor: string | null
+  onRestoreDay: (day: PersistedDay) => void
 }
 
 const STYLES = [
@@ -46,12 +48,18 @@ export default function ImagesOverlay({
   onClose,
   generating,
   generatingFor,
+  onRestoreDay,
 }: ImagesOverlayProps) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0].id)
   const [provider, setProvider] = useState<'gemini' | 'higgsfield'>('higgsfield')
-  // Local editable base prompt per concept
   const [editedBase, setEditedBase] = useState<Record<string, string>>({})
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
+
+  useEffect(() => {
+    if (historyOpen) setHistoryDays(loadAllDays())
+  }, [historyOpen])
 
   const activeConcept = selectedConcepts[activeIdx] ?? selectedConcepts[0]
   const rawBase = activeConcept ? imagePrompts[activeConcept.id] ?? '' : ''
@@ -71,9 +79,61 @@ export default function ImagesOverlay({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: '#050e0d', position: 'sticky', top: 0, zIndex: 10,
         }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#ff6b35', letterSpacing: 3 }}>
-            NODE_02 — PIXEL DAMAGE · {provider === 'gemini' ? 'GEMINI' : 'HIGGSFIELD'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* History toggle */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setHistoryOpen(o => !o)}
+                style={{
+                  fontFamily: '"Orbitron", sans-serif', fontSize: 7,
+                  background: historyOpen ? '#07201e' : 'transparent',
+                  border: `1px solid ${historyOpen ? '#ff6b35' : '#0d3330'}`,
+                  color: historyOpen ? '#ff6b35' : '#4a2010',
+                  padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                {historyOpen ? '▾ HISTORY' : '▸ HISTORY'}
+              </button>
+              {historyOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, zIndex: 200,
+                  background: '#050e0d', border: '1px solid #0d3330',
+                  minWidth: 320, maxHeight: 300, overflowY: 'auto',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                }}>
+                  {historyDays.length === 0 && (
+                    <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
+                      _ sin historial
+                    </div>
+                  )}
+                  {historyDays.map(day => (
+                    <div
+                      key={day.date}
+                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      style={{
+                        padding: '8px 14px', cursor: 'pointer',
+                        borderBottom: '1px solid #0a1a18',
+                        fontFamily: '"Share Tech Mono", monospace', fontSize: 12,
+                        color: '#00c4a0', display: 'flex', gap: 10, alignItems: 'center',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ color: '#004d3d' }}>
+                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#ff6b35', letterSpacing: 3 }}>
+              NODE_02 — PIXEL DAMAGE · {provider === 'gemini' ? 'GEMINI' : 'HIGGSFIELD'}
+            </div>
           </div>
+
           <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
             {selectedImageId && (
               <button className="btn-pixel" onClick={onContinueToVideo}
@@ -99,7 +159,7 @@ export default function ImagesOverlay({
                   key={concept.id}
                   onClick={() => setActiveIdx(idx)}
                   style={{
-                    fontFamily: '"Press Start 2P", monospace', fontSize: 6,
+                    fontFamily: '"Orbitron", sans-serif', fontSize: 6,
                     padding: '9px 14px',
                     background: isActive ? '#071412' : 'transparent',
                     border: 'none',
@@ -121,7 +181,7 @@ export default function ImagesOverlay({
 
         {/* Active concept title */}
         <div style={{ padding: '7px 18px', background: '#050e0d', borderBottom: '1px solid #0d3330' }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 9, color: '#fff' }}>
+          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 9, color: '#fff' }}>
             {activeConcept?.title}
           </div>
         </div>
@@ -132,14 +192,14 @@ export default function ImagesOverlay({
           <div style={{ width: 250, minWidth: 250, borderRight: '2px solid #0d3330', background: '#050e0d', display: 'flex', flexDirection: 'column' }}>
 
             <div style={{ padding: '11px 13px', borderBottom: '1px solid #0d3330' }}>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 9 }}>ESTILO VISUAL</div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 9 }}>ESTILO VISUAL</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {STYLES.map(s => (
                   <button
                     key={s.id}
                     onClick={() => setSelectedStyle(s.id)}
                     style={{
-                      fontFamily: '"Press Start 2P", monospace', fontSize: 6,
+                      fontFamily: '"Orbitron", sans-serif', fontSize: 6,
                       padding: '6px 9px',
                       background: selectedStyle === s.id ? `${s.color}15` : 'transparent',
                       border: `2px solid ${selectedStyle === s.id ? s.color : '#0d3330'}`,
@@ -156,7 +216,7 @@ export default function ImagesOverlay({
 
             {/* Editable base prompt */}
             <div style={{ padding: '9px 13px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>
                 BASE PROMPT
               </div>
               <textarea
@@ -168,7 +228,7 @@ export default function ImagesOverlay({
                   background: '#060f0e',
                   border: '1px solid #0d3330',
                   color: '#00d4a8',
-                  fontFamily: '"Courier New", monospace',
+                  fontFamily: '"Share Tech Mono", monospace',
                   fontSize: 13,
                   lineHeight: 1.6,
                   padding: '6px 8px',
@@ -190,7 +250,7 @@ export default function ImagesOverlay({
                     onClick={() => setProvider(p)}
                     style={{
                       flex: 1,
-                      fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                      fontFamily: '"Orbitron", sans-serif', fontSize: 5,
                       padding: '5px 0',
                       background: provider === p ? '#07201e' : 'transparent',
                       border: `1px solid ${provider === p ? '#00c4a0' : '#0d3330'}`,
@@ -218,7 +278,7 @@ export default function ImagesOverlay({
                   ? <span className="loading-dots">GENERANDO<span>.</span><span>.</span><span>.</span></span>
                   : `▶ GENERAR ${style.label}`}
               </button>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
                 {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · soul_v2 (higgs)'}
               </div>
             </div>
@@ -228,8 +288,8 @@ export default function ImagesOverlay({
           <div style={{ flex: 1, padding: 12, background: '#060f0e', overflowY: 'auto' }}>
             {conceptImages.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 10 }}>
-                <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#0d3330' }}>[ SIN IMÁGENES ]</div>
-                <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#0a1412' }}>Elige un estilo y presiona GENERAR</div>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330' }}>[ SIN IMÁGENES ]</div>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#0a1412' }}>Elige un estilo y presiona GENERAR</div>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
@@ -255,7 +315,7 @@ export default function ImagesOverlay({
                         />
                         {isSelected && (
                           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '3px solid #00c4a0', pointerEvents: 'none' }}>
-                            <div style={{ position: 'absolute', top: 5, right: 5, fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#00ffcc', background: 'rgba(0,0,0,0.85)', padding: '3px 5px' }}>✓ VEO</div>
+                            <div style={{ position: 'absolute', top: 5, right: 5, fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#00ffcc', background: 'rgba(0,0,0,0.85)', padding: '3px 5px' }}>✓ VEO</div>
                           </div>
                         )}
                       </div>
@@ -265,7 +325,7 @@ export default function ImagesOverlay({
                         onClick={e => e.stopPropagation()}
                         style={{
                           display: 'block', textAlign: 'center',
-                          fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                          fontFamily: '"Orbitron", sans-serif', fontSize: 5,
                           color: '#0d3330', border: '1px solid #0d3330',
                           padding: '3px 0', textDecoration: 'none', background: 'transparent',
                         }}
@@ -290,14 +350,14 @@ export default function ImagesOverlay({
 
         {/* Footer */}
         <div style={{ padding: '6px 18px', borderTop: '1px solid #0d3330', background: '#050e0d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330' }}>
+          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330' }}>
             {conceptImages.length === 0
               ? 'Genera imágenes para este concepto'
               : selectedImageId
                 ? '▶ Imagen seleccionada — haz clic en ANIMAR CON VEO 3'
                 : 'Haz clic en una imagen para seleccionarla'}
           </div>
-          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0a1412' }}>
+          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0a1412' }}>
             {generatedImages.length} imagen{generatedImages.length !== 1 ? 'es' : ''} total
           </div>
         </div>

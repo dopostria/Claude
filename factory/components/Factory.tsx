@@ -7,10 +7,9 @@ import IdeasOverlay from './overlays/IdeasOverlay'
 import ImagesOverlay from './overlays/ImagesOverlay'
 import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept, AnimationConcept } from '@/lib/types'
-import HistoryPanel from './HistoryPanel'
 import {
   loadDay, saveDay, triggerDownload,
-  todayStr, yesterdayStr,
+  todayStr,
   type PersistedDay, type PersistedVideo,
 } from '@/lib/persistence'
 import QuickNav from './QuickNav'
@@ -52,8 +51,6 @@ export default function Factory() {
   const [pillPath, setPillPath] = useState<string | null>(null)
   const [drChatOpen, setDrChatOpen] = useState(false)
   const [chatContext, setChatContext] = useState<string | undefined>(undefined)
-  const [persistedToday, setPersistedToday] = useState<PersistedDay | null>(null)
-  const [persistedYesterday, setPersistedYesterday] = useState<PersistedDay | null>(null)
   const [sessionVideos, setSessionVideos] = useState<PersistedVideo[]>([])
   const [isRestored, setIsRestored] = useState(false)
 
@@ -66,10 +63,7 @@ export default function Factory() {
   // Restore today's session from localStorage, then mark ready for syncing
   useEffect(() => {
     const today = loadDay(todayStr())
-    const yesterday = loadDay(yesterdayStr())
-    setPersistedYesterday(yesterday)
     if (today && today.concepts.length > 0) {
-      setPersistedToday(today)
       setState(s => ({
         ...s,
         concepts: today.concepts,
@@ -114,7 +108,6 @@ export default function Factory() {
       videos: sessionVideos,
     }
     saveDay(day)
-    setPersistedToday(day)
   }, [isRestored, state.concepts, state.imagePrompts, state.selectedConceptIds, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
@@ -344,13 +337,6 @@ export default function Factory() {
       {/* Main */}
       <div className="factory-body">
         <div className="dungeon-col">
-          <HistoryPanel
-            onOpenIdeas={handleOpenIdeas}
-            onOpenImages={handleOpenImagesOverlay}
-            onOpenVideo={handleOpenVideoOverlay}
-            onRestoreDay={handleRestoreDay}
-          />
-
           <div className="dungeon-stage">
             <div className="dungeon-inner">
               <div className="dungeon-bg" />
@@ -410,14 +396,16 @@ export default function Factory() {
         <IdeasOverlay concepts={state.concepts} selectedIds={state.selectedConceptIds}
           imagePrompts={state.imagePrompts} videoPrompts={state.videoPrompts}
           onSelectConcept={handleSelectConcept} onConfirmSelection={handleConfirmSelection}
-          onOpenImages={handleOpenImages} onClose={handleCloseOverlay} processingPrompts={processingPrompts} />
+          onOpenImages={handleOpenImages} onClose={handleCloseOverlay} processingPrompts={processingPrompts}
+          onRestoreDay={handleRestoreDay} />
       )}
       {state.activeOverlay === 'images' && selectedConcepts.length > 0 && (
         <ImagesOverlay selectedConcepts={selectedConcepts} imagePrompts={state.imagePrompts}
           generatedImages={generatedImages} selectedImageId={selectedImageId}
           onGenerate={handleGenerateImage} onSelectImage={handleSelectImage}
           onContinueToVideo={handleContinueToVideo} onClose={handleCloseOverlay}
-          generating={generatingImage} generatingFor={generatingFor} />
+          generating={generatingImage} generatingFor={generatingFor}
+          onRestoreDay={handleRestoreDay} />
       )}
       {drChatOpen && (
         <ChatOverlay
@@ -433,7 +421,8 @@ export default function Factory() {
           videoUri={videoUri} videoModel={videoModel} defaultVideoPrompt={videoPromptForSelected}
           onGenerateVideo={handleGenerateVideo}
           onBack={() => setState(s => ({ ...s, activeOverlay: 'images' }))}
-          onClose={handleCloseOverlay} generating={generatingVideo} />
+          onClose={handleCloseOverlay} generating={generatingVideo}
+          onRestoreDay={handleRestoreDay} />
       )}
     </div>
   )

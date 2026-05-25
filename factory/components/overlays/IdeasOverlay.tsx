@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { Concept } from '@/lib/types'
+import { loadAllDays, type PersistedDay } from '@/lib/persistence'
 
 interface IdeasOverlayProps {
   concepts: Concept[]
@@ -13,6 +14,7 @@ interface IdeasOverlayProps {
   onOpenImages: (imagePrompts: Record<string, string>, videoPrompts: Record<string, string>) => void
   onClose: () => void
   processingPrompts: boolean
+  onRestoreDay: (day: PersistedDay) => void
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -37,11 +39,13 @@ export default function IdeasOverlay({
   onOpenImages,
   onClose,
   processingPrompts,
+  onRestoreDay,
 }: IdeasOverlayProps) {
-  // Local editable copies of the prompts
   const [localImage, setLocalImage] = useState<Record<string, string>>(imagePrompts)
   const [localVideo, setLocalVideo] = useState<Record<string, string>>(videoPrompts)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
 
   const prevImageRef = useRef(imagePrompts)
   const prevVideoRef = useRef(videoPrompts)
@@ -50,7 +54,6 @@ export default function IdeasOverlay({
     if (imagePrompts !== prevImageRef.current) {
       setLocalImage(imagePrompts)
       prevImageRef.current = imagePrompts
-      // Auto-expand first selected concept when prompts arrive
       if (selectedIds.length > 0) setExpandedId(selectedIds[0])
     }
   }, [imagePrompts, selectedIds])
@@ -61,6 +64,10 @@ export default function IdeasOverlay({
       prevVideoRef.current = videoPrompts
     }
   }, [videoPrompts])
+
+  useEffect(() => {
+    if (historyOpen) setHistoryDays(loadAllDays())
+  }, [historyOpen])
 
   const promptsReady = selectedIds.length > 0 && selectedIds.every(id => localImage[id] && localVideo[id])
 
@@ -80,12 +87,63 @@ export default function IdeasOverlay({
           top: 0,
           zIndex: 10,
         }}>
-          <div>
-            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 3, marginBottom: 5 }}>
-              NODE_01 — 3AM THOUGHTS
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* History toggle */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setHistoryOpen(o => !o)}
+                style={{
+                  fontFamily: '"Orbitron", sans-serif', fontSize: 7,
+                  background: historyOpen ? '#07201e' : 'transparent',
+                  border: `1px solid ${historyOpen ? '#00c4a0' : '#0d3330'}`,
+                  color: historyOpen ? '#00ffcc' : '#004d3d',
+                  padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                {historyOpen ? '▾ HISTORY' : '▸ HISTORY'}
+              </button>
+              {historyOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, zIndex: 200,
+                  background: '#050e0d', border: '1px solid #0d3330',
+                  minWidth: 320, maxHeight: 300, overflowY: 'auto',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                }}>
+                  {historyDays.length === 0 && (
+                    <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
+                      _ sin historial
+                    </div>
+                  )}
+                  {historyDays.map(day => (
+                    <div
+                      key={day.date}
+                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      style={{
+                        padding: '8px 14px', cursor: 'pointer',
+                        borderBottom: '1px solid #0a1a18',
+                        fontFamily: '"Share Tech Mono", monospace', fontSize: 12,
+                        color: '#00c4a0', display: 'flex', gap: 10, alignItems: 'center',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ color: '#004d3d' }}>
+                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 11, color: '#00c4a0' }}>
-              {concepts.length} CONCEPTOS
+
+            <div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 3, marginBottom: 5 }}>
+                NODE_01 — 3AM THOUGHTS
+              </div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 11, color: '#00c4a0' }}>
+                {concepts.length} CONCEPTOS
+              </div>
             </div>
           </div>
 
@@ -164,7 +222,7 @@ export default function IdeasOverlay({
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
+                      fontFamily: '"Orbitron", sans-serif',
                       fontSize: 5,
                       color: '#0d3330',
                       marginBottom: 5,
@@ -173,7 +231,7 @@ export default function IdeasOverlay({
                       <span style={{ color: '#004d3d', marginLeft: 8 }}>{concept.archetype}</span>
                     </div>
                     <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
+                      fontFamily: '"Orbitron", sans-serif',
                       fontSize: 9,
                       color: isSelected ? '#00ffcc' : '#fff',
                       lineHeight: 1.5,
@@ -184,7 +242,7 @@ export default function IdeasOverlay({
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {concept.tags.map(tag => (
                         <span key={tag} style={{
-                          fontFamily: '"Press Start 2P", monospace',
+                          fontFamily: '"Orbitron", sans-serif',
                           fontSize: 5,
                           color: TAG_COLORS[tag] || '#fff',
                           border: `1px solid ${TAG_COLORS[tag] || '#fff'}44`,
@@ -202,26 +260,26 @@ export default function IdeasOverlay({
                 <div style={{ padding: '11px 13px' }}>
                   <div style={{ marginBottom: 9 }}>
                     <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
+                      fontFamily: '"Orbitron", sans-serif',
                       fontSize: 5,
                       color: '#004d3d',
                       marginBottom: 5,
                       letterSpacing: 2,
                     }}>SETUP VISUAL</div>
-                    <div style={{ fontFamily: '"Courier New", monospace', fontSize: 13, color: '#00d4a8', lineHeight: 1.6 }}>
+                    <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#00d4a8', lineHeight: 1.6 }}>
                       {concept.setup}
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 10 }}>
                     <div style={{
-                      fontFamily: '"Press Start 2P", monospace',
+                      fontFamily: '"Orbitron", sans-serif',
                       fontSize: 5,
                       color: '#ff6b3566',
                       marginBottom: 5,
                       letterSpacing: 2,
                     }}>PUNCHLINE</div>
-                    <div style={{ fontFamily: '"Courier New", monospace', fontSize: 13, color: '#ff6b35', lineHeight: 1.6 }}>
+                    <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#ff6b35', lineHeight: 1.6 }}>
                       {concept.punchline}
                     </div>
                   </div>
@@ -298,7 +356,7 @@ export default function IdeasOverlay({
             position: 'sticky',
             bottom: 0,
           }}>
-            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00c4a0' }}>
+            <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00c4a0' }}>
               {selectedIds.length} CONCEPTO{selectedIds.length > 1 ? 'S' : ''} — PROMPTS LISTOS
             </div>
             <button
@@ -336,7 +394,7 @@ function ScoreBadge({ qualityScore }: { qualityScore: Concept['quality_score'] }
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       boxShadow: `0 0 8px ${color}44`,
     }}>
-      <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color, lineHeight: 1 }}>{passed}/4</div>
+      <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color, lineHeight: 1 }}>{passed}/4</div>
     </div>
   )
 }
@@ -386,11 +444,11 @@ function EditablePrompt({
   return (
     <div style={{ border: `1px solid ${color}33`, background: '#050e0d', padding: '9px 11px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color, letterSpacing: 1 }}>{label}</div>
+        <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color, letterSpacing: 1 }}>{label}</div>
         <button
           onClick={handleCopy}
           style={{
-            fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+            fontFamily: '"Orbitron", sans-serif', fontSize: 5,
             color: copied ? '#00ffcc' : '#004d3d',
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
           }}
@@ -407,7 +465,7 @@ function EditablePrompt({
           background: '#060f0e',
           border: `1px solid ${color}22`,
           color: '#00d4a8',
-          fontFamily: '"Courier New", monospace',
+          fontFamily: '"Share Tech Mono", monospace',
           fontSize: 13,
           lineHeight: 1.6,
           padding: '6px 8px',

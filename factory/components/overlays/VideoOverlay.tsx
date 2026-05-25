@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Concept, AnimationConcept } from '@/lib/types'
+import { loadAllDays, type PersistedDay } from '@/lib/persistence'
 
 interface GeneratedImage {
   id: string
@@ -23,6 +24,7 @@ interface VideoOverlayProps {
   onBack: () => void
   onClose: () => void
   generating: boolean
+  onRestoreDay: (day: PersistedDay) => void
 }
 
 const ENERGY_COLORS = {
@@ -43,17 +45,23 @@ export default function VideoOverlay({
   onBack,
   onClose,
   generating,
+  onRestoreDay,
 }: VideoOverlayProps) {
   const [selectedAnimation, setSelectedAnimation] = useState<AnimationConcept | null>(null)
   const [prompt, setPrompt] = useState(defaultVideoPrompt)
   const [provider, setProvider] = useState<'google' | 'higgsfield'>('higgsfield')
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
 
-  // Sync default prompt when it arrives
   useEffect(() => {
     if (defaultVideoPrompt && !prompt) {
       setPrompt(defaultVideoPrompt)
     }
   }, [defaultVideoPrompt, prompt])
+
+  useEffect(() => {
+    if (historyOpen) setHistoryDays(loadAllDays())
+  }, [historyOpen])
 
   const activeConcept = selectedConcepts[0]
 
@@ -78,14 +86,66 @@ export default function VideoOverlay({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: '#050e0d', position: 'sticky', top: 0, zIndex: 10,
         }}>
-          <div>
-            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 5 }}>
-              NODE_03 — MOTION SICK · {provider === 'google' ? 'GOOGLE VEO' : 'HIGGSFIELD'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* History toggle */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setHistoryOpen(o => !o)}
+                style={{
+                  fontFamily: '"Orbitron", sans-serif', fontSize: 7,
+                  background: historyOpen ? '#07201e' : 'transparent',
+                  border: `1px solid ${historyOpen ? '#48cae4' : '#0d3330'}`,
+                  color: historyOpen ? '#48cae4' : '#0d3330',
+                  padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                {historyOpen ? '▾ HISTORY' : '▸ HISTORY'}
+              </button>
+              {historyOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, zIndex: 200,
+                  background: '#050e0d', border: '1px solid #0d3330',
+                  minWidth: 320, maxHeight: 300, overflowY: 'auto',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                }}>
+                  {historyDays.length === 0 && (
+                    <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
+                      _ sin historial
+                    </div>
+                  )}
+                  {historyDays.map(day => (
+                    <div
+                      key={day.date}
+                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      style={{
+                        padding: '8px 14px', cursor: 'pointer',
+                        borderBottom: '1px solid #0a1a18',
+                        fontFamily: '"Share Tech Mono", monospace', fontSize: 12,
+                        color: '#00c4a0', display: 'flex', gap: 10, alignItems: 'center',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ color: '#004d3d' }}>
+                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 9, color: '#fff' }}>
-              {activeConcept?.title ?? 'Sin concepto'}
+
+            <div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 5 }}>
+                NODE_03 — MOTION SICK · {provider === 'google' ? 'GOOGLE VEO' : 'HIGGSFIELD'}
+              </div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 9, color: '#fff' }}>
+                {activeConcept?.title ?? 'Sin concepto'}
+              </div>
             </div>
           </div>
+
           <div style={{ display: 'flex', gap: 7 }}>
             {!generating && (
               <button className="btn-pixel" onClick={onBack}
@@ -104,7 +164,7 @@ export default function VideoOverlay({
 
             {/* Reference image */}
             <div style={{ padding: '11px 13px', borderBottom: '1px solid #0d3330' }}>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 7 }}>REFERENCIA</div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 7 }}>REFERENCIA</div>
               {selectedImage ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -114,14 +174,14 @@ export default function VideoOverlay({
                 />
               ) : (
                 <div style={{ aspectRatio: '9/16', background: '#060f0e', border: '2px solid #0d3330', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330' }}>SIN IMG</div>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330' }}>SIN IMG</div>
                 </div>
               )}
             </div>
 
             {/* Prompt textarea */}
             <div style={{ padding: '9px 13px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>PROMPT VEO</div>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>PROMPT VEO</div>
               <textarea
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
@@ -130,7 +190,7 @@ export default function VideoOverlay({
                   flex: 1, minHeight: 80,
                   background: '#060f0e', border: '1px solid #0d3330',
                   color: prompt ? '#00d4a8' : '#0d3330',
-                  fontFamily: '"Courier New", monospace', fontSize: 13, lineHeight: 1.6,
+                  fontFamily: '"Share Tech Mono", monospace', fontSize: 13, lineHeight: 1.6,
                   padding: 8, resize: 'none', outline: 'none',
                   width: '100%', boxSizing: 'border-box',
                 }}
@@ -147,7 +207,7 @@ export default function VideoOverlay({
                     onClick={() => setProvider(p)}
                     style={{
                       flex: 1,
-                      fontFamily: '"Press Start 2P", monospace', fontSize: 5,
+                      fontFamily: '"Orbitron", sans-serif', fontSize: 5,
                       padding: '5px 0',
                       background: provider === p ? '#07201e' : 'transparent',
                       border: `1px solid ${provider === p ? '#48cae4' : '#0d3330'}`,
@@ -175,7 +235,7 @@ export default function VideoOverlay({
                   ? <span className="loading-dots">PROCESANDO<span>.</span><span>.</span><span>.</span></span>
                   : '▶ GENERAR VIDEO'}
               </button>
-              <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 5 }}>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 5 }}>
                 {generating
                   ? 'no cierres esta ventana...'
                   : provider === 'google'
@@ -191,27 +251,27 @@ export default function VideoOverlay({
             {/* Animation concept selector */}
             {!videoUri && (
               <div style={{ padding: 14, borderBottom: '2px solid #0d3330', flex: videoUri ? 'none' : 1, overflowY: 'auto' }}>
-                <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 11 }}>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 11 }}>
                   ELIGE UN CONCEPTO DE ANIMACIÓN
                 </div>
 
                 {loadingAnimations && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '18px 0' }}>
                     <div style={{ width: 7, height: 7, background: '#48cae4', animation: 'neonPulse 0.8s infinite' }} />
-                    <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#48cae4' }}>
+                    <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#48cae4' }}>
                       <span className="loading-dots">ANALIZANDO IMAGEN<span>.</span><span>.</span><span>.</span></span>
                     </div>
                   </div>
                 )}
 
                 {!loadingAnimations && animationConcepts === null && (
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#0d3330', padding: '18px 0' }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330', padding: '18px 0' }}>
                     Cargando conceptos...
                   </div>
                 )}
 
                 {!loadingAnimations && animationConcepts?.length === 0 && (
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#ff3030', padding: '18px 0' }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#ff3030', padding: '18px 0' }}>
                     Error generando conceptos. Escribe tu prompt manualmente.
                   </div>
                 )}
@@ -233,20 +293,20 @@ export default function VideoOverlay({
                             transition: 'all 0.1s',
                           }}
                         >
-                          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: ec.color, marginBottom: 5, letterSpacing: 1 }}>
+                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: ec.color, marginBottom: 5, letterSpacing: 1 }}>
                             {ec.label}
                           </div>
-                          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: isSelected ? '#fff' : '#00a882', marginBottom: 7, lineHeight: 1.5 }}>
+                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: isSelected ? '#fff' : '#00a882', marginBottom: 7, lineHeight: 1.5 }}>
                             {anim.name}
                           </div>
-                          <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#004d3d', lineHeight: 1.5, marginBottom: 5 }}>
+                          <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 8, color: '#004d3d', lineHeight: 1.5, marginBottom: 5 }}>
                             {anim.movement}
                           </div>
-                          <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: '#0d3330' }}>
+                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330' }}>
                             {anim.camera_direction}
                           </div>
                           {isSelected && (
-                            <div style={{ marginTop: 7, fontFamily: '"Press Start 2P", monospace', fontSize: 5, color: ec.color }}>
+                            <div style={{ marginTop: 7, fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: ec.color }}>
                               ✓ SELECCIONADO
                             </div>
                           )}
@@ -268,10 +328,10 @@ export default function VideoOverlay({
                     margin: '0 auto 18px',
                     animation: 'spin 1s linear infinite',
                   }} />
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 8, color: '#48cae4', marginBottom: 9 }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 8, color: '#48cae4', marginBottom: 9 }}>
                     <span className="loading-dots">GENERANDO<span>.</span><span>.</span><span>.</span></span>
                   </div>
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#0d3330', lineHeight: 2 }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#0d3330', lineHeight: 2 }}>
                     Veo 3 genera tu video<br />esto tarda 3-7 minutos
                   </div>
                 </div>
@@ -279,7 +339,7 @@ export default function VideoOverlay({
 
               {!generating && !videoUri && !loadingAnimations && animationConcepts && animationConcepts.length > 0 && (
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 7, color: '#0d3330' }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330' }}>
                     {selectedAnimation ? '▶ Listo para generar' : '← Elige un concepto de animación'}
                   </div>
                 </div>
@@ -287,7 +347,7 @@ export default function VideoOverlay({
 
               {!generating && videoUri && proxyUrl && (
                 <div style={{ width: '100%', maxWidth: 400 }}>
-                  <div style={{ fontFamily: '"Press Start 2P", monospace', fontSize: 6, color: '#00ffcc', marginBottom: 9, display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', marginBottom: 9, display: 'flex', justifyContent: 'space-between' }}>
                     <span>✓ VIDEO LISTO</span>
                     {videoModel && <span style={{ color: '#0d3330' }}>{videoModel}</span>}
                   </div>

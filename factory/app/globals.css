@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -41,7 +41,7 @@
 html, body {
   background: #020810;
   color: var(--teal-bright);
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Orbitron', sans-serif;
   font-size: 10px;
   overflow-x: hidden;
   height: 100%;
@@ -105,7 +105,7 @@ body::after {
 
 /* ─── BUTTONS ──────────────────────────────────────── */
 .btn-pixel {
-  font-family:'Press Start 2P',monospace; font-size:8px; padding:10px 16px;
+  font-family:'Orbitron',sans-serif; font-size:8px; padding:10px 16px;
   border:2px solid currentColor; background:transparent;
   cursor:pointer; text-transform:uppercase; letter-spacing:1px;
   transition:background .08s,color .08s,transform .08s; outline:none;
@@ -154,8 +154,8 @@ body::after {
   flex-shrink:0; z-index:10;
 }
 .hud-bar.bottom { border-top:1px solid #0a1e30; border-bottom:none; }
-.hud-label { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--sc-text-dim); letter-spacing:2px; white-space:nowrap; }
-.hud-value { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--sc-blue-bright); }
+.hud-label { font-family:'Orbitron',sans-serif; font-size:8px; color:var(--sc-text-dim); letter-spacing:2px; white-space:nowrap; }
+.hud-value { font-family:'Orbitron',sans-serif; font-size:10px; color:var(--sc-blue-bright); }
 .hud-sep { width:1px; height:16px; background:#0a1e30; flex-shrink:0; }
 .hud-spacer { flex:1; }
 
@@ -264,8 +264,8 @@ body::after {
   flex-shrink:0; display:flex; align-items:baseline; justify-content:space-between; gap:8px;
   background:rgba(0,0,0,.3);
 }
-.r-node { font-family:'Press Start 2P',monospace; font-size:5px; color:var(--r-dim); letter-spacing:3px; }
-.r-name { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--r-c); letter-spacing:1px; text-shadow:0 0 10px var(--r-glow); }
+.r-node { font-family:'Orbitron',sans-serif; font-size:5px; color:var(--r-dim); letter-spacing:3px; }
+.r-name { font-family:'Orbitron',sans-serif; font-size:8px; color:var(--r-c); letter-spacing:1px; text-shadow:0 0 10px var(--r-glow); }
 
 /* Room body */
 .r-body { flex:1; display:flex; align-items:center; justify-content:center; padding:8px; position:relative; min-height:0; overflow:hidden; }
@@ -273,9 +273,9 @@ body::after {
 /* Room footer */
 .r-ftr { padding:6px 12px; border-top:1px solid var(--r-dim); flex-shrink:0; display:flex; align-items:center; gap:7px; background:rgba(0,0,0,.25); }
 .r-led { width:5px; height:5px; flex-shrink:0; transition:background .3s,box-shadow .3s; }
-.r-status { font-family:'Press Start 2P',monospace; font-size:5px; transition:color .3s; }
-.r-info   { font-family:'Press Start 2P',monospace; font-size:5px; color:var(--r-mid); margin-left:auto; }
-.r-hint   { font-family:'Press Start 2P',monospace; font-size:4px; color:var(--r-dim); margin-left:auto; animation:neonPulse 2s ease-in-out infinite; }
+.r-status { font-family:'Orbitron',sans-serif; font-size:5px; transition:color .3s; }
+.r-info   { font-family:'Orbitron',sans-serif; font-size:5px; color:var(--r-mid); margin-left:auto; }
+.r-hint   { font-family:'Orbitron',sans-serif; font-size:4px; color:var(--r-dim); margin-left:auto; animation:neonPulse 2s ease-in-out infinite; }
 
 /* ─── ROOM DECORATIONS ─────────────────────────────── */
 
@@ -314,20 +314,20 @@ body::after {
 /* ─── COMMS PANEL (Starcraft style) ───────────────── */
 .comms-panel { width:320px; min-width:320px; background:var(--sc-bg); border-left:2px solid var(--sc-border); display:flex; flex-direction:column; overflow:hidden; }
 .comms-hdr   { padding:8px 12px 6px; border-bottom:2px solid var(--sc-border-hi); background:var(--sc-bg-hi); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
-.comms-title { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--sc-blue-bright); letter-spacing:2px; }
-.comms-date  { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-orange); }
+.comms-title { font-family:'Orbitron',sans-serif; font-size:10px; color:var(--sc-blue-bright); letter-spacing:2px; }
+.comms-date  { font-family:'Orbitron',sans-serif; font-size:7px; color:var(--sc-orange); }
 .comms-body  { flex:1; overflow-y:auto; padding:6px 10px; display:flex; flex-direction:column; gap:4px; }
-.comms-entry { font-family:'Courier New',monospace; font-size:13px; line-height:1.5; border-left:3px solid transparent; padding-left:8px; padding-top:2px; padding-bottom:2px; background:rgba(0,0,0,.2); }
-.comms-ts    { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-text-dim); margin-bottom:2px; }
+.comms-entry { font-family:'Share Tech Mono',monospace; font-size:13px; line-height:1.5; border-left:3px solid transparent; padding-left:8px; padding-top:2px; padding-bottom:2px; background:rgba(0,0,0,.2); }
+.comms-ts    { font-family:'Orbitron',sans-serif; font-size:7px; color:var(--sc-text-dim); margin-bottom:2px; }
 .comms-msg   { }
 .comms-entry.info    { color:var(--sc-text-dim); border-color:var(--sc-border); }
 .comms-entry.working { color:var(--sc-orange); border-color:var(--sc-orange-dim); }
 .comms-entry.success { color:var(--sc-green); border-color:#1a5530; }
 .comms-entry.error   { color:#ff5555; border-color:#551515; }
-.comms-empty { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--sc-text-dim); padding:8px 0; }
+.comms-empty { font-family:'Orbitron',sans-serif; font-size:8px; color:var(--sc-text-dim); padding:8px 0; }
 .comms-ftr   { padding:6px 12px; border-top:2px solid var(--sc-border); background:var(--sc-bg-hi); flex-shrink:0; display:flex; justify-content:space-between; align-items:center; }
-.comms-ver   { font-family:'Press Start 2P',monospace; font-size:6px; color:var(--sc-text-dim); }
-.comms-status{ font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-green); }
+.comms-ver   { font-family:'Orbitron',sans-serif; font-size:6px; color:var(--sc-text-dim); }
+.comms-status{ font-family:'Orbitron',sans-serif; font-size:7px; color:var(--sc-green); }
 
 /* ─── LEGACY room-card ─────────────────────────────── */
 .room-card { border:2px solid var(--border-idle); background:var(--bg-mid); transition:border-color .3s,box-shadow .3s; position:relative; overflow:hidden; }
@@ -511,42 +511,6 @@ body::after {
 }
 .do-not-push-btn.is-busy { background-position:-161px -8px; cursor:not-allowed; }
 
-/* ─── HISTORY PANEL (Starcraft style) ────────────── */
-.history-top {
-  flex-shrink:0;
-  background:var(--sc-bg);
-  border-bottom:2px solid var(--sc-border-hi);
-  overflow:hidden;
-}
-.history-section { border-bottom:1px solid var(--sc-border); }
-.history-section:last-child { border-bottom:none; }
-.history-hdr {
-  width:100%; display:flex; align-items:center; gap:10px; padding:5px 12px;
-  background:var(--sc-bg-hi); border:none; cursor:pointer; text-align:left;
-  font-family:'Press Start 2P',monospace; font-size:8px;
-  border-bottom:1px solid var(--sc-border);
-}
-.history-hdr:hover { background:#0e1e34; }
-.history-arrow { font-size:7px; color:var(--sc-blue); flex-shrink:0; }
-.history-label { color:var(--sc-blue-bright); letter-spacing:2px; }
-.history-date  { color:var(--sc-orange); font-size:7px; }
-.history-count { margin-left:auto; color:var(--sc-text-dim); font-size:7px; white-space:nowrap; }
-.history-items { padding:4px 12px 6px; display:flex; flex-direction:column; gap:2px; background:var(--sc-bg); }
-.history-item  { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--sc-border); }
-.history-item:last-child { border-bottom:none; }
-.history-item-icon { font-size:11px; flex-shrink:0; width:16px; }
-.history-item-text {
-  font-family:'Courier New',monospace; font-size:13px; color:var(--sc-text);
-  flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.history-open-btn {
-  font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-blue-bright);
-  background:rgba(34,153,204,.12); border:1px solid var(--sc-border-hi); padding:3px 8px;
-  cursor:pointer; flex-shrink:0; white-space:nowrap;
-  transition:background .1s,border-color .1s;
-}
-.history-open-btn:hover { background:rgba(85,187,238,.25); border-color:var(--sc-blue-bright); }
-.history-empty { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-text-dim); padding:5px 0; }
 
 /* ─── QUICKNAV BAR (Starcraft style) ──────────────── */
 .quicknav-bar {
@@ -560,7 +524,7 @@ body::after {
   background:transparent; border:none; border-right:1px solid var(--sc-border);
   cursor:pointer; opacity:.35; transition:opacity .15s,background .15s,box-shadow .15s;
   position:relative; padding:0 10px;
-  font-family:'Press Start 2P',monospace;
+  font-family:'Orbitron',sans-serif;
 }
 .qnav-btn:last-child { border-right:none; }
 .qnav-btn.active { opacity:1; }
@@ -594,7 +558,7 @@ body::after {
 .chat-hdr {
   flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
   padding:8px 14px; background:var(--sc-bg-hi); border-bottom:2px solid var(--sc-border-hi);
-  font-family:'Press Start 2P',monospace; font-size:8px; color:var(--sc-blue-bright);
+  font-family:'Orbitron',sans-serif; font-size:8px; color:var(--sc-blue-bright);
 }
 .chat-title { letter-spacing:2px; }
 .chat-close {
@@ -607,13 +571,13 @@ body::after {
   flex:1; overflow-y:auto; padding:10px 14px; display:flex; flex-direction:column; gap:8px;
   scrollbar-width:thin; scrollbar-color:var(--sc-border) transparent;
 }
-.chat-empty { font-family:'Press Start 2P',monospace; font-size:7px; color:var(--sc-text-dim); padding:10px 0; }
+.chat-empty { font-family:'Orbitron',sans-serif; font-size:7px; color:var(--sc-text-dim); padding:10px 0; }
 .chat-msg { display:flex; flex-direction:column; gap:3px; }
-.chat-msg-who { font-family:'Press Start 2P',monospace; font-size:7px; letter-spacing:2px; }
+.chat-msg-who { font-family:'Orbitron',sans-serif; font-size:7px; letter-spacing:2px; }
 .chat-msg-user .chat-msg-who   { color:var(--sc-orange); align-self:flex-end; }
 .chat-msg-assistant .chat-msg-who { color:var(--sc-blue-bright); }
 .chat-msg-text {
-  font-family:'Courier New',monospace; font-size:13px; line-height:1.5;
+  font-family:'Share Tech Mono',monospace; font-size:13px; line-height:1.5;
   color:var(--sc-text); white-space:pre-wrap; word-break:break-word;
 }
 .chat-msg-user .chat-msg-text {
@@ -632,14 +596,14 @@ body::after {
 }
 .chat-input {
   flex:1; background:var(--sc-bg-hi); border:none; border-right:1px solid var(--sc-border);
-  color:var(--sc-text); font-family:'Courier New',monospace; font-size:13px;
+  color:var(--sc-text); font-family:'Share Tech Mono',monospace; font-size:13px;
   padding:8px 12px; outline:none;
 }
 .chat-input::placeholder { color:var(--sc-text-dim); }
 .chat-input:focus { background:#0d1f36; }
 .chat-send {
   flex-shrink:0; background:rgba(68,221,204,.12); border:none; border-left:1px solid var(--sc-border-hi);
-  color:var(--sc-blue-bright); font-family:'Press Start 2P',monospace; font-size:7px;
+  color:var(--sc-blue-bright); font-family:'Orbitron',sans-serif; font-size:7px;
   padding:0 14px; cursor:pointer; letter-spacing:1px; white-space:nowrap;
 }
 .chat-send:hover:not(:disabled) { background:rgba(68,221,204,.22); }
@@ -650,7 +614,7 @@ body::after {
 }
 .chat-feed-btn {
   width:100%; background:rgba(255,136,0,.12); border:1px solid var(--sc-orange-dim);
-  color:var(--sc-orange); font-family:'Press Start 2P',monospace; font-size:7px;
+  color:var(--sc-orange); font-family:'Orbitron',sans-serif; font-size:7px;
   padding:7px; cursor:pointer; letter-spacing:1px;
 }
 .chat-feed-btn:hover { background:rgba(255,136,0,.25); border-color:var(--sc-orange); }
