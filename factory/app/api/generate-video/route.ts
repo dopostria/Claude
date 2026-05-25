@@ -180,6 +180,16 @@ export async function POST(req: NextRequest) {
 
     let result: { videoUri: string; model: string }
 
+    // Load image from disk if a path was provided (avoids sending large base64 over the wire)
+    let imageBase64: string | undefined
+    if (imagePath) {
+      try {
+        const filename = imagePath.replace('/api/images/', '')
+        const buf = await readFile(join(TMP_DIR, filename))
+        imageBase64 = buf.toString('base64')
+      } catch { /* image unavailable, proceed without it */ }
+    }
+
     if (provider === 'higgsfield') {
       result = await withHiggsfieldToken(token =>
         generateWithHiggsfield(prompt, token, imagePath, imageMime)
