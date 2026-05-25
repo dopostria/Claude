@@ -270,7 +270,7 @@ export default function Factory() {
     try {
       const res = await fetch('/api/generate-video', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, imageBase64: selectedImg?.base64, imageMime: selectedImg?.mime, provider }) })
+        body: JSON.stringify({ prompt, imagePath: selectedImg?.imagePath, imageMime: selectedImg?.mime, provider }) })
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
       const data = await res.json()
       setVideoUri(data.videoUri); setVideoModel(data.model)
