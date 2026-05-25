@@ -34,10 +34,11 @@ async function generateWithHiggsfield(
     throw new Error(`Higgsfield create failed ${createRes.status}: ${body.slice(0, 200)}`)
   }
 
-  const job = await createRes.json() as Record<string, unknown>
+  const jobRaw = await createRes.json()
+  const job = Array.isArray(jobRaw) ? jobRaw[0] as Record<string, unknown> : jobRaw as Record<string, unknown>
   console.log('[generate-image] Higgsfield create response:', JSON.stringify(job))
   const jobId = (job.id ?? job.job_id ?? job.jobId ?? job.request_id ?? job.requestId) as string | undefined
-  if (!jobId) throw new Error(`Higgsfield: no job ID in response — keys: ${Object.keys(job).join(', ')}`)
+  if (!jobId) throw new Error(`Higgsfield: no job ID — keys: ${Object.keys(job).join(', ')}`)
   console.log(`[generate-image] Higgsfield job created: ${jobId}`)
 
   const TIMEOUT = 180_000
@@ -52,7 +53,8 @@ async function generateWithHiggsfield(
     })
     if (!pollRes.ok) throw new Error(`Higgsfield poll failed ${pollRes.status}`)
 
-    const status = await pollRes.json() as {
+    const pollRaw = await pollRes.json()
+    const status = (Array.isArray(pollRaw) ? pollRaw[0] : pollRaw) as {
       status?: string
       results?: Array<{ url?: string } | string>
       error?: unknown
