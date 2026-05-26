@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { Concept, AnimationConcept, HistorySelection, UsedCombination } from './types'
+import type { Concept, HistorySelection, UsedCombination } from './types'
 import { getTodayUsedCombinations } from './storage'
 import { readTrendFeed } from './trending'
 
