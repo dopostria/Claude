@@ -1,5 +1,5 @@
 # CantSleept Content Factory — Status Document
-**Date:** 2026-05-25  
+**Date:** 2026-05-26  
 **Repo:** github.com/dopostria/claude  
 **Branch:** `cantsleept-iso` (production)  
 **Live URL:** https://kantsleepmay.vercel.app  
@@ -16,6 +16,7 @@ A pixel-art isometric "dungeon" web app for generating viral social media conten
 
 ### Stack
 - **Frontend:** Next.js 14 App Router, React, TypeScript, CSS (no UI library)
+- **Fonts:** Orbitron (labels/headings/buttons) + Share Tech Mono (body/prompts/text content) via Google Fonts
 - **AI – Ideas:** Anthropic Claude (claude-opus-4-5 or similar) via `ANTHROPIC_API_KEY`
 - **AI – Images:** Higgsfield Soul V2 (`text2image_soul_v2`) via device auth token, OR Google Gemini (fallback)
 - **AI – Video:** Higgsfield `grok_video` OR Google Veo 3.1 (`veo-3.1-generate-preview`)
@@ -37,20 +38,19 @@ factory/
 │   │   ├── health/          — Env var status check
 │   │   ├── images/          — Serve tmp images
 │   │   └── video-proxy/     — Proxy for Google-hosted videos (auth required)
-│   └── globals.css          — All styles (pixel art / neon theme)
+│   └── globals.css          — All styles + font imports (Orbitron + Share Tech Mono)
 ├── components/
 │   ├── Factory.tsx          — Root component, all state management
-│   ├── HistoryPanel.tsx     — Left sidebar: HISTORY of all saved days
 │   ├── Sidebar.tsx          — Right sidebar: session log / comms
 │   ├── QuickNav.tsx         — Bottom nav buttons
 │   ├── overlays/
-│   │   ├── IdeasOverlay.tsx     — Browse/select concepts + prompts
-│   │   ├── ImagesOverlay.tsx    — Generate images per concept
-│   │   ├── VideoOverlay.tsx     — Generate video
+│   │   ├── IdeasOverlay.tsx     — Browse/select concepts + prompts (has ▸ HISTORY dropdown)
+│   │   ├── ImagesOverlay.tsx    — Generate images per concept (has ▸ HISTORY dropdown)
+│   │   ├── VideoOverlay.tsx     — Generate video (has ▸ HISTORY dropdown)
 │   │   └── ChatOverlay.tsx      — Chat with Dr. Adderall
 │   └── rooms/
-│       ├── BossRoom.tsx         — Boss room HUD (score bars)
-│       └── IdeasRoom.tsx        — Ideas room HUD
+│       ├── BossRoom.tsx         — Boss room HUD (unused in current dungeon layout)
+│       └── IdeasRoom.tsx        — Ideas room HUD (unused in current dungeon layout)
 └── lib/
     ├── persistence.ts       — localStorage read/write/loadAllDays
     ├── claude.ts            — Claude prompts (ideas, quality scoring)
@@ -93,12 +93,28 @@ factory/
 - ✅ Generate video: Higgsfield grok_video or Google Veo 3.1
 - ✅ Video playback in-app (Higgsfield = direct CloudFront URL, Google = proxied)
 - ✅ Download images and videos
-- ✅ HISTORY panel: all days saved in localStorage forever, shows concepts + prompts + thumbnails
-- ✅ Session restore from history
+- ✅ HISTORY dropdown in every overlay: all days saved in localStorage, click any row to restore session
+- ✅ Session restore from history (concepts + prompts + images re-loaded into active session)
 - ✅ Dr. Adderall chat overlay with context injection
 - ✅ Character hover glows (each sprite has color matching its room)
-- ✅ Room glow only during `is-working` state
+- ✅ Room glow only during `is-working` state (no glow on done)
 - ✅ localStorage persistence (survives page reloads, NOT redeploys to different URLs)
+- ✅ Fonts: Orbitron for all labels/UI chrome, Share Tech Mono for readable body text/prompts
+
+---
+
+## UI Layout
+```
+┌─────────────────────────────┬──────────────┐
+│  DUNGEON STAGE (full width) │  COMMS panel │
+│  (sprites + dungeon.png bg) │  (session    │
+│                             │   log)       │
+├─────────────────────────────┤              │
+│  QUICKNAV BAR (Ideas/Fotos/ │              │
+│  Videos buttons)            │              │
+└─────────────────────────────┴──────────────┘
+```
+History is now accessed via **▸ HISTORY** dropdown button in the top-left of each overlay header — no longer a separate left sidebar.
 
 ---
 
@@ -148,3 +164,4 @@ factory/
 - Add proper error boundaries in React
 - The `cantsleept-iso` branch name is confusing — consider renaming to `main` or `production`
 - `.env.local.example` still references old `HIGGSFIELD_API_KEY` variable name (should be `HIGGSFIELD_API_TOKEN`)
+- `rooms/BossRoom.tsx` and `rooms/IdeasRoom.tsx` are unused dead code (dungeon uses sprite PNG + CSS, not these React components)
