@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import { withHiggsfieldToken } from '@/lib/higgsfield-auth'
-
-const TMP_DIR = '/tmp/cantsleept-images'
 
 const GOOGLE_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
@@ -74,29 +70,28 @@ async function generateWithGoogle(
 }
 
 // ---------------------------------------------------------------------------
-// Higgsfield — veo3_1_lite (cheapest / fast)
+// Higgsfield — grok_video with start frame via media upload
 // ---------------------------------------------------------------------------
 
 async function generateWithHiggsfield(
   prompt: string,
   apiToken: string,
-  imagePath?: string,
+  imageBase64?: string,
   imageMime?: string
 ): Promise<{ videoUri: string; model: string }> {
   let mediaId: string | undefined
 
-  if (imagePath) {
-    // Load image from tmp dir and upload to Higgsfield
+  // Upload start frame image if provided
+  if (imageBase64) {
     try {
-      const filename = imagePath.replace('/api/images/', '')
-      const imgBuf = await readFile(join(TMP_DIR, filename))
       const mime = imageMime ?? 'image/jpeg'
+      const imgBuf = Buffer.from(imageBase64, 'base64')
 
       // Step 1: request upload slot
       const uploadInitRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: 'reference.jpg', content_type: mime }),
+        body: JSON.stringify({ filename: 'start_frame.jpg', content_type: mime }),
       })
       if (uploadInitRes.ok) {
         const uploadData = await uploadInitRes.json() as {
@@ -105,8 +100,15 @@ async function generateWithHiggsfield(
         const uploadUrl = uploadData.url ?? uploadData.upload_url
         mediaId = uploadData.id ?? uploadData.upload_id
         if (uploadUrl) {
-          const putRes = await fetch(uploadUrl, { method: 'PUT', body: imgBuf, headers: { 'Content-Type': mime } })
-          if (!putRes.ok) mediaId = undefined
+          const putRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: imgBuf,
+            headers: { 'Content-Type': mime },
+          })
+          if (!putRes.ok) {
+            console.warn('[generate-video] Higgsfield upload PUT failed, proceeding without start frame')
+            mediaId = undefined
+          }
         }
       }
     } catch (e) {
@@ -114,9 +116,9 @@ async function generateWithHiggsfield(
     }
   }
 
-  // Create video job
+  // Create video job — start_image carries the uploaded media ID
   const params: Record<string, unknown> = { prompt, aspect_ratio: '9:16', duration: 3 }
-  if (mediaId) params.media_ids = [mediaId]
+  if (mediaId) params.start_image = mediaId
 
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',
@@ -169,9 +171,9 @@ async function generateWithHiggsfield(
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, imagePath, imageMime, provider = 'google' } = await req.json() as {
+    const { prompt, imageBase64, imageMime, provider = 'google' } = await req.json() as {
       prompt: string
-      imagePath?: string
+      imageBase64?: string
       imageMime?: string
       provider?: 'higgsfield' | 'google'
     }
@@ -180,19 +182,9 @@ export async function POST(req: NextRequest) {
 
     let result: { videoUri: string; model: string }
 
-    // Load image from disk if a path was provided (avoids sending large base64 over the wire)
-    let imageBase64: string | undefined
-    if (imagePath) {
-      try {
-        const filename = imagePath.replace('/api/images/', '')
-        const buf = await readFile(join(TMP_DIR, filename))
-        imageBase64 = buf.toString('base64')
-      } catch { /* image unavailable, proceed without it */ }
-    }
-
     if (provider === 'higgsfield') {
       result = await withHiggsfieldToken(token =>
-        generateWithHiggsfield(prompt, token, imagePath, imageMime)
+        generateWithHiggsfield(prompt, token, imageBase64, imageMime)
       )
     } else {
       const apiKey = process.env.GEMINI_API_KEY
