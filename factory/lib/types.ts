@@ -34,15 +34,6 @@ export interface Concept {
 // Single unified image prompt — style is chosen by Claude per concept
 export type ImagePrompts = string
 
-export interface AnimationConcept {
-  id: string
-  name: string
-  energy: 'subtle' | 'dynamic' | 'surreal'
-  movement: string
-  camera_direction: string
-  video_prompt: string
-}
-
 export interface GeneratedImage {
   id: string
   concept_id: string
@@ -55,7 +46,6 @@ export interface GeneratedImage {
 export interface GeneratedVideo {
   id: string
   image_id: string
-  animation_concept_id: string
   tool: 'gemini' | 'higgsfield'
   path: string
   prompt: string
@@ -64,7 +54,7 @@ export interface GeneratedVideo {
 
 export interface SessionEntry {
   timestamp: string
-  type: 'concept_generated' | 'concept_selected' | 'image_generated' | 'image_selected' | 'animation_selected' | 'video_generated'
+  type: 'concept_generated' | 'concept_selected' | 'image_generated' | 'image_selected' | 'video_generated'
   data: Record<string, unknown>
   tool?: string
   status: 'pending' | 'done' | 'error'
@@ -83,8 +73,6 @@ export interface SessionData {
   image_prompts: Record<string, string>
   generated_images: GeneratedImage[]
   selected_image_id: string | null
-  animation_concepts: AnimationConcept[]
-  selected_animation_id: string | null
   generated_video: GeneratedVideo | null
   log: SessionEntry[]
   used_combinations: UsedCombination[]
@@ -98,6 +86,7 @@ export interface HistorySelection {
   concept_punchline: string
   tags: ConceptTag[]
   tool_used: string | null
+  character?: string
 }
 
 export interface History {
@@ -128,7 +117,5 @@ export interface FactoryState {
   videoPrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
-  animationConcepts: AnimationConcept[]
-  selectedAnimationId: string | null
   signal: { from: string; to: string } | null
 }
