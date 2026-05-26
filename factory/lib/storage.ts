@@ -85,8 +85,6 @@ export function getOrCreateTodaySession(): SessionData {
     image_prompts: {},
     generated_images: [],
     selected_image_id: null,
-    animation_concepts: [],
-    selected_animation_id: null,
     generated_video: null,
     log: [],
     used_combinations: [],
