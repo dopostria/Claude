@@ -5,14 +5,26 @@ import { readTrendFeed } from './trending'
 
 const MODEL = 'claude-sonnet-4-6'
 
+// Shorthand for a system content block with optional prompt-caching marker
+type SystemBlock = {
+  type: 'text'
+  text: string
+  cache_control?: { type: 'ephemeral' } | null
+}
+
 function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 }
 
+// Returns { staticPart, dynamicPart } so the caller can cache the static block.
+// staticPart  — sections 1–12: all brand context, archetypes, humor rules, etc.
+//               Changes only when brand_context.json changes. Cache this.
+// dynamicPart — sections 13–16: combination blacklist, trend feed, history,
+//               output format. Changes every call / every day. Do NOT cache.
 function buildIdeaSystemPrompt(
   bc: Record<string, unknown>,
   recentHistory: HistorySelection[]
-): string {
+): { staticPart: string; dynamicPart: string } {
   const brand       = bc.brand        as Record<string, unknown>
   const tone        = bc.tone         as Record<string, unknown>
   const qf          = bc.quality_filters as Record<string, unknown>
@@ -35,67 +47,19 @@ function buildIdeaSystemPrompt(
   const filterList      = (qf.filters             as Record<string, unknown>[])
   const punchList       = (punches.formats        as Record<string, unknown>[])
   const humorEngines    = (humorDna.humor_engines       as Record<string, unknown>[])
-
-  // ── TREND FEED — leer desde la misma ruta que usa trending.ts ───────────
-  let trendFeedBlock = ''
-  try {
-    const trendData = readTrendFeed()
-    if (trendData.trends && trendData.trends.length > 0) {
-      trendFeedBlock = `=== ACTUALIDAD BOLIVIANA HOY — OBLIGATORIO ===
-${trendData.trends.map(t => `
-TREND: ${t.topic}
-QUÉ PASÓ: ${t.summary}
-ÁNGULO CÓMICO: ${t.humor_angle}
-TAGS: ${t.tags.join(', ')}`).join('\n')}
-
-REGLA DURA: De los 10 conceptos generados, MÍNIMO 4 deben usar
-uno de estos trends como contexto, setting o situación base.
-
-El trend NO es el chiste. Es el mundo donde ocurre el chiste.
-El humor_engine y el arquetipo siguen siendo el motor.
-
-CÓMO USAR LOS TRENDS — EJEMPLOS CONCRETOS:
-- Si el trend es "67 bloqueos activos" → el concepto no es "personaje en un bloqueo genérico".
-  Es "personaje en el bloqueo número 67, que ya nadie recuerda por qué empezó,
-  llevando 11 horas esperando, con cara de total resignación."
-- Si el trend es "gasolina 4x más cara" → cualquier personaje con vehículo
-  ahora no puede llenarlo. Ese es el conflicto real boliviano de hoy.
-- Si el trend es "narco capturado en Bolivia" → personaje pop culture buscado
-  por agencia internacional, encontrado en lugar completamente mundano y boliviano.
-- Si el trend es "vicepresidente opositor desde adentro" → funcionario que
-  no renuncia pero tampoco coopera — arquetipo A6 perfecto.
-- Si el trend es "repechaje Bolivia vs Irak/Surinam" → el contexto deportivo
-  más absurdo del continente en este momento como setting real.
-
-Si al terminar de generar los 10 conceptos hay menos de 4 con trend —
-descartar los más débiles sin trend y regenerarlos con trend incorporado.
-Nunca forzar un trend donde no encaja — elegir los 4 trends más fértiles
-del feed y usarlos con el personaje y arquetipo correcto.
-=== FIN ACTUALIDAD ===`
-    }
-  } catch {
-    trendFeedBlock = ''
-  }
-
-  // ── COMBINATION BLACKLIST — leer sesión de hoy ───────────────────────────
-  const usedCombinations: UsedCombination[] = getTodayUsedCombinations()
-
-  console.log('=== COMBINATION BLACKLIST ===')
-  console.log(JSON.stringify(usedCombinations, null, 2))
-  console.log('Cholita+NASA bloqueada:',
-    usedCombinations.some(c =>
-      c.character.includes('cholita') && c.setting.includes('nasa')
-    )
-  )
-  console.log('=== END ===')
-
   const humorChecklist  = (humorDna.humor_score_checklist as Record<string, unknown>)
   const darkRules       = (humorDna.dark_humor_rules     as Record<string, unknown>)
   const langVoice       = (humorDna.language_and_voice   as Record<string, unknown>)
   const politicalRules  = (humorDna.political_humor_rules as Record<string, unknown>)
 
+  // ── STATIC SECTIONS (1–12) ─────────────────────────────────────────────
+  // These derive entirely from brand_context.json which rarely changes.
+  // The caller marks this block with cache_control: ephemeral.
+
+  const sections: string[] = []
+
   // ── 1. IDENTIDAD Y TONO ─────────────────────────────────────────────────
-  const sections: string[] = [`Eres el CantSleept Content Factory IDEA ENGINE.
+  sections.push(`Eres el CantSleept Content Factory IDEA ENGINE.
 
 CUENTA: ${brand.handle} | Plataformas: ${(brand.platforms as string[]).join(', ')} | Idioma: ${brand.language}
 Paradoja central: ${brand.central_paradox}
@@ -106,7 +70,7 @@ TONO: ${(tone.primary as string[]).join(' + ')} — ${tone.note}
 Suena así:
 ${(tone.what_it_sounds_like as string[]).map(x => `- ${x}`).join('\n')}
 NUNCA suena así:
-${(tone.what_it_never_sounds_like as string[]).map(x => `- ${x}`).join('\n')}`]
+${(tone.what_it_never_sounds_like as string[]).map(x => `- ${x}`).join('\n')}`)
 
   // ── 2. FILTROS DE CALIDAD ────────────────────────────────────────────────
   sections.push(`FILTROS DE CALIDAD
@@ -173,7 +137,7 @@ ${archetypeList.map(a =>
   `${a.id}: ${a.name}\n  ${a.description}\n  Motor de contraste: ${a.contrast_engine}\n  Ejemplo: ${a.example}`
 ).join('\n\n')}`)
 
-  // ── 4. ROTATION RULES ────────────────────────────────────────────────────
+  // ── 5. ROTATION RULES ────────────────────────────────────────────────────
   sections.push(`ROTATION RULES — POR SESIÓN
 - Total: ${perSession.total_concepts} conceptos
 - Mínimo ${perSession.min_archetypes_covered} arquetipos distintos, máximo ${perSession.max_same_archetype} del mismo
@@ -187,7 +151,7 @@ ROTATION RULES — ENTRE SESIONES (ventana: ${crossSess.history_window})
 - ${crossSess.archetype_rule}
 - ${crossSess.setting_rule}`)
 
-  // ── 5. UNIVERSO DE PERSONAJES Y SETTINGS ─────────────────────────────────
+  // ── 6. UNIVERSO DE PERSONAJES Y SETTINGS ─────────────────────────────────
   sections.push(`UNIVERSO DE PERSONAJES
 ${chars.note}
 
@@ -204,13 +168,13 @@ Settings globales: ${(settings.global_settings as string[]).join(' · ')}
 
 Settings bolivianos: ${(settings.bolivian_settings as string[]).join(' · ')}`)
 
-  // ── 6. CONTRAST MATRIX ───────────────────────────────────────────────────
+  // ── 7. CONTRAST MATRIX ───────────────────────────────────────────────────
   sections.push(`CONTRAST MATRIX — GENERADOR DE TENSIÓN CÓMICA
 ${matrix.note}
 
 ${(matrix.pairs as Array<{ A: string; B: string }>).map(p => `A: ${p.A}  ↔  B: ${p.B}`).join('\n')}`)
 
-  // ── 7. ELEMENTOS BOLIVIANOS ──────────────────────────────────────────────
+  // ── 8. ELEMENTOS BOLIVIANOS ──────────────────────────────────────────────
   sections.push(`ELEMENTOS BOLIVIANOS (opcional pero preferido)
 ${bolivia.note}
 Espacios: ${(bolivia.spaces as string[]).join(', ')}
@@ -218,7 +182,7 @@ Personajes: ${(bolivia.characters as string[]).join(', ')}
 Objetos: ${(bolivia.objects as string[]).join(', ')}
 Sabor de lenguaje: ${(bolivia.language_flavor as string[]).join(', ')}`)
 
-  // ── 8. FORMATOS DE PUNCHLINE ─────────────────────────────────────────────
+  // ── 9. FORMATOS DE PUNCHLINE ─────────────────────────────────────────────
   sections.push(`FORMATOS DE PUNCHLINE
 ${punches.note}
 
@@ -236,7 +200,7 @@ Example right: Shrek al micrófono: 'El drenaje fue un error.' (specific, unexpe
 
 Predictable punchlines fail H4 automatically. If you can guess the punchline from the setup in under 2 seconds — rewrite it.`)
 
-  // ── 9. ESTILO VISUAL ─────────────────────────────────────────────────────
+  // ── 10. ESTILO VISUAL ─────────────────────────────────────────────────────
   sections.push(`ESTILO VISUAL
 Estética: ${visual.aesthetic}
 Proporciones: ${visual.proportions}
@@ -244,12 +208,12 @@ Colores: ${visual.colors}
 Expresión: ${visual.character_expression}
 Evitar: ${(visual.what_to_avoid as string[]).join(' · ')}`)
 
-  // ── 10. QUÉ EVITAR ───────────────────────────────────────────────────────
+  // ── 11. QUÉ EVITAR ───────────────────────────────────────────────────────
   sections.push(`QUÉ EVITAR
 Contenido: ${(avoid.content as string[]).join(' · ')}
 Creativamente: ${(avoid.creative as string[]).join(' · ')}`)
 
-  // ── 11. REFERENCE EXAMPLES ───────────────────────────────────────────────
+  // ── 12. REFERENCE EXAMPLES ───────────────────────────────────────────────
   sections.push(`REFERENCE EXAMPLES — EL BAR A SUPERAR
 
 ${examples.map(e =>
@@ -267,32 +231,94 @@ The Llama example exists. Never generate another llama-as-authority concept.
 The Yatiri example exists. Never generate another expert-in-wrong-place with bolivian mystic concept.
 The Tom & Jerry courtroom exists. Never generate another Tom & Jerry legal scenario.`)
 
-  // ── 12. CROSS-BATCH MEMORY ───────────────────────────────────────────────
+  const staticPart = sections.join('\n\n---\n\n')
+
+  // ── DYNAMIC SECTIONS (13–16) ───────────────────────────────────────────
+  // Computed per-call: combination blacklist (changes each generation),
+  // trend feed (changes daily), history (changes across sessions),
+  // and the output format instruction (always at the end).
+
+  // Trend feed
+  let trendFeedBlock = ''
+  try {
+    const trendData = readTrendFeed()
+    if (trendData.trends && trendData.trends.length > 0) {
+      trendFeedBlock = `=== ACTUALIDAD BOLIVIANA HOY — OBLIGATORIO ===
+${trendData.trends.map(t => `
+TREND: ${t.topic}
+QUÉ PASÓ: ${t.summary}
+ÁNGULO CÓMICO: ${t.humor_angle}
+TAGS: ${t.tags.join(', ')}`).join('\n')}
+
+REGLA DURA: De los 10 conceptos generados, MÍNIMO 4 deben usar
+uno de estos trends como contexto, setting o situación base.
+
+El trend NO es el chiste. Es el mundo donde ocurre el chiste.
+El humor_engine y el arquetipo siguen siendo el motor.
+
+CÓMO USAR LOS TRENDS — EJEMPLOS CONCRETOS:
+- Si el trend es "67 bloqueos activos" → el concepto no es "personaje en un bloqueo genérico".
+  Es "personaje en el bloqueo número 67, que ya nadie recuerda por qué empezó,
+  llevando 11 horas esperando, con cara de total resignación."
+- Si el trend es "gasolina 4x más cara" → cualquier personaje con vehículo
+  ahora no puede llenarlo. Ese es el conflicto real boliviano de hoy.
+- Si el trend es "narco capturado en Bolivia" → personaje pop culture buscado
+  por agencia internacional, encontrado en lugar completamente mundano y boliviano.
+- Si el trend es "vicepresidente opositor desde adentro" → funcionario que
+  no renuncia pero tampoco coopera — arquetipo A6 perfecto.
+- Si el trend es "repechaje Bolivia vs Irak/Surinam" → el contexto deportivo
+  más absurdo del continente en este momento como setting real.
+
+Si al terminar de generar los 10 conceptos hay menos de 4 con trend —
+descartar los más débiles sin trend y regenerarlos con trend incorporado.
+Nunca forzar un trend donde no encaja — elegir los 4 trends más fértiles
+del feed y usarlos con el personaje y arquetipo correcto.
+=== FIN ACTUALIDAD ===`
+    }
+  } catch {
+    trendFeedBlock = ''
+  }
+
+  // Combination blacklist
+  const usedCombinations: UsedCombination[] = getTodayUsedCombinations()
+
+  console.log('=== COMBINATION BLACKLIST ===')
+  console.log(JSON.stringify(usedCombinations, null, 2))
+  console.log('Cholita+NASA bloqueada:',
+    usedCombinations.some(c =>
+      c.character.includes('cholita') && c.setting.includes('nasa')
+    )
+  )
+  console.log('=== END ===')
+
   const combinationBlacklist = usedCombinations.length > 0
     ? `\n\nCOMBINATION BLACKLIST — estas combinaciones personaje+setting ya fueron usadas HOY. No repetir en ninguna forma:\n${usedCombinations.map(c => `- ${c.character} en ${c.setting}`).join('\n')}`
     : ''
 
-  sections.push(`CROSS-BATCH MEMORY:
+  const dynamicSections: string[] = []
+
+  // 13. Cross-batch memory + combination blacklist
+  dynamicSections.push(`CROSS-BATCH MEMORY:
 These concepts and punchlines were already generated in previous sessions today.
 Do not regenerate them in any form:
 - Shrek recibiendo premio con discurso sobre pantanos
 - Cualquier personaje en la ONU o Asamblea General
 Track generated titles within the session and reject structural duplicates.${combinationBlacklist}`)
 
-  // ── 13. ACTUALIDAD BOLIVIANA (trends) ────────────────────────────────────
+  // 14. Trend feed (changes daily)
   if (trendFeedBlock) {
-    sections.push(trendFeedBlock)
+    dynamicSections.push(trendFeedBlock)
   }
 
-  // ── 14. HISTORIAL (si existe) ────────────────────────────────────────────
+  // 15. Recent history (changes across sessions)
   if (recentHistory.length > 0) {
-    sections.push(`HISTORIAL RECIENTE — NO REPETIR
+    dynamicSections.push(`HISTORIAL RECIENTE — NO REPETIR
 Personajes protagonistas de los últimos 2 días (no pueden ser protagonistas hoy, pueden aparecer en fondo):
 ${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}`)
   }
 
-  // ── 15. FORMATO DE OUTPUT ────────────────────────────────────────────────
-  sections.push(`FORMATO DE OUTPUT — OBLIGATORIO
+  // 16. Output format (always last — model pays most attention to the end)
+  dynamicSections.push(`FORMATO DE OUTPUT — OBLIGATORIO
 Responde ÚNICAMENTE con un array JSON válido de exactamente 10 conceptos. Sin markdown, sin texto adicional, solo el JSON.
 
 [
@@ -326,7 +352,9 @@ REGLAS DE FILTRO DUAL — ambos sistemas deben pasar antes de incluir un concept
 Si un concepto falla, reemplazarlo — el output final siempre tiene exactamente 10 conceptos que pasaron ambos filtros.
 Ordenados de mayor a menor calidad combinada.`)
 
-  return sections.join('\n\n---\n\n')
+  const dynamicPart = dynamicSections.join('\n\n---\n\n')
+
+  return { staticPart, dynamicPart }
 }
 
 export async function generateConcepts(
@@ -337,6 +365,15 @@ export async function generateConcepts(
 ): Promise<Concept[]> {
   const client = getClient()
 
+  const { staticPart, dynamicPart } = buildIdeaSystemPrompt(brandContext, recentHistory)
+
+  // Two-block system: static brand context is cached (saves ~10k tokens/min
+  // against the rate limit after the first call); dynamic tail is not cached.
+  const systemBlocks: SystemBlock[] = [
+    { type: 'text', text: staticPart, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: dynamicPart },
+  ]
+
   const userMsg = additionalContext
     ? `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.\n\nInstrucciones adicionales del Dr. Adderall:\n${additionalContext}`
     : `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.`
@@ -344,7 +381,7 @@ export async function generateConcepts(
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 8000,
-    system: buildIdeaSystemPrompt(brandContext, recentHistory),
+    system: systemBlocks as Parameters<typeof client.messages.create>[0]['system'],
     messages: [{
       role: 'user',
       content: userMsg,
@@ -364,7 +401,10 @@ export async function generateDualPrompts(concept: Concept): Promise<{ imageProm
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 1200,
-    system: `You are the CantSleept Visual Prompt Engine. For each concept you generate two production-ready prompts simultaneously.
+    system: [{
+      type: 'text',
+      cache_control: { type: 'ephemeral' },
+      text: `You are the CantSleept Visual Prompt Engine. For each concept you generate two production-ready prompts simultaneously.
 
 IMAGE PROMPT — choose the MOST EFFECTIVE visual style (do not default to one):
 1. GPK / Collectible sticker: grotesque, hyper-detailed, wrong proportions, sticker card border
@@ -417,6 +457,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "image_prompt": "...",
   "video_prompt": "..."
 }`,
+    }] as Parameters<typeof client.messages.create>[0]['system'],
     messages: [{
       role: 'user',
       content: `Concept:
@@ -452,7 +493,10 @@ export async function generateAnimationConcepts(
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 2048,
-    system: `You are the CantSleept Animation Engine. You generate 3 genuinely distinct video animation concepts.
+    system: [{
+      type: 'text',
+      cache_control: { type: 'ephemeral' },
+      text: `You are the CantSleept Animation Engine. You generate 3 genuinely distinct video animation concepts.
 
 RULES:
 - Prompts LEAD with the action verb / movement — not scene description
@@ -464,6 +508,7 @@ The 3 concepts must differ in ENERGY:
 1. SUBTLE/ATMOSPHERIC — minimal movement, maximum impact. One small element changes everything.
 2. DYNAMIC/KINETIC — clear action, active camera, kinetic energy.
 3. SURREAL/UNEXPECTED — something that shouldn't move, moves. Physics breaks subtly.`,
+    }] as Parameters<typeof client.messages.create>[0]['system'],
     messages: [{
       role: 'user',
       content: `Concept:
