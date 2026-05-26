@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
 
     if (provider === 'higgsfield') {
       raw = await withHiggsfieldToken(token =>
-        generateWithHiggsfield(prompt, token, 'text2image_soul_v2')
+        generateWithHiggsfield(prompt, token, 'nano_banana_2')
       )
     } else {
       if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
