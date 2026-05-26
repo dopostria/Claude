@@ -120,14 +120,20 @@ Jerga boliviana disponible: ${[
 QUÉ MATA EL HUMOR:
 ${(humorDna.what_kills_the_humor as string[]).map(x => `- ${x}`).join('\n')}
 
+GRONCHO — DEFINICIÓN OFICIAL:
+Humor boliviano absurdista que ataca al poder, incomoda a la tía en la cena, dice verdades incómodas con cara seria.
+El groncho NO es vulgar por vulgar. Es específico, boliviano, y te hace reír y mirar al costado al mismo tiempo.
+Test: ¿haría incómodo el Día de la Madre en Bolivia? Si la respuesta es sí, probablemente es H8.
+
 REQUIRED — H8 (GRONCHO_DESUBICADO) QUOTA:
-At least 2 of the 10 concepts must use humor_engine H8 (GRONCHO_DESUBICADO).
-H8 concepts must include at least one of:
-- parafernalia visible
-- situación comprometedora real
-- referencia política usando solo descripciones físicas sin nombres
-- personaje inocente en situación que ninguna marca aprobaría
-If the batch has zero H8 concepts — regenerate until it has minimum 2.`)
+Exactly 2 of the 10 concepts must use humor_engine H8 (GRONCHO_DESUBICADO).
+A concept qualifies as H8 only if it passes 2+ of these 4 criteria:
+1. PODER ATACADO: apunta directamente a una institución, clase social, o figura de autoridad boliviana
+2. VERDAD INCÓMODA: revela algo que todos saben pero nadie dice en público
+3. ENTREGA DEADPAN: el personaje no sabe que es absurdo — él/ella es completamente serio
+4. INAPROPIADO PARA MARCA: ninguna empresa lo aprobaría en su campaña de RSE
+If the concept does not pass 2+ criteria — it is not H8, assign a different humor engine.
+If the batch has fewer than 2 H8 concepts — regenerate until it has exactly 2.`)
 
   // ── 4. ARQUETIPOS ────────────────────────────────────────────────────────
   sections.push(`ARQUETIPOS (A1–A10)
@@ -150,6 +156,8 @@ ROTATION RULES — ENTRE SESIONES (ventana: ${crossSess.history_window})
 - ${crossSess.character_rule}
 - ${crossSess.archetype_rule}
 - ${crossSess.setting_rule}`)
+
+- VARIEDAD DE FORMATO CÓMICO: no más de 2 conceptos pueden compartir la misma estructura cómica (ej: máx 2 'experto fuera de lugar', máx 2 'personaje vs institución', máx 2 'pez fuera del agua'). Si hay 3+ del mismo formato — regenerar hasta tener variedad real.`)
 
   // ── 6. UNIVERSO DE PERSONAJES Y SETTINGS ─────────────────────────────────
   sections.push(`UNIVERSO DE PERSONAJES
@@ -212,6 +220,29 @@ Evitar: ${(visual.what_to_avoid as string[]).join(' · ')}`)
   sections.push(`QUÉ EVITAR
 Contenido: ${(avoid.content as string[]).join(' · ')}
 Creativamente: ${(avoid.creative as string[]).join(' · ')}`)
+
+  // ── 11.5 PROHIBIDO + CUOTA DE INCOMODIDAD ─────────────────────────────────
+  sections.push(`CONTENIDO ABSOLUTAMENTE PROHIBIDO — DESCARTE INMEDIATO:
+Si un concepto cae en cualquiera de estas categorías — descartarlo y regenerar sin excepción:
+- Niño/niña aprendiendo una lección valiosa
+- Amigos apoyándose mutuamente en un momento difícil
+- Superar adversidades con positividad o resiliencia
+- Orgullo cultural boliviano sin ironía
+- Personaje simpático que todo el mundo adora
+- Cualquier concepto que podría aparecer en una campaña de Banco Bisa, CBN, o un spot navideño boliviano
+
+REGLA DE ORO: Si el concepto haría llorar de ternura a una señora en el mercado — no es CantSleept.
+
+CUOTA DE INCOMODIDAD — OBLIGATORIA:
+Al menos 3 de los 10 conceptos deben tocar UNO de estos temas directamente:
+- Política boliviana (instituciones, burocracia, corrupción, clase política, absurdos del estado)
+- Muerte o finitud (sin sensacionalismo, con humor absurdista)
+- Desigualdad de clase (ricos vs cholitas, La Paz vs El Alto, expat vs local)
+- Incompetencia gubernamental específica y verificable
+- Religión boliviana (fe popular, promesas al santo patrón, sincretismo, milagros convenientes)
+
+Si al contar los 10 hay menos de 3 tocando estos temas — descartar los más seguros y reemplazarlos.
+El discomfort NO es opcional. Es el producto.`)
 
   // ── 12. REFERENCE EXAMPLES ───────────────────────────────────────────────
   sections.push(`REFERENCE EXAMPLES — EL BAR A SUPERAR
@@ -312,9 +343,18 @@ Track generated titles within the session and reject structural duplicates.${com
 
   // 15. Recent history (changes across sessions)
   if (recentHistory.length > 0) {
+    const recentCharacters = recentHistory
+      .map(h => h.character)
+      .filter((c): c is string => !!c)
+      .slice(0, 15)
+
+    const charBanLine = recentCharacters.length > 0
+      ? `\n\nPERSONAJES PROHIBIDOS como protagonistas (aparecieron en las últimas 3 sesiones — pueden ser extra/fondo, no protagonistas):\n${recentCharacters.map(c => `- ${c}`).join('\n')}`
+      : ''
+
     dynamicSections.push(`HISTORIAL RECIENTE — NO REPETIR
 Personajes protagonistas de los últimos 2 días (no pueden ser protagonistas hoy, pueden aparecer en fondo):
-${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}`)
+${recentHistory.map(h => `- ${h.concept_title} (${h.tags.join(', ')}): ${h.concept_setup}`).join('\n')}${charBanLine}`)
   }
 
   // 16. Output format (always last — model pays most attention to the end)
@@ -482,64 +522,4 @@ Generate one image prompt + one video animation prompt for this concept.`,
   if (!imagePrompt) throw new Error('Empty image_prompt from Claude')
   if (!videoPrompt) throw new Error('Empty video_prompt from Claude')
   return { imagePrompt, videoPrompt }
-}
-
-export async function generateAnimationConcepts(
-  concept: Concept,
-  imagePrompt: string
-): Promise<AnimationConcept[]> {
-  const client = getClient()
-
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 2048,
-    system: [{
-      type: 'text',
-      cache_control: { type: 'ephemeral' },
-      text: `You are the CantSleept Animation Engine. You generate 3 genuinely distinct video animation concepts.
-
-RULES:
-- Prompts LEAD with the action verb / movement — not scene description
-- Describe WHAT MOVES and HOW, not what the image looks like
-- Max 3 sentences per prompt
-- PROHIBITED phrases: "electric ZAP", "magical", "glowing effect", "transition", "particle burst"
-
-The 3 concepts must differ in ENERGY:
-1. SUBTLE/ATMOSPHERIC — minimal movement, maximum impact. One small element changes everything.
-2. DYNAMIC/KINETIC — clear action, active camera, kinetic energy.
-3. SURREAL/UNEXPECTED — something that shouldn't move, moves. Physics breaks subtly.`,
-    }] as Parameters<typeof client.messages.create>[0]['system'],
-    messages: [{
-      role: 'user',
-      content: `Concept:
-Title: ${concept.title}
-Setup: ${concept.setup}
-Punchline: ${concept.punchline}
-
-Image style: ${imagePrompt.slice(0, 200)}
-
-Generate exactly 3 animation concepts. Return ONLY valid JSON:
-{
-  "animations": [
-    {
-      "id": "unique-kebab-slug",
-      "name": "2-3 WORD NAME IN CAPS",
-      "energy": "subtle",
-      "movement": "Specific description of what moves, how, and timing. 1-2 sentences.",
-      "camera_direction": "Exact camera behavior. E.g: ultra slow push in, locked off static, whip pan right",
-      "video_prompt": "Production-ready Veo prompt. Start with movement verb. Max 3 sentences, max 60 words."
-    }
-  ]
-}
-
-Energy values must be exactly: "subtle", "dynamic", "surreal" — one of each.`,
-    }],
-  })
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON in Claude response for animations')
-
-  const parsed = JSON.parse(jsonMatch[0])
-  return parsed.animations as AnimationConcept[]
 }
