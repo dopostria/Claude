@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { Concept, AnimationConcept } from '@/lib/types'
+import type { Concept } from '@/lib/types'
 import { loadAllDays, type PersistedDay } from '@/lib/persistence'
 
 interface GeneratedImage {
@@ -15,8 +15,6 @@ interface GeneratedImage {
 interface VideoOverlayProps {
   selectedConcepts: Concept[]
   selectedImage: GeneratedImage | null
-  animationConcepts: AnimationConcept[] | null
-  loadingAnimations: boolean
   videoUri: string | null
   videoModel: string | null
   defaultVideoPrompt: string
@@ -27,17 +25,9 @@ interface VideoOverlayProps {
   onRestoreDay: (day: PersistedDay) => void
 }
 
-const ENERGY_COLORS = {
-  subtle:  { color: '#48cae4', label: 'SUTIL' },
-  dynamic: { color: '#ff6b35', label: 'DINÁMICO' },
-  surreal: { color: '#a855f7', label: 'SURREAL' },
-}
-
 export default function VideoOverlay({
   selectedConcepts,
   selectedImage,
-  animationConcepts,
-  loadingAnimations,
   videoUri,
   videoModel,
   defaultVideoPrompt,
@@ -47,28 +37,20 @@ export default function VideoOverlay({
   generating,
   onRestoreDay,
 }: VideoOverlayProps) {
-  const [selectedAnimation, setSelectedAnimation] = useState<AnimationConcept | null>(null)
   const [prompt, setPrompt] = useState(defaultVideoPrompt)
   const [provider, setProvider] = useState<'google' | 'higgsfield'>('higgsfield')
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
 
   useEffect(() => {
-    if (defaultVideoPrompt && !prompt) {
-      setPrompt(defaultVideoPrompt)
-    }
-  }, [defaultVideoPrompt, prompt])
+    if (defaultVideoPrompt) setPrompt(defaultVideoPrompt)
+  }, [defaultVideoPrompt])
 
   useEffect(() => {
     if (historyOpen) setHistoryDays(loadAllDays())
   }, [historyOpen])
 
   const activeConcept = selectedConcepts[0]
-
-  function pickAnimation(anim: AnimationConcept) {
-    setSelectedAnimation(anim)
-    setPrompt(anim.video_prompt)
-  }
 
   const proxyUrl = videoUri
     ? videoUri.includes('googleapis.com')
@@ -159,7 +141,7 @@ export default function VideoOverlay({
 
         <div style={{ display: 'flex', minHeight: 520 }}>
 
-          {/* Left panel */}
+          {/* Left panel — reference image + prompt + generate */}
           <div style={{ width: 220, minWidth: 220, borderRight: '2px solid #0d3330', background: '#050e0d', display: 'flex', flexDirection: 'column' }}>
 
             {/* Reference image */}
@@ -185,9 +167,9 @@ export default function VideoOverlay({
               <textarea
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
-                placeholder="Selecciona un concepto de animación →"
+                placeholder="Edita el prompt de video aquí..."
                 style={{
-                  flex: 1, minHeight: 80,
+                  flex: 1, minHeight: 120,
                   background: '#060f0e', border: '1px solid #0d3330',
                   color: prompt ? '#00d4a8' : '#0d3330',
                   fontFamily: '"Share Tech Mono", monospace', fontSize: 13, lineHeight: 1.6,
@@ -245,80 +227,8 @@ export default function VideoOverlay({
             </div>
           </div>
 
-          {/* Right panel */}
+          {/* Right panel — video result */}
           <div style={{ flex: 1, background: '#060f0e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-            {/* Animation concept selector */}
-            {!videoUri && (
-              <div style={{ padding: 14, borderBottom: '2px solid #0d3330', flex: videoUri ? 'none' : 1, overflowY: 'auto' }}>
-                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#48cae4', letterSpacing: 3, marginBottom: 11 }}>
-                  ELIGE UN CONCEPTO DE ANIMACIÓN
-                </div>
-
-                {loadingAnimations && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '18px 0' }}>
-                    <div style={{ width: 7, height: 7, background: '#48cae4', animation: 'neonPulse 0.8s infinite' }} />
-                    <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#48cae4' }}>
-                      <span className="loading-dots">ANALIZANDO IMAGEN<span>.</span><span>.</span><span>.</span></span>
-                    </div>
-                  </div>
-                )}
-
-                {!loadingAnimations && animationConcepts === null && (
-                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330', padding: '18px 0' }}>
-                    Cargando conceptos...
-                  </div>
-                )}
-
-                {!loadingAnimations && animationConcepts?.length === 0 && (
-                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#ff3030', padding: '18px 0' }}>
-                    Error generando conceptos. Escribe tu prompt manualmente.
-                  </div>
-                )}
-
-                {animationConcepts && animationConcepts.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
-                    {animationConcepts.map(anim => {
-                      const ec = ENERGY_COLORS[anim.energy] ?? ENERGY_COLORS.dynamic
-                      const isSelected = selectedAnimation?.id === anim.id
-                      return (
-                        <div
-                          key={anim.id}
-                          onClick={() => pickAnimation(anim)}
-                          style={{
-                            border: `2px solid ${isSelected ? ec.color : '#0d3330'}`,
-                            background: isSelected ? `${ec.color}0d` : '#050e0d',
-                            padding: 11, cursor: 'pointer',
-                            boxShadow: isSelected ? `0 0 12px ${ec.color}33` : 'none',
-                            transition: 'all 0.1s',
-                          }}
-                        >
-                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: ec.color, marginBottom: 5, letterSpacing: 1 }}>
-                            {ec.label}
-                          </div>
-                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: isSelected ? '#fff' : '#00a882', marginBottom: 7, lineHeight: 1.5 }}>
-                            {anim.name}
-                          </div>
-                          <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 8, color: '#004d3d', lineHeight: 1.5, marginBottom: 5 }}>
-                            {anim.movement}
-                          </div>
-                          <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330' }}>
-                            {anim.camera_direction}
-                          </div>
-                          {isSelected && (
-                            <div style={{ marginTop: 7, fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: ec.color }}>
-                              ✓ SELECCIONADO
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Video result */}
             <div style={{ flex: 1, padding: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               {generating && (
                 <div style={{ textAlign: 'center' }}>
@@ -332,15 +242,18 @@ export default function VideoOverlay({
                     <span className="loading-dots">GENERANDO<span>.</span><span>.</span><span>.</span></span>
                   </div>
                   <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#0d3330', lineHeight: 2 }}>
-                    Veo 3 genera tu video<br />esto tarda 3-7 minutos
+                    {provider === 'google' ? 'Veo 3 genera tu video\nesto tarda 3-7 minutos' : 'Higgsfield generando clip 3s...'}
                   </div>
                 </div>
               )}
 
-              {!generating && !videoUri && !loadingAnimations && animationConcepts && animationConcepts.length > 0 && (
+              {!generating && !videoUri && (
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330' }}>
-                    {selectedAnimation ? '▶ Listo para generar' : '← Elige un concepto de animación'}
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#0d3330', marginBottom: 9 }}>
+                    [ LISTO PARA GENERAR ]
+                  </div>
+                  <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#0a1412' }}>
+                    Edita el prompt y presiona GENERAR VIDEO
                   </div>
                 </div>
               )}
