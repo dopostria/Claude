@@ -155,8 +155,7 @@ ${archetypeList.map(a =>
 ROTATION RULES — ENTRE SESIONES (ventana: ${crossSess.history_window})
 - ${crossSess.character_rule}
 - ${crossSess.archetype_rule}
-- ${crossSess.setting_rule}`)
-
+- ${crossSess.setting_rule}
 - VARIEDAD DE FORMATO CÓMICO: no más de 2 conceptos pueden compartir la misma estructura cómica (ej: máx 2 'experto fuera de lugar', máx 2 'personaje vs institución', máx 2 'pez fuera del agua'). Si hay 3+ del mismo formato — regenerar hasta tener variedad real.`)
 
   // ── 6. UNIVERSO DE PERSONAJES Y SETTINGS ─────────────────────────────────
