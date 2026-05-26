@@ -28,14 +28,28 @@ interface ImagesOverlayProps {
 }
 
 const STYLES = [
-  { id: 'FOTO',    label: 'FOTO',    color: '#48cae4', prefix: 'Ultra-realistic photograph, cinematic lighting, Sony A7R IV, 8K resolution. ' },
-  { id: 'ANIME',   label: 'ANIME',   color: '#a855f7', prefix: 'Vibrant anime illustration, Studio Ghibli inspired, clean linework, vivid cel-shaded colors. ' },
-  { id: 'PELUCHE', label: 'PELUCHE', color: '#ff6b35', prefix: 'Plush toy aesthetic, soft fuzzy fabric texture, cute chibi style, pastel palette. ' },
-  { id: 'CYBER',   label: 'CYBER',   color: '#00c4a0', prefix: 'Cyberpunk neon aesthetic, Blade Runner vibes, dark moody atmosphere, glowing neon accents. ' },
-  { id: 'ARTE',    label: 'ARTE',    color: '#ffdd00', prefix: 'Bold digital painting, concept art quality, dynamic brushwork, rich saturated colors. ' },
+  {
+    id: 'FOTO',
+    label: 'FOTO',
+    color: '#48cae4',
+    prefix: 'style: cinematic photorealism | camera: Sony A7R IV 85mm f/1.4, shallow bokeh | lighting: dramatic chiaroscuro, deep shadows, volumetric rays | detail: 8K ultra-sharp, hyper-detailed skin and material textures | grade: teal-orange film look, desaturated midtones | subject: ',
+    suffix: ' | format: 9:16 vertical portrait, ultra-detailed photorealistic render',
+  },
+  {
+    id: 'ANIME',
+    label: 'ANIME',
+    color: '#a855f7',
+    prefix: 'style: vibrant anime illustration | quality: Studio Ghibli x Trigger, crisp clean linework, dynamic cel-shading | expression: exaggerated emotive features, kinetic energy | palette: neon accents, deep saturated colors, bold outlines | subject: ',
+    suffix: ' | format: 9:16 vertical portrait, anime art quality, sharp crisp illustration',
+  },
+  {
+    id: 'PELUCHE',
+    label: 'PELUCHE',
+    color: '#ff6b35',
+    prefix: 'style: everything rendered as high-quality plush stuffed toys | texture: soft fur surfaces throughout, velvet fabric, visible stitching on seams, glass button eyes on all characters | proportions: chibi-plush, oversized soft heads | palette: warm pastels, felt-like muted tones | render: photorealistic plush toy product photography | subject: ',
+    suffix: ' | format: 9:16 vertical portrait, cozy toy store aesthetic, plush material render quality',
+  },
 ]
-
-const ASPECT_SUFFIX = ' Vertical 9:16 portrait format optimized for social media.'
 
 export default function ImagesOverlay({
   selectedConcepts,
@@ -65,7 +79,7 @@ export default function ImagesOverlay({
   const rawBase = activeConcept ? imagePrompts[activeConcept.id] ?? '' : ''
   const basePrompt = activeConcept ? (editedBase[activeConcept.id] ?? rawBase) : ''
   const style = STYLES.find(s => s.id === selectedStyle) ?? STYLES[0]
-  const finalPrompt = basePrompt ? style.prefix + basePrompt + ASPECT_SUFFIX : ''
+  const finalPrompt = basePrompt ? style.prefix + basePrompt + style.suffix : ''
   const conceptImages = generatedImages.filter(img => img.conceptId === activeConcept?.id)
   const isGeneratingThis = generating && generatingFor === activeConcept?.id
 
@@ -279,7 +293,7 @@ export default function ImagesOverlay({
                   : `▶ GENERAR ${style.label}`}
               </button>
               <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#0d3330', textAlign: 'center', marginTop: 6 }}>
-                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · soul_v2 (higgs)'}
+                {provider === 'gemini' ? '9:16 · gemini-2.0-flash (free)' : '9:16 · nano_banana_2 (higgs)'}
               </div>
             </div>
           </div>
