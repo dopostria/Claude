@@ -6,7 +6,7 @@ import Sidebar from './Sidebar'
 import IdeasOverlay from './overlays/IdeasOverlay'
 import ImagesOverlay from './overlays/ImagesOverlay'
 import VideoOverlay from './overlays/VideoOverlay'
-import type { FactoryState, Concept, AnimationConcept } from '@/lib/types'
+import type { FactoryState, Concept } from '@/lib/types'
 import {
   loadDay, saveDay, triggerDownload,
   todayStr,
@@ -45,8 +45,6 @@ export default function Factory() {
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [videoUri, setVideoUri] = useState<string | null>(null)
   const [videoModel, setVideoModel] = useState<string | null>(null)
-  const [animationConcepts, setAnimationConcepts] = useState<AnimationConcept[] | null>(null)
-  const [loadingAnimations, setLoadingAnimations] = useState(false)
   const [bossLaunching, setBossLaunching] = useState(false)
   const [pillPath, setPillPath] = useState<string | null>(null)
   const [drChatOpen, setDrChatOpen] = useState(false)
@@ -232,26 +230,11 @@ export default function Factory() {
   }, [])
 
   // ── NODO 4 ──────────────────────────────────────────────────────────
-  const handleContinueToVideo = useCallback(async () => {
+  const handleContinueToVideo = useCallback(() => {
     setState(s => ({ ...s, activeOverlay: 'video', rooms: { ...s.rooms, video: 'idle' },
       sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo MOTION SICK...', type: 'info' }] }))
     fireSignal('images', 'video')
-    const selectedImg = generatedImages.find(img => img.id === selectedImageId)
-    const concept = state.concepts.find(c => state.selectedConceptIds.includes(c.id) && c.id === selectedImg?.conceptId)
-      ?? state.concepts.find(c => state.selectedConceptIds.includes(c.id))
-    if (!concept) return
-    setLoadingAnimations(true); setAnimationConcepts(null)
-    try {
-      const res = await fetch('/api/animation-concepts', { method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ concept, imagePrompt: selectedImg?.prompt ?? '' }) })
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
-      const data = await res.json()
-      setAnimationConcepts(data.animations ?? [])
-      setState(s => ({ ...s, sessionLog: [...s.sessionLog, { time: now(), message: '3 conceptos de animacion listos!', type: 'success' }] }))
-    } catch { setAnimationConcepts([]) }
-    finally { setLoadingAnimations(false) }
-  }, [fireSignal, generatedImages, selectedImageId, state.concepts, state.selectedConceptIds])
+  }, [fireSignal])
 
   // ── NODO 5 ──────────────────────────────────────────────────────────
   const handleGenerateVideo = useCallback(async (prompt: string, provider: 'google' | 'higgsfield' = 'google') => {
@@ -263,7 +246,7 @@ export default function Factory() {
     try {
       const res = await fetch('/api/generate-video', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, imagePath: selectedImg?.imagePath, imageMime: selectedImg?.mime, provider }) })
+        body: JSON.stringify({ prompt, imageBase64: selectedImg?.base64, imageMime: selectedImg?.mime, provider }) })
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
       const data = await res.json()
       setVideoUri(data.videoUri); setVideoModel(data.model)
@@ -417,7 +400,6 @@ export default function Factory() {
       {state.activeOverlay === 'video' && (
         <VideoOverlay selectedConcepts={selectedConcepts}
           selectedImage={generatedImages.find(img => img.id === selectedImageId) ?? null}
-          animationConcepts={animationConcepts} loadingAnimations={loadingAnimations}
           videoUri={videoUri} videoModel={videoModel} defaultVideoPrompt={videoPromptForSelected}
           onGenerateVideo={handleGenerateVideo}
           onBack={() => setState(s => ({ ...s, activeOverlay: 'images' }))}
