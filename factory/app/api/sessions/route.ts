@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
               concept_punchline: concept.punchline,
               tags: concept.tags,
               tool_used: null,
+              character: concept.character,
             }
             addHistorySelection(sel)
           }
