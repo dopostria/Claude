@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T16:29:44.261Z",
+      "savedAt": "2026-05-27T16:30:01.178Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -244,7 +244,9 @@
           "setting": "red carpet de premiación internacional"
         }
       ],
-      "selectedConceptIds": [],
+      "selectedConceptIds": [
+        "concept_02"
+      ],
       "imagePrompts": {},
       "videoPrompts": {},
       "videos": []
