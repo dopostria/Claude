@@ -2,8 +2,248 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T12:00:00Z",
-      "concepts": [],
+      "savedAt": "2026-05-27T16:29:44.261Z",
+      "concepts": [
+        {
+          "id": "concept_01",
+          "title": "Thanos en la Cola",
+          "archetype": "A9",
+          "setup": "Cola del banco estatal boliviano. Thanos sentado en plástico naranja con número de turno 47. La pantalla dice ATENDIENDO 12. Traje completo. Guantelete con las seis gemas. Una gema parpadea.",
+          "punchline_format": "P1",
+          "punchline": "subtítulo: 'ni con el tiempo gem'",
+          "tags": [
+            "BOLIVIA",
+            "POP_CULTURE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "El poder cósmico máximo es inútil ante el único sistema que lo vence: el turno del banco boliviano.",
+          "humor_engine": "H3, H4",
+          "humor_score": "5/5",
+          "character": "thanos",
+          "setting": "cola del banco estatal boliviano"
+        },
+        {
+          "id": "concept_02",
+          "title": "El Funeral del Dólar",
+          "archetype": "A7",
+          "setup": "Funeral de estado. Ataúd cubierto con la wiphala. Guardia de honor. Autoridades en primera fila con cara seria. En la urna mortuoria grabada: 'BS. 6.96'.",
+          "punchline_format": "P2",
+          "punchline": "El ministro al micrófono: 'Era joven.'",
+          "tags": [
+            "BOLIVIA",
+            "INCOMODIDAD_POLITICA"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "La solemnidad del protocolo choca contra la verdad que todos conocen pero que nadie del gobierno pronuncia en voz alta.",
+          "humor_engine": "H1, H2",
+          "humor_score": "5/5",
+          "character": "ministro boliviano genérico",
+          "setting": "funeral de estado"
+        },
+        {
+          "id": "concept_03",
+          "title": "Pikachu en Confesión",
+          "archetype": "A4",
+          "setup": "Confesionario de iglesia. Pikachu adentro, cabina del penitente. En el suelo, visible bajo la puerta: una botella de singani, billetes, y lo que parece ser una bolsa sellada. El cura al otro lado espera.",
+          "punchline_format": "P2",
+          "punchline": "'Era para uso personal, padre.'",
+          "tags": [
+            "RELIGION",
+            "POP_CULTURE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": false,
+            "total": "4/4"
+          },
+          "why_it_works": "La inocencia del personaje contrasta con la escena completamente comprometedora que sus pies delatan — y la frase la entrega deadpan.",
+          "humor_engine": "H8, H1",
+          "humor_score": "5/5",
+          "character": "pikachu",
+          "setting": "confesionario"
+        },
+        {
+          "id": "concept_04",
+          "title": "Homer en Tranca",
+          "archetype": "A1",
+          "setup": "Tranca policial en la carretera altiplánica. Policía boliviano con libreta parado junto al auto. Al volante: Homer Simpson, camisa blanca, ojos saltones. Sobre el asiento del copiloto, una rosquilla.",
+          "punchline_format": "P2",
+          "punchline": "Policía: '¿SOAT?' Homer: '¿El qué?'  Policía escribe. Homer agarra la rosquilla.",
+          "tags": [
+            "BOLIVIA",
+            "POP_CULTURE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "El policía ignora completamente que Homer Simpson existe — solo le interesa el papel. Homer ignora completamente la tranca. Nadie nota a nadie.",
+          "humor_engine": "H5, H4",
+          "humor_score": "5/5",
+          "character": "homer simpson",
+          "setting": "tranca policial altiplánica"
+        },
+        {
+          "id": "concept_05",
+          "title": "El Tanque Sin Gasolina",
+          "archetype": "A6",
+          "setup": "Tanque militar parado en el centro de La Paz. Intento de golpe de estado. El general de pie sobre la escotilla, micrófono en mano, discurso preparado. Un soldado le pasa una nota.",
+          "punchline_format": "P2",
+          "punchline": "El general baja el micrófono: 'No hay gasolina.'",
+          "tags": [
+            "BOLIVIA",
+            "INCOMODIDAD_POLITICA"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": false,
+            "total": "4/4"
+          },
+          "why_it_works": "La crisis más épica del año reducida al mismo problema que tiene cualquier boliviano un jueves a las 7pm — la especificidad es el golpe.",
+          "humor_engine": "H4, H7",
+          "humor_score": "5/5",
+          "character": "general boliviano genérico",
+          "setting": "centro de la paz, golpe fallido"
+        },
+        {
+          "id": "concept_06",
+          "title": "Buzz Lightyear, Migraciones",
+          "archetype": "A3",
+          "setup": "Ventanilla de Migraciones Bolivia. Buzz Lightyear parado frente al funcionario con su traje espacial completo. Funcionario revisa documentos con cara de trámite normal. En el sello: STAR COMMAND no figura en el sistema.",
+          "punchline_format": "P1",
+          "punchline": "subtítulo: 'segunda ventanilla, señor'",
+          "tags": [
+            "BOLIVIA",
+            "POP_CULTURE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "La burocracia boliviana no distingue héroes galácticos — el protocolo es el mismo para todos y Buzz lo acepta.",
+          "humor_engine": "H3, H4",
+          "humor_score": "5/5",
+          "character": "buzz lightyear",
+          "setting": "migraciones bolivia"
+        },
+        {
+          "id": "concept_07",
+          "title": "Señora del Mercado, CEO",
+          "archetype": "A2",
+          "setup": "Sala de juntas corporativa, mesa oval, suits. En la cabecera: señora del mercado con delantal, sombrero, cajón de frutas al lado. Proyector con KPIs encendido. Todos los ejecutivos con bloc de notas.",
+          "punchline_format": "P2",
+          "punchline": "'Ahora no joven, estoy viendo los números.'",
+          "tags": [
+            "BOLIVIA",
+            "DESIGUALDAD_CLASE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": false,
+            "total": "4/4"
+          },
+          "why_it_works": "La frase es un rechazo total entregado con total autoridad — y tiene razón, está ocupada.",
+          "humor_engine": "H1, H4",
+          "humor_score": "5/5",
+          "character": "señora del mercado",
+          "setting": "sala de juntas corporativa"
+        },
+        {
+          "id": "concept_08",
+          "title": "Stitch en Teleférico",
+          "archetype": "A10",
+          "setup": "Teleférico de La Paz, góndola en movimiento, vista de la ciudad abajo. Stitch sentado junto a pasajeros bolivianos comunes. Todos mirando el celular o la ventana. Stitch también mira el celular. Nadie lo mira.",
+          "punchline_format": "P5",
+          "punchline": "ninguno — Stitch tiene auriculares puestos y el pie sobre el asiento de enfrente como cualquier pasajero. Nadie voltea.",
+          "tags": [
+            "BOLIVIA",
+            "POP_CULTURE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "El crossover no es el chiste — que nadie lo registre ES el chiste. La góndola tiene sus propios problemas.",
+          "humor_engine": "H5, H6",
+          "humor_score": "5/5",
+          "character": "stitch",
+          "setting": "teleférico de la paz"
+        },
+        {
+          "id": "concept_09",
+          "title": "Subasta del Cuñapé",
+          "archetype": "A5",
+          "setup": "Sala de subasta estilo Christie's. Iluminación de museo, paletas numeradas, silencio de galería. En el pedestal bajo foco: un cuñapé en bandeja de plata con placa de identificación. El rematador levanta el mazo.",
+          "punchline_format": "P1",
+          "punchline": "subtítulo: 'LOTE 14 — RECIÉN SACADO, TIBIO'",
+          "tags": [
+            "BOLIVIA"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "El detalle 'tibio' en tipografía de Christie's es el único descriptor que importa y es completamente boliviano.",
+          "humor_engine": "H3, H4",
+          "humor_score": "5/5",
+          "character": "rematador de christie's",
+          "setting": "sala de subasta estilo christie's"
+        },
+        {
+          "id": "concept_10",
+          "title": "Cholita, Red Carpet",
+          "archetype": "A8",
+          "setup": "Red carpet de premiación internacional. Flashes, fotógrafos, periodistas con micrófono. Cholita paceña con pollera de gala, sombrero bombín, caminando con total soltura. Periodista se acerca con micrófono.",
+          "punchline_format": "P2",
+          "punchline": "Periodista: '¿Quién te viste esta noche?' Cholita: 'Mi ciela, yo siempre me visto así.'",
+          "tags": [
+            "BOLIVIA",
+            "DESIGUALDAD_CLASE"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": false,
+            "total": "4/4"
+          },
+          "why_it_works": "La pregunta asume que hay un diseñador detrás — la respuesta la destruye sin esfuerzo ni hostilidad.",
+          "humor_engine": "H1, H4",
+          "humor_score": "5/5",
+          "character": "cholita paceña",
+          "setting": "red carpet de premiación internacional"
+        }
+      ],
       "selectedConceptIds": [],
       "imagePrompts": {},
       "videoPrompts": {},
