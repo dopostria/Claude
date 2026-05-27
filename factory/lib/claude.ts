@@ -16,6 +16,51 @@ function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 }
 
+// ── Rate-limit retry ───────────────────────────────────────────────────────
+// Wraps a Claude API call; on HTTP 429 it waits (using Retry-After when
+// present, otherwise 15 s) and retries up to MAX_RETRIES times before
+// re-throwing. All other errors are thrown immediately.
+const MAX_RETRIES = 2
+const DEFAULT_RETRY_WAIT_MS = 15_000
+
+function isRateLimitError(err: unknown): boolean {
+  if (err instanceof Anthropic.RateLimitError) return true
+  if (err instanceof Anthropic.APIError && err.status === 429) return true
+  return (
+    err instanceof Error &&
+    (err.message.includes('rate_limit_error') || err.message.includes('429'))
+  )
+}
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (err: unknown) {
+      if (!isRateLimitError(err) || attempt >= MAX_RETRIES) throw err
+
+      // Honour the Retry-After header when the SDK exposes it
+      let waitMs = DEFAULT_RETRY_WAIT_MS
+      if (err instanceof Anthropic.APIError && err.headers) {
+        const ra = err.headers.get('retry-after')
+        if (ra) {
+          const secs = parseFloat(ra)
+          if (!isNaN(secs)) waitMs = Math.min(Math.ceil(secs) * 1000, 60_000)
+        }
+      }
+
+      const waitSecs = Math.round(waitMs / 1000)
+      console.log(
+        `[claude] 429 rate-limit — esperando ${waitSecs}s ` +
+        `(intento ${attempt + 1}/${MAX_RETRIES})...`
+      )
+      await new Promise(r => setTimeout(r, waitMs))
+    }
+  }
+  // Unreachable — the loop always throws or returns inside the try block
+  throw new Error('[claude] withRetry: max retries exceeded')
+}
+
 // Returns { staticPart, dynamicPart } so the caller can cache the static block.
 // staticPart  — sections 1–12: all brand context, archetypes, humor rules, etc.
 //               Changes only when brand_context.json changes. Cache this.
@@ -417,15 +462,17 @@ export async function generateConcepts(
     ? `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.\n\nInstrucciones adicionales del Dr. Adderall:\n${additionalContext}`
     : `Genera exactamente 10 conceptos para @CantSleept. Fecha de hoy: ${date}.`
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
-    system: systemBlocks as Parameters<typeof client.messages.create>[0]['system'],
-    messages: [{
-      role: 'user',
-      content: userMsg,
-    }],
-  })
+  const response = await withRetry(() =>
+    client.messages.create({
+      model: MODEL,
+      max_tokens: 8000,
+      system: systemBlocks as Parameters<typeof client.messages.create>[0]['system'],
+      messages: [{
+        role: 'user',
+        content: userMsg,
+      }],
+    })
+  )
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
   const jsonMatch = text.match(/\[[\s\S]*\]/)
@@ -437,7 +484,8 @@ export async function generateConcepts(
 export async function generateDualPrompts(concept: Concept): Promise<{ imagePrompt: string; videoPrompt: string }> {
   const client = getClient()
 
-  const response = await client.messages.create({
+  const response = await withRetry(() =>
+    client.messages.create({
     model: MODEL,
     max_tokens: 1200,
     system: [{
@@ -510,6 +558,7 @@ Why it works: ${concept.why_it_works}
 Generate one image prompt + one video animation prompt for this concept.`,
     }],
   })
+  )
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
   const jsonMatch = text.match(/\{[\s\S]*\}/)

@@ -80,6 +80,15 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[/api/sessions]', err)
+    const isRateLimit =
+      message.includes('rate_limit_error') ||
+      message.includes('429')
+    if (isRateLimit) {
+      return NextResponse.json(
+        { error: 'Rate limit agotado después de reintentos — espera ~60s y vuelve a intentar' },
+        { status: 429 }
+      )
+    }
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
