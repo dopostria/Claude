@@ -9,6 +9,7 @@ import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept } from '@/lib/types'
 import {
   saveImages, loadImages, triggerDownload,
+  saveLocalSession, loadLocalSession,
   todayStr,
   type PersistedImage, type PersistedVideo,
 } from '@/lib/persistence'
@@ -76,47 +77,81 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
-  // On mount: load GitHub history → restore today's session → load images from localStorage
+  // On mount: load GitHub history → restore today's session → fall back to
+  // localStorage if GitHub is empty or fails → then load today's images.
   useEffect(() => {
-    fetch('/api/history')
-      .then(r => r.json())
-      .then(({ sessions }: { sessions: GitHubSession[] }) => {
-        const list = sessions ?? []
+    const init = async () => {
+      const today = todayStr()
+      let restoredFromGitHub = false
+
+      try {
+        const r = await fetch('/api/history')
+        const data = await r.json() as { sessions?: GitHubSession[] }
+        const list: GitHubSession[] = data.sessions ?? []
         setAllSessions(list)
-        const today = list.find(s => s.date === todayStr())
-        if (today && today.concepts.length > 0) {
+
+        const ghSession = list.find(s => s.date === today)
+        if (ghSession && ghSession.concepts.length > 0) {
+          restoredFromGitHub = true
           setState(s => ({
             ...s,
-            concepts: today.concepts,
-            imagePrompts: today.imagePrompts,
-            videoPrompts: today.videoPrompts,
-            selectedConceptIds: today.selectedConceptIds,
+            concepts: ghSession.concepts,
+            imagePrompts: ghSession.imagePrompts,
+            videoPrompts: ghSession.videoPrompts,
+            selectedConceptIds: ghSession.selectedConceptIds,
             rooms: { ...s.rooms, ideas: 'done' },
           }))
-          if (today.videos.length > 0) {
-            setSessionVideos(today.videos)
-            const last = today.videos[today.videos.length - 1]
+          if (ghSession.videos.length > 0) {
+            setSessionVideos(ghSession.videos)
+            const last = ghSession.videos[ghSession.videos.length - 1]
             setVideoUri(last.uri)
             setVideoModel(last.model)
           }
         }
-      })
-      .catch(() => {})
-      .finally(() => {
-        const imgs = loadImages(todayStr())
-        if (imgs.length > 0) {
-          setGeneratedImages(imgs.map((img: PersistedImage) => ({
-            id: img.id, conceptId: img.conceptId, tool: img.model,
-            imagePath: '', base64: img.base64, mime: img.mime,
-            prompt: img.prompt, timestamp: img.timestamp,
-          })))
-          setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' } }))
+      } catch { /* GitHub unavailable — fall through to localStorage */ }
+
+      // Fallback: restore from localStorage when GitHub has no data for today
+      if (!restoredFromGitHub) {
+        const local = loadLocalSession(today)
+        if (local && local.concepts.length > 0) {
+          setState(s => ({
+            ...s,
+            concepts: local.concepts,
+            imagePrompts: local.imagePrompts,
+            videoPrompts: local.videoPrompts,
+            selectedConceptIds: local.selectedConceptIds,
+            rooms: { ...s.rooms, ideas: 'done' },
+          }))
+          if (local.videos.length > 0) {
+            setSessionVideos(local.videos)
+            const last = local.videos[local.videos.length - 1]
+            setVideoUri(last.uri)
+            setVideoModel(last.model)
+          }
         }
-        setIsRestored(true)
-      })
+      }
+
+      // Always load today's images from localStorage
+      const imgs = loadImages(today)
+      if (imgs.length > 0) {
+        setGeneratedImages(imgs.map((img: PersistedImage) => ({
+          id: img.id, conceptId: img.conceptId, tool: img.model,
+          imagePath: '', base64: img.base64, mime: img.mime,
+          prompt: img.prompt, timestamp: img.timestamp,
+        })))
+        setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' } }))
+      }
+
+      setIsRestored(true)
+    }
+
+    init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reactive sync: images → localStorage immediately; concepts/prompts/videos → GitHub debounced 2s
+  // Reactive sync:
+  //   images          → localStorage immediately
+  //   concepts+videos → localStorage immediately (fallback when GitHub fails)
+  //   concepts+videos → GitHub debounced 2s (primary, may fail if token is read-only)
   useEffect(() => {
     if (!isRestored) return
     if (state.concepts.length === 0 && generatedImages.length === 0 && sessionVideos.length === 0) return
@@ -128,6 +163,17 @@ export default function Factory() {
 
     if (state.concepts.length === 0) return
 
+    // Always save to localStorage immediately so reload works even if GitHub fails
+    saveLocalSession({
+      date: todayStr(),
+      concepts: state.concepts,
+      selectedConceptIds: state.selectedConceptIds,
+      imagePrompts: state.imagePrompts,
+      videoPrompts: state.videoPrompts,
+      videos: sessionVideos,
+    })
+
+    // Also attempt GitHub save (cross-device sync) — may fail if token is read-only
     const timer = setTimeout(() => {
       const session: GitHubSession = {
         date: todayStr(),

@@ -1,6 +1,10 @@
-// Images-only localStorage layer.
-// Concepts, prompts, and videos are stored in GitHub via /api/history.
-// Key: cantsleept_img_YYYY-MM-DD
+// localStorage persistence layer.
+// Images:  cantsleept_img_YYYY-MM-DD
+// Session: cantsleept_session_YYYY-MM-DD  (concepts, prompts, videos)
+//          Fallback when GitHub writes fail (403 / token issue).
+//          GitHub is still attempted first on save and always tried first on load.
+
+import type { Concept } from './types'
 
 export interface PersistedImage {
   id: string
@@ -19,13 +23,23 @@ export interface PersistedVideo {
   timestamp: string
 }
 
+export interface PersistedSession {
+  date: string
+  concepts: Concept[]
+  selectedConceptIds: string[]
+  imagePrompts: Record<string, string>
+  videoPrompts: Record<string, string>
+  videos: PersistedVideo[]
+}
+
 // Use LOCAL date (Bolivia = UTC-4; toISOString() gives "tomorrow" after 8 PM local)
 export function todayStr(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function imgKey(date: string) { return `cantsleept_img_${date}` }
+function imgKey(date: string)     { return `cantsleept_img_${date}` }
+function sessionKey(date: string) { return `cantsleept_session_${date}` }
 
 export function saveImages(date: string, images: PersistedImage[]): void {
   if (typeof window === 'undefined') return
@@ -59,4 +73,24 @@ export function triggerDownload(base64: string, mime: string, filename: string):
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
+}
+
+// ── Session persistence (concepts + prompts + videos) ──────────────────────
+// Written synchronously on every state change; acts as fallback when
+// GitHub writes fail (e.g. GITHUB_TOKEN has read-only scope).
+
+export function saveLocalSession(session: PersistedSession): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(sessionKey(session.date), JSON.stringify(session))
+  } catch { /* quota — not critical, images take priority */ }
+}
+
+export function loadLocalSession(date: string): PersistedSession | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(sessionKey(date))
+    if (!raw) return null
+    return JSON.parse(raw) as PersistedSession
+  } catch { return null }
 }
