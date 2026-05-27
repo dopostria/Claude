@@ -70,8 +70,74 @@ async function generateWithGoogle(
 }
 
 // ---------------------------------------------------------------------------
-// Higgsfield — grok_video with start frame via media upload
+// Higgsfield — upload image, confirm, then grok_video with start frame
 // ---------------------------------------------------------------------------
+
+async function uploadStartFrame(
+  apiToken: string,
+  imgBuf: Buffer,
+  mime: string
+): Promise<string | undefined> {
+  // Step 1: request presigned upload slot
+  const initRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: 'start_frame.jpg', content_type: mime }),
+  })
+  if (!initRes.ok) {
+    console.warn(`[generate-video] upload init ${initRes.status}: ${(await initRes.text()).slice(0, 200)}`)
+    return undefined
+  }
+
+  const initData = await initRes.json() as {
+    id?: string; upload_id?: string; media_id?: string
+    url?: string; upload_url?: string
+  }
+  console.log('[generate-video] upload init:', JSON.stringify(initData).slice(0, 300))
+
+  const uploadUrl = initData.url ?? initData.upload_url
+  const rawId     = initData.id ?? initData.upload_id ?? initData.media_id
+  if (!uploadUrl || !rawId) {
+    console.warn('[generate-video] upload init missing url or id:', JSON.stringify(initData).slice(0, 200))
+    return undefined
+  }
+
+  // Step 2: PUT image bytes to presigned URL
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: imgBuf,
+    headers: { 'Content-Type': mime },
+  })
+  if (!putRes.ok) {
+    console.warn(`[generate-video] upload PUT ${putRes.status}`)
+    return undefined
+  }
+
+  // Step 3: confirm the upload (required before media can be used in a job)
+  // Try both known confirm endpoint patterns
+  for (const confirmUrl of [
+    `${HIGGSFIELD_BASE}/agents/uploads/${rawId}/confirm`,
+    `${HIGGSFIELD_BASE}/agents/uploads/confirm`,
+  ]) {
+    const cRes = await fetch(confirmUrl, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ upload_id: rawId, media_id: rawId, type: 'image' }),
+    })
+    const cText = await cRes.text().catch(() => '')
+    console.log(`[generate-video] confirm ${confirmUrl} -> ${cRes.status}: ${cText.slice(0, 200)}`)
+    if (cRes.ok) {
+      try {
+        const cData = JSON.parse(cText) as { id?: string; media_id?: string }
+        return cData.id ?? cData.media_id ?? rawId
+      } catch { return rawId }
+    }
+  }
+
+  // Confirm endpoint unknown — use rawId optimistically and let Higgsfield handle it
+  console.warn('[generate-video] confirm failed — using rawId without confirm')
+  return rawId
+}
 
 async function generateWithHiggsfield(
   prompt: string,
@@ -81,49 +147,30 @@ async function generateWithHiggsfield(
 ): Promise<{ videoUri: string; model: string }> {
   let mediaId: string | undefined
 
-  // Upload start frame image if provided
   if (imageBase64) {
     try {
-      const mime = imageMime ?? 'image/jpeg'
+      const mime   = imageMime ?? 'image/jpeg'
       const imgBuf = Buffer.from(imageBase64, 'base64')
-
-      // Step 1: request upload slot
-      const uploadInitRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: 'start_frame.jpg', content_type: mime }),
-      })
-      if (uploadInitRes.ok) {
-        const uploadData = await uploadInitRes.json() as {
-          id?: string; upload_id?: string; url?: string; upload_url?: string
-        }
-        const uploadUrl = uploadData.url ?? uploadData.upload_url
-        mediaId = uploadData.id ?? uploadData.upload_id
-        if (uploadUrl) {
-          const putRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: imgBuf,
-            headers: { 'Content-Type': mime },
-          })
-          if (!putRes.ok) {
-            console.warn('[generate-video] Higgsfield upload PUT failed, proceeding without start frame')
-            mediaId = undefined
-          }
-        }
-      }
+      mediaId = await uploadStartFrame(apiToken, imgBuf, mime)
+      console.log('[generate-video] start frame mediaId:', mediaId ?? 'none')
     } catch (e) {
-      console.warn('[generate-video] image upload skipped:', e)
+      console.warn('[generate-video] start frame upload error:', e)
     }
   }
 
-  // Create video job — start_image carries the uploaded media ID
+  // Job body: pass mediaId both in params.start_image and in medias[] (belt + suspenders)
   const params: Record<string, unknown> = { prompt, aspect_ratio: '9:16', duration: 3 }
   if (mediaId) params.start_image = mediaId
+
+  const jobBody: Record<string, unknown> = { job_set_type: 'grok_video', params }
+  if (mediaId) jobBody.medias = [{ value: mediaId, role: 'start_image' }]
+
+  console.log('[generate-video] Higgsfield job body:', JSON.stringify(jobBody).slice(0, 400))
 
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ job_set_type: 'grok_video', params }),
+    body: JSON.stringify(jobBody),
   })
   if (!createRes.ok) {
     const body = await createRes.text().catch(() => '')
@@ -136,7 +183,7 @@ async function generateWithHiggsfield(
   if (!jobId) throw new Error(`Higgsfield: no video job ID — raw: ${JSON.stringify(createRaw).slice(0, 200)}`)
   console.log(`[generate-video] Higgsfield video job created: ${jobId}`)
 
-  const TIMEOUT = 600_000
+  const TIMEOUT  = 600_000
   const INTERVAL = 8_000
   const deadline = Date.now() + TIMEOUT
 
