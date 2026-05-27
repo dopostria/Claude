@@ -75,7 +75,7 @@ async function generateWithGoogle(
 
 async function uploadStartFrame(
   apiToken: string,
-  imgBuf: Uint8Array,
+  imgBuf: Blob,
   mime: string
 ): Promise<string | undefined> {
   // Step 1: request presigned upload slot
@@ -150,7 +150,7 @@ async function generateWithHiggsfield(
   if (imageBase64) {
     try {
       const mime   = imageMime ?? 'image/jpeg'
-      const imgBuf = new Uint8Array(Buffer.from(imageBase64, 'base64'))
+      const imgBuf = new Blob([Buffer.from(imageBase64, 'base64')], { type: mime })
       mediaId = await uploadStartFrame(apiToken, imgBuf, mime)
       console.log('[generate-video] start frame mediaId:', mediaId ?? 'none')
     } catch (e) {
