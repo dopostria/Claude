@@ -160,9 +160,10 @@ export default function Factory() {
     if (state.concepts.length === 0 && generatedImages.length === 0 && sessionVideos.length === 0) return
 
     saveImages(todayStr(), generatedImages.map(img => ({
-      id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
+      id: img.id, conceptId: img.conceptId, mime: img.mime,
       prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
-      url: img.url,   // CDN URL for Higgsfield; undefined for Gemini
+      url: img.url,          // CDN URL for Higgsfield — persisted for reload
+      base64: img.url ? '' : img.base64,  // Omit base64 for CDN images (prevents localStorage quota exhaustion)
     })))
 
     if (state.concepts.length === 0) return

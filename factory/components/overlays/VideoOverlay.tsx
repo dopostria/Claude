@@ -10,6 +10,7 @@ interface GeneratedImage {
   base64: string
   mime: string
   prompt: string
+  url?: string   // CDN URL for Higgsfield-hosted images (base64 may be empty after reload)
 }
 
 interface VideoOverlayProps {
@@ -147,7 +148,9 @@ export default function VideoOverlay({
               {selectedImage ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={`data:${selectedImage.mime};base64,${selectedImage.base64}`}
+                  src={selectedImage.base64
+                    ? `data:${selectedImage.mime};base64,${selectedImage.base64}`
+                    : (selectedImage.url ?? '')}
                   alt=""
                   style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover', display: 'block', border: '2px solid #48cae433' }}
                 />

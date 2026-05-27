@@ -68,9 +68,24 @@ async function generateWithHiggsfield(
       const imageUrl = (s.result_url ?? s.min_result_url) as string | undefined
       if (!imageUrl) throw new Error(`Higgsfield: no image URL — keys: ${Object.keys(s).join(', ')}`)
 
-      // Return the CDN URL directly — no download, no base64.
-      // Images live in the user's Higgsfield library as permanent CDN URLs.
-      return { base64: '', mime: 'image/webp', model: `higgsfield/${model}`, higgsfieldUrl: imageUrl }
+      // Download the image for in-memory use (video start frame + reference display).
+      // The CDN URL is also returned so Factory.tsx can persist it without base64 quota issues.
+      let higgsfieldBase64 = ''
+      let higgsfieldMime = 'image/webp'
+      try {
+        const imgFetch = await fetch(imageUrl)
+        if (imgFetch.ok) {
+          const buf = await imgFetch.arrayBuffer()
+          higgsfieldBase64 = Buffer.from(buf).toString('base64')
+          higgsfieldMime = imgFetch.headers.get('content-type')?.split(';')[0] ?? 'image/webp'
+          console.log(`[generate-image] Higgsfield base64 fetched (${Math.round(higgsfieldBase64.length / 1024)}KB, ${higgsfieldMime})`)
+        } else {
+          console.warn(`[generate-image] Higgsfield CDN fetch failed ${imgFetch.status}`)
+        }
+      } catch (fetchErr) {
+        console.warn('[generate-image] Higgsfield CDN fetch error:', fetchErr)
+      }
+      return { base64: higgsfieldBase64, mime: higgsfieldMime, model: `higgsfield/${model}`, higgsfieldUrl: imageUrl }
     }
 
     if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {
