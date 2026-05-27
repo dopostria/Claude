@@ -1,9 +1,10 @@
 # CantSleept Content Factory — Status Document
-**Date:** 2026-05-26  
-**Repo:** github.com/dopostria/claude  
+**Date:** 2026-05-27  
+**Repo:** github.com/dopostria/Claude  
 **Branch:** `cantsleept-iso` (production)  
 **Live URL:** https://kantsleepmay.vercel.app  
 **Health check:** https://kantsleepmay.vercel.app/api/health  
+**Current HEAD:** `7c0a52e` (GitHub session storage + PROMPTS tab)
 
 ---
 
@@ -16,11 +17,12 @@ A pixel-art isometric "dungeon" web app for generating viral social media conten
 
 ### Stack
 - **Frontend:** Next.js 14 App Router, React, TypeScript, CSS (no UI library)
-- **Fonts:** Orbitron (labels/headings/buttons) + Share Tech Mono (body/prompts/text content) via Google Fonts
-- **AI – Ideas:** Anthropic Claude (claude-opus-4-5 or similar) via `ANTHROPIC_API_KEY`
-- **AI – Images:** Higgsfield Soul V2 (`text2image_soul_v2`) via device auth token, OR Google Gemini (fallback)
-- **AI – Video:** Higgsfield `grok_video` OR Google Veo 3.1 (`veo-3.1-generate-preview`)
-- **Persistence:** Browser `localStorage` (key: `cantsleept_YYYY-MM-DD`)
+- **Fonts:** Orbitron (labels/headings/buttons) + Share Tech Mono (body/prompts) via Google Fonts
+- **AI – Ideas:** Anthropic Claude (`claude-sonnet-4-6`) via `ANTHROPIC_API_KEY`
+- **AI – Images:** Higgsfield (`nano_banana_2`) OR Google Gemini (`gemini-2.0-flash-exp`) fallback
+- **AI – Video:** Google Veo 3.1 (`veo-3.1-generate-preview`) OR Higgsfield `grok_video`
+- **Persistence (concepts/prompts/videos):** GitHub file `factory/data/sessions.json` via `/api/history`
+- **Persistence (images):** Browser `localStorage` key `cantsleept_img_YYYY-MM-DD`
 - **Deployment:** Vercel (auto-deploys from `cantsleept-iso` branch)
 
 ### Key Files
@@ -30,138 +32,165 @@ factory/
 │   ├── api/
 │   │   ├── ideas/           — Generate 10 concepts via Claude
 │   │   ├── sessions/        — Session stats + concept prompt generation
-│   │   ├── generate-image/  — Higgsfield Soul V2 or Gemini image gen
+│   │   ├── history/         — GET/POST GitHub-backed session storage (NEW)
+│   │   ├── generate-image/  — Higgsfield nano_banana_2 or Gemini image gen
 │   │   ├── generate-video/  — Higgsfield grok_video or Google Veo
-│   │   ├── animation-concepts/ — Alternative video concept generation
 │   │   ├── chat/            — Dr. Adderall chat overlay
 │   │   ├── trends/          — Trend analysis
 │   │   ├── health/          — Env var status check
-│   │   ├── images/          — Serve tmp images
 │   │   └── video-proxy/     — Proxy for Google-hosted videos (auth required)
-│   └── globals.css          — All styles + font imports (Orbitron + Share Tech Mono)
+│   └── globals.css          — All styles + font imports
 ├── components/
-│   ├── Factory.tsx          — Root component, all state management
-│   ├── Sidebar.tsx          — Right sidebar: session log / comms
+│   ├── Factory.tsx          — Root component, all state + GitHub history load/save
+│   ├── Sidebar.tsx          — Right sidebar: session log
 │   ├── QuickNav.tsx         — Bottom nav buttons
-│   ├── overlays/
-│   │   ├── IdeasOverlay.tsx     — Browse/select concepts + prompts (has ▸ HISTORY dropdown)
-│   │   ├── ImagesOverlay.tsx    — Generate images per concept (has ▸ HISTORY dropdown)
-│   │   ├── VideoOverlay.tsx     — Generate video (has ▸ HISTORY dropdown)
-│   │   └── ChatOverlay.tsx      — Chat with Dr. Adderall
-│   └── rooms/
-│       ├── BossRoom.tsx         — Boss room HUD (unused in current dungeon layout)
-│       └── IdeasRoom.tsx        — Ideas room HUD (unused in current dungeon layout)
+│   └── overlays/
+│       ├── IdeasOverlay.tsx     — [IDEAS] / [PROMPTS] tabs; HISTORY dropdown (GitHub)
+│       ├── ImagesOverlay.tsx    — Generate images; HISTORY dropdown (GitHub)
+│       ├── VideoOverlay.tsx     — Generate video; HISTORY dropdown (GitHub)
+│       └── ChatOverlay.tsx      — Chat with Dr. Adderall
+├── data/
+│   ├── sessions.json        — Permanent history storage (NEW, in-repo GitHub file)
+│   ├── brand_context.json   — Archetypes, humor engines, quality filters
+│   └── trend_feed.json      — Current Bolivian trends (updated via /api/trends)
 └── lib/
-    ├── persistence.ts       — localStorage read/write/loadAllDays
-    ├── claude.ts            — Claude prompts (ideas, quality scoring)
+    ├── session-types.ts     — GitHubSession interface (NEW, shared client+server)
+    ├── github-storage.ts    — readSessions() / upsertSession() via GitHub API (NEW)
+    ├── persistence.ts       — Images-only localStorage (REWRITTEN, images only)
+    ├── claude.ts            — Claude prompts (ideas, quality scoring, prompts)
     ├── types.ts             — Shared TypeScript types
     └── higgsfield-auth.ts   — Token management + auto-refresh logic
 ```
 
 ### API Models in Use
-| Route | Default Provider | Model |
-|-------|-----------------|-------|
-| `/api/ideas` | Claude | claude-opus-4-5 (or latest) |
-| `/api/generate-image` | Gemini | gemini-2.0-flash-exp (fallback chain) |
-| `/api/generate-image` | Higgsfield | `text2image_soul_v2` via `fnf.higgsfield.ai` |
+| Route | Provider | Model |
+|-------|----------|-------|
+| `/api/ideas` | Claude | claude-sonnet-4-6 |
+| `/api/sessions` (prompts) | Claude | claude-sonnet-4-6 |
+| `/api/generate-image` | Higgsfield | `nano_banana_2` |
+| `/api/generate-image` | Gemini (fallback) | `gemini-2.0-flash-exp` |
 | `/api/generate-video` | Google | `veo-3.1-generate-preview` |
-| `/api/generate-video` | Higgsfield | `grok_video` via `fnf.higgsfield.ai` |
+| `/api/generate-video` | Higgsfield | `grok_video` (3s clips, 9:16) |
+| `/api/history` (GET/POST) | GitHub API | Contents API on `sessions.json` |
 
 ---
 
 ## Environment Variables (Vercel)
 | Variable | Status | Notes |
 |----------|--------|-------|
-| `ANTHROPIC_API_KEY` | ✅ Working | Used for ideas + Dr. Adderall chat |
-| `GEMINI_API_KEY` | ✅ Working | Images (default) + Google Veo video |
-| `HIGGSFIELD_API_TOKEN` | ⚠️ Expires ~hourly | Device auth token, format: `hf_...` |
-| `HIGGSFIELD_REFRESH_TOKEN` | ❌ Currently missing in Vercel | Format: `hfr_...` — needed for auto-refresh |
+| `ANTHROPIC_API_KEY` | ✅ Working | Ideas + Dr. Adderall chat |
+| `GEMINI_API_KEY` | ✅ Working | Images (fallback) + Google Veo video |
+| `HIGGSFIELD_API_TOKEN` | ⚠️ Expires ~hourly | Format `hf_...`; auto-refresh attempted |
+| `HIGGSFIELD_REFRESH_TOKEN` | ✅ Set | Format `hfr_...`; enables auto-refresh in `higgsfield-auth.ts` |
+| `GITHUB_TOKEN` | ✅ Set | PAT for reading/writing `factory/data/sessions.json` |
 
-### Higgsfield Token Rotation (manual process until fixed)
-1. On Windows PowerShell: `higgsfield auth login` (if token expired) or read from `~/.config/higgsfield/credentials.json`
-2. Update `HIGGSFIELD_API_TOKEN` in Vercel → Settings → Environment Variables
-3. Push an empty commit or use Vercel "Redeploy" to pick up new value
-4. **Auto-refresh is implemented** in `lib/higgsfield-auth.ts` but requires `HIGGSFIELD_REFRESH_TOKEN` to be set — the refresh endpoint (`fnf-device-auth.higgsfield.ai/refresh`) may not be correct yet (needs verification)
+---
+
+## How Persistence Works Now
+
+### Two-layer system:
+1. **GitHub (`factory/data/sessions.json`)** — permanent, cross-device, cross-browser
+   - Stores: concepts, selectedConceptIds, imagePrompts, videoPrompts, videos[]
+   - Loaded on every page mount via `GET /api/history`
+   - Saved 2s after any change via `POST /api/history` (debounced)
+   - Keeps up to 60 sessions, newest first
+   - Never loses data even on Vercel cold starts
+   
+2. **localStorage (`cantsleept_img_YYYY-MM-DD`)** — today's images only
+   - Stores: generated images as base64 (today only)
+   - Saves immediately on image generation
+   - Lost if browser storage cleared or on new browser/device
+   - On page load: checks localStorage AFTER GitHub restore
+
+### On page load sequence:
+```
+fetch /api/history → find today's session → restore concepts/prompts/videos
+→ finally: loadImages(today) from localStorage → setIsRestored(true)
+→ save effect activates
+```
 
 ---
 
 ## Current Working Features
-- ✅ Generate 10 content concepts via Claude (with quality scoring)
-- ✅ Browse concepts in IdeasOverlay with setup/punchline/prompts
+- ✅ Generate 10 content concepts via Claude (with quality scoring + trend injection)
+- ✅ Browse concepts in IdeasOverlay with setup/punchline display
+- ✅ **[IDEAS] / [PROMPTS] tab** in IdeasOverlay:
+  - IDEAS: concept cards with select + expand-prompts per card
+  - PROMPTS: all prompts from ALL sessions grouped by date, each with COPY button
 - ✅ Select concepts and generate image + video prompts
-- ✅ Generate images: Higgsfield Soul V2 (character-consistent) or Gemini (free)
-- ✅ Generate video: Higgsfield grok_video or Google Veo 3.1
+- ✅ Generate images: Higgsfield nano_banana_2 or Gemini (free)
+- ✅ Generate video: Higgsfield grok_video (3s) or Google Veo 3.1 (8s, ~7min)
 - ✅ Video playback in-app (Higgsfield = direct CloudFront URL, Google = proxied)
 - ✅ Download images and videos
-- ✅ HISTORY dropdown in every overlay: all days saved in localStorage, click any row to restore session
-- ✅ Session restore from history (concepts + prompts + images re-loaded into active session)
-- ✅ Dr. Adderall chat overlay with context injection
-- ✅ Character hover glows (each sprite has color matching its room)
-- ✅ Room glow only during `is-working` state (no glow on done)
-- ✅ localStorage persistence (survives page reloads, NOT redeploys to different URLs)
-- ✅ Fonts: Orbitron for all labels/UI chrome, Share Tech Mono for readable body text/prompts
+- ✅ **HISTORY dropdown in every overlay** now backed by GitHub (permanent, cross-device)
+- ✅ Session restore from history (concepts + prompts + videos; images NOT restored from history)
+- ✅ Dr. Adderall chat overlay with context injection into idea generation
+- ✅ Image compression before video request (prevents Vercel 4.5MB body limit 413 error)
+- ✅ Higgsfield grok_video: correct upload flow + start frame (medias[] in params)
+- ✅ Local date key for Bolivia timezone (UTC-4)
 
 ---
 
-## UI Layout
-```
-┌─────────────────────────────┬──────────────┐
-│  DUNGEON STAGE (full width) │  COMMS panel │
-│  (sprites + dungeon.png bg) │  (session    │
-│                             │   log)       │
-├─────────────────────────────┤              │
-│  QUICKNAV BAR (Ideas/Fotos/ │              │
-│  Videos buttons)            │              │
-└─────────────────────────────┴──────────────┘
-```
-History is now accessed via **▸ HISTORY** dropdown button in the top-left of each overlay header — no longer a separate left sidebar.
+## Known Issues / Pending Work
+
+### 🔴 Rate Limit (Anthropic API)
+- Error: `429 rate_limit_error — 30,000 input tokens/minute exceeded`
+- Cause: ideas system prompt is large (brand_context + trend_feed + history = 8-15k tokens); 2-3 rapid calls hit the limit
+- **Workaround:** wait ~60 seconds and retry
+- **Pending fix:** add retry-with-backoff in `lib/claude.ts` for 429 errors (2 retries, 15s wait each)
+  - Show user: "Rate limit — esperando 15s..." instead of raw error
+
+### 🟡 Higgsfield Token
+- Token expires ~hourly; `HIGGSFIELD_REFRESH_TOKEN` is set but refresh endpoint correctness unverified
+- Manual rotation: update `HIGGSFIELD_API_TOKEN` in Vercel env vars → redeploy
+
+### 🟡 Image History
+- Images are NOT stored in GitHub (too large) — only in localStorage for TODAY
+- Restoring a historical session from HISTORY dropdown loads concepts+prompts+videos but NOT images
+- User must regenerate images after restoring a past session
+
+### 🟡 Video URL Expiry
+- Higgsfield CloudFront video URLs are temporary (may expire in hours/days)
+- Restored videos from history may have dead links
+- Long-term fix: download and store to R2/S3/Supabase
+
+### 🟢 Minor Technical Debt
+- `rooms/BossRoom.tsx` and `rooms/IdeasRoom.tsx` are unused dead code
+- `.env.local.example` still references old `HIGGSFIELD_API_KEY` name (should be `HIGGSFIELD_API_TOKEN`)
+- `lib/storage.ts` (server-side SQLite/JSON storage) still exists but is no longer the primary persistence layer
 
 ---
 
-## Known Issues / Limitations
+## Next Session — Suggested Tasks
 
-### Higgsfield Token
-- Token expires ~hourly; requires manual rotation via Vercel env var + redeploy
-- `HIGGSFIELD_REFRESH_TOKEN` is set in Vercel but wasn't being picked up (missing after last redeploy — needs re-verification via `/api/health`)
-- The auto-refresh endpoint `/refresh` may not be the correct Higgsfield endpoint (unknown — CLI binary is closed source)
-- Long-term fix options: (a) figure out correct refresh endpoint, (b) Windows Task Scheduler script to auto-rotate via Vercel API
+### Immediate (small, high value)
+1. **Retry logic for 429** in `lib/claude.ts`:
+   - Catch 429 responses, wait 15s, retry up to 2 times
+   - Show "Rate limit — reintentando en 15s..." in session log
+   - File to edit: `factory/lib/claude.ts` (the `callClaude` / fetch wrapper)
 
-### Persistence
-- localStorage is browser-specific — data doesn't transfer between devices or browsers
-- If accessing via a new Vercel deployment URL (not the stable `kantsleepmay.vercel.app`), localStorage will be empty
-- Images stored as base64 in localStorage — may hit quota on many large images (trimmed to last 3 if quota exceeded)
+2. **Verify HISTORY works end-to-end** — generate ideas, close browser, reopen, confirm concepts+prompts appear
 
-### Video
-- Higgsfield `grok_video`: 3-second clips only
-- Google Veo 3.1: 8-second clips but ~7 min generation time; requires Gemini API access to `veo-3.1-generate-preview`
-- Video URLs from Higgsfield (CloudFront) are temporary — not permanently saved
+### Medium Priority
+3. **Image storage option** — store today's images to a GitHub gist or Vercel Blob so they survive beyond localStorage
+4. **Prompt length reduction** — audit `brand_context.json` to see if it can be trimmed to reduce token usage
 
-### General
-- No user authentication — single-user app
-- No server-side database — all state in browser localStorage
-- Concepts generated once per day (keyed by date)
+### Longer Term
+5. Scheduler / publishing (TikTok/Instagram auto-post)
+6. Batch image generation (all 10 concepts at once)
+7. Video URL persistence (R2/S3 download + store)
 
 ---
 
-## Potential Next Steps (to discuss)
+## Git / Deploy Reference
+| Commit | Description | Status |
+|--------|-------------|--------|
+| `7c0a52e` | GitHub session storage + PROMPTS tab + images-only localStorage | ✅ LIVE |
+| `93d6aae` | Higgsfield grok_video upload flow + start frame fix | ✅ LIVE (superseded) |
+| `fd72b2d` | localStorage date bug + selectedImageId + quota fix | ✅ LIVE (superseded) |
+| `ab5a715` | Remove stale animation_concepts TS build error | ✅ LIVE (superseded) |
 
-### High Priority
-1. **Fix Higgsfield refresh token** — verify correct endpoint, or build Windows auto-rotation script using Vercel API
-2. **Persistent video storage** — CloudFront URLs expire; need to download and store videos (R2/S3/Supabase)
-3. **Cross-device sync** — replace localStorage with a real backend (Supabase, PlanetScale, etc.)
-
-### Feature Ideas
-4. **Scheduler / publishing** — auto-post to TikTok/Instagram/YouTube Shorts
-5. **Batch generation** — generate all 10 concept images in one click
-6. **Character library** — save and reuse Soul V2 character seeds for consistency
-7. **Trend injection** — pull real-time trends into concept generation (trends API exists but unused)
-8. **Caption / text overlay** — add captions to generated videos
-9. **Multiple accounts** — support other creators beyond @CantSleept
-10. **Mobile view** — current layout is desktop-only
-
-### Technical Debt
-- Remove debug commits from git history (empty "trigger redeploy" commits)
-- Add proper error boundaries in React
-- The `cantsleept-iso` branch name is confusing — consider renaming to `main` or `production`
-- `.env.local.example` still references old `HIGGSFIELD_API_KEY` variable name (should be `HIGGSFIELD_API_TOKEN`)
-- `rooms/BossRoom.tsx` and `rooms/IdeasRoom.tsx` are unused dead code (dungeon uses sprite PNG + CSS, not these React components)
+**Deploy protocol:** push to `cantsleept-iso` → Vercel auto-builds → ~2min to READY  
+**Atomic commits:** use GitHub Trees API (blob → tree → commit → ref) to avoid partial deploys  
+**Vercel project ID:** `prj_BFpuezMK0X8UxXno07O48IqL6Q0r`  
+**GitHub repo ID:** `1174773494`
