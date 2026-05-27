@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T20:00:09.227Z",
+      "savedAt": "2026-05-27T20:02:34.975Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -289,6 +289,12 @@
           "model": "higgsfield/grok_video",
           "prompt": "The bureaucrat's thick arm swings down in slow motion, slamming the oversized CONDONADO stamp onto the form with a thunderous thud. Ink splashes outward in red droplets as the yellow creature's pointed ears flatten then spring back upright. The long queue outside shuffles forward one step, a hundred pairs of eyes straining toward the window.",
           "timestamp": "2026-05-27T19:37:39.588Z"
+        },
+        {
+          "uri": "https://d8j0ntlcm91z4.cloudfront.net/user_35laGSENab44UzYFF0f5XIk5ozF/hf_20260527_200119_06861555-68b0-4199-a78b-22ebf69b26d2.mp4",
+          "model": "higgsfield/grok_video",
+          "prompt": "The bureaucrat's thick arm swings down in slow motion, slamming the oversized CONDONADO stamp onto the form with a thunderous thud. Ink splashes outward in red droplets as the yellow creature's pointed ears flatten then spring back upright. The long queue outside shuffles forward one step, a hundred pairs of eyes straining toward the window.",
+          "timestamp": "2026-05-27T20:02:33.592Z"
         }
       ]
     }
