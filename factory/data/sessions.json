@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T16:30:48.878Z",
+      "savedAt": "2026-05-27T16:31:49.828Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -249,8 +249,16 @@
         "concept_05",
         "concept_07"
       ],
-      "imagePrompts": {},
-      "videoPrompts": {},
+      "imagePrompts": {
+        "concept_02": "Cinematic photorealistic style, 9:16 vertical portrait, 8K ultra-detail. State funeral interior, grand Bolivian government hall draped in shadow and ceremony. Center frame: a dark mahogany coffin covered with a multicolored indigenous flag in vivid geometric patterns (#ff0040, #00ff88, #ffdd00, #0088ff), resting on an elevated catafalque with ornate brass handles. Engraved gold plaque on the coffin reads 'BS. 6.96' in bold serif font. Honor guard of four soldiers in formal dress uniform stand rigid at each corner, white gloves, expressionless faces. Front row of wooden pews: a line of suited government officials with stiff, exaggeratedly solemn faces — thick sweat beads visible on foreheads despite composed expressions. At the pulpit microphone: a heavyset middle-aged man in an expensive dark suit, silver tie, gripping the podium with both hands, mouth open mid-speech. A single speech bubble in crisp bold text: 'ERA JOVEN.' Dramatic single overhead spotlight casts hard shadows across the coffin. Background of massive stone columns draped in black mourning cloth. Neon color leak from stained glass windows casting #0088ff and #ff0040 across the marble floor. Cinematic depth of field, 35mm lens compression, photorealistic textures.",
+        "concept_05": "Cinematic photorealistic style, 9:16 vertical portrait, 8K ultra-detail. Massive Soviet-era military tank frozen motionless in the center of a high-altitude Andean plaza — colonial government buildings behind, gray stone cobblestones, thin mountain air visible as cold breath. Imposing uniformed general stands tall through open hatch, heavily decorated chest with medals, silver-streaked mustache, one fist raised mid-speech, vintage military microphone clutched dramatically. A young nervous soldier stretches up on tiptoe to hand him a crumpled yellow sticky note. The general's face mid-transition: jaw slightly dropped, fire of revolution leaving his eyes, replaced by the specific defeated look of a man who forgot to charge his phone. Small handwritten note reads 'NO HAY GASOLINA'. Tank treads bone-dry, no exhaust, no rumble. Crowd of confused onlookers in ponchos and bowler hats staring in silence. Saturated neon color grading slashes through the realism: shadow pools in #ff0040, midday altiplano light pushed to #ffdd00, cold plaza air tinted #0088ff, a single defiant coca-cola sign in the background glowing #00ff88. Cinematic wide-to-portrait composition, slight low angle making the frozen tank look both powerful and absurd. The visual contradiction: the most dramatic object of political force in the frame is going absolutely nowhere.",
+        "concept_07": "Cinematic photorealistic style, 4K ultra-detailed. Imposing corporate boardroom, oval mahogany table, floor-to-ceiling windows with city skyline. At the head of the table: a Bolivian market woman in embroidered apron, traditional bowler hat tilted with authority, weathered hands on the table, wooden fruit crate beside her executive chair. Massive projector screen blazing with KPI charts, bar graphs, revenue curves in neon (#ff0040, #00ff88, #ffdd00, #0088ff). Eight suited executives — male and female, expensive watches, tailored blazers — leaning forward with notepads, pens ready, completely attentive. Her expression: absolute focus on the numbers, one dismissive hand raised toward a standing executive without looking at him. Speech bubble in bold Bolivian-street-font: 'AHORA NO JOVEN, ESTOY VIENDO LOS NÚMEROS.' Dramatic cinematic lighting, low-angle shot making her silhouette monumental against the glowing screen. Saturated neon color grading over corporate cool-grey environment. 9:16 vertical portrait."
+      },
+      "videoPrompts": {
+        "concept_02": "The minister leans slowly into the microphone, pauses with theatrical gravity, then delivers the words 'ERA JOVEN' as the honor guards simultaneously drop their heads in rehearsed unison. The camera pulls back to reveal the full hall of stone-faced officials nodding solemnly, while the engraved plaque on the coffin catches the spotlight.",
+        "concept_05": "The general's raised fist slowly lowers as he reads the crumpled note, microphone drooping away from his lips. His jaw closes, medals clink softly against his chest as his shoulders deflate. The crowd in ponchos exchanges glances, a bowler hat tips sideways in the wind — the tank sits completely, humiliatingly still.",
+        "concept_07": "The market woman's raised hand slowly turns, palm outward, silencing the standing executive mid-sentence without her eyes ever leaving the glowing KPI screen. Her other hand taps a number on the projection with one firm finger. The executives' heads all pivot toward the screen in unison, pens dropping to notepads."
+      },
       "videos": []
     }
   ]
