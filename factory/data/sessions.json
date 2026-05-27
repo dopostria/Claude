@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T16:50:08.428Z",
+      "savedAt": "2026-05-27T16:52:32.630Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -259,7 +259,14 @@
         "concept_05": "The general's raised fist slowly lowers as he reads the crumpled note, microphone drooping away from his lips. His jaw closes, medals clink softly against his chest as his shoulders deflate. The crowd in ponchos exchanges glances, a bowler hat tips sideways in the wind — the tank sits completely, humiliatingly still.",
         "concept_07": "The market woman's raised hand slowly turns, palm outward, silencing the standing executive mid-sentence without her eyes ever leaving the glowing KPI screen. Her other hand taps a number on the projection with one firm finger. The executives' heads all pivot toward the screen in unison, pens dropping to notepads."
       },
-      "videos": []
+      "videos": [
+        {
+          "uri": "https://d8j0ntlcm91z4.cloudfront.net/user_35laGSENab44UzYFF0f5XIk5ozF/hf_20260527_165108_94c77144-62e3-4c74-b11d-1e8abf057d8b.mp4",
+          "model": "higgsfield/grok_video",
+          "prompt": "The general's raised fist slowly lowers as he reads the crumpled note, microphone drooping away from his lips. His jaw closes, medals clink softly against his chest as his shoulders deflate. The crowd in ponchos exchanges glances, a bowler hat tips sideways in the wind — the tank sits completely, humiliatingly still.",
+          "timestamp": "2026-05-27T16:52:31.230Z"
+        }
+      ]
     }
   ]
 }
