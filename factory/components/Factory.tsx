@@ -20,6 +20,7 @@ import ChatOverlay from './overlays/ChatOverlay'
 interface GeneratedImage {
   id: string; conceptId: string; tool: string; imagePath: string
   base64: string; mime: string; prompt: string; timestamp: string
+  url?: string   // CDN URL for Higgsfield images (survives reload via PersistedImage.url)
 }
 
 function now() { return new Date().toLocaleTimeString('en-US', { hour12: false }) }
@@ -136,7 +137,9 @@ export default function Factory() {
       if (imgs.length > 0) {
         setGeneratedImages(imgs.map((img: PersistedImage) => ({
           id: img.id, conceptId: img.conceptId, tool: img.model,
-          imagePath: '', base64: img.base64, mime: img.mime,
+          imagePath: img.url ?? '',   // CDN URL for Higgsfield; '' for Gemini (uses base64)
+          url: img.url,
+          base64: img.base64, mime: img.mime,
           prompt: img.prompt, timestamp: img.timestamp,
         })))
         setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' } }))
@@ -159,6 +162,7 @@ export default function Factory() {
     saveImages(todayStr(), generatedImages.map(img => ({
       id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
       prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
+      url: img.url,   // CDN URL for Higgsfield; undefined for Gemini
     })))
 
     if (state.concepts.length === 0) return
@@ -300,11 +304,13 @@ export default function Factory() {
         try { const e = await res.json(); em = (e as { error?: string }).error ?? em } catch { em = await res.text().catch(() => em) }
         throw new Error(em)
       }
-      const data = await res.json() as { native916?: boolean; originalDimensions?: string; model?: string; imagePath?: string; base64: string; mime: string; timestamp: string }
+      const data = await res.json() as { native916?: boolean; originalDimensions?: string; model?: string; imagePath?: string; higgsfieldUrl?: string; base64: string; mime: string; timestamp: string }
       const aspectLabel = data.native916 ? '9:16 nativo' : `9:16 crop (orig ${data.originalDimensions ?? '?'})`
       const newImage: GeneratedImage = {
         id: `${conceptId}-${Date.now()}`, conceptId, tool: data.model ?? 'gemini',
-        imagePath: data.imagePath ?? '', base64: data.base64, mime: data.mime,
+        imagePath: data.higgsfieldUrl ?? data.imagePath ?? '',
+        url: data.higgsfieldUrl,
+        base64: data.base64, mime: data.mime,
         prompt, timestamp: data.timestamp }
       setGeneratedImages(prev => [...prev, newImage])
       setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' },

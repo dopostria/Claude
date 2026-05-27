@@ -16,7 +16,7 @@ async function generateWithHiggsfield(
   prompt: string,
   apiToken: string,
   model = 'nano_banana'
-): Promise<{ base64: string; mime: string; model: string }> {
+): Promise<{ base64: string; mime: string; model: string; higgsfieldUrl?: string }> {
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',
     headers: {
@@ -68,12 +68,9 @@ async function generateWithHiggsfield(
       const imageUrl = (s.result_url ?? s.min_result_url) as string | undefined
       if (!imageUrl) throw new Error(`Higgsfield: no image URL — keys: ${Object.keys(s).join(', ')}`)
 
-      const imgRes = await fetch(imageUrl)
-      if (!imgRes.ok) throw new Error(`Higgsfield image download failed ${imgRes.status}`)
-      const buf = await imgRes.arrayBuffer()
-      const mime = imgRes.headers.get('content-type') ?? 'image/jpeg'
-
-      return { base64: Buffer.from(buf).toString('base64'), mime, model: `higgsfield/${model}` }
+      // Return the CDN URL directly — no download, no base64.
+      // Images live in the user's Higgsfield library as permanent CDN URLs.
+      return { base64: '', mime: 'image/webp', model: `higgsfield/${model}`, higgsfieldUrl: imageUrl }
     }
 
     if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {
@@ -205,12 +202,27 @@ export async function POST(req: NextRequest) {
 
     const geminiKey = process.env.GEMINI_API_KEY
 
-    let raw: { base64: string; mime: string; model: string }
+    let raw: { base64: string; mime: string; model: string; higgsfieldUrl?: string }
 
     if (provider === 'higgsfield') {
       raw = await withHiggsfieldToken(token =>
         generateWithHiggsfield(prompt, token, 'nano_banana_2')
       )
+      // Higgsfield images live in the user's CDN library — no download needed.
+      if (raw.higgsfieldUrl) {
+        return NextResponse.json({
+          success: true,
+          base64: '',
+          mime: raw.mime,
+          model: raw.model,
+          higgsfieldUrl: raw.higgsfieldUrl,
+          imagePath: raw.higgsfieldUrl,
+          native916: true,
+          originalDimensions: '1536x2752',
+          conceptId,
+          timestamp: new Date().toISOString(),
+        })
+      }
     } else {
       if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
       raw = await generateWithGemini(prompt, geminiKey)

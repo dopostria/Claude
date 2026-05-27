@@ -14,6 +14,7 @@ export interface PersistedImage {
   prompt: string
   model: string
   timestamp: string
+  url?: string   // CDN URL for provider-hosted images (Higgsfield); no base64 needed when set
 }
 
 export interface PersistedVideo {
