@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Concept } from '@/lib/types'
-import { loadAllDays, type PersistedDay } from '@/lib/persistence'
+import type { GitHubSession } from '@/lib/session-types'
 
 interface GeneratedImage {
   id: string
@@ -18,11 +18,12 @@ interface VideoOverlayProps {
   videoUri: string | null
   videoModel: string | null
   defaultVideoPrompt: string
+  allSessions: GitHubSession[]
   onGenerateVideo: (prompt: string, provider: 'google' | 'higgsfield') => void
   onBack: () => void
   onClose: () => void
   generating: boolean
-  onRestoreDay: (day: PersistedDay) => void
+  onRestoreSession: (session: GitHubSession) => void
 }
 
 export default function VideoOverlay({
@@ -31,24 +32,20 @@ export default function VideoOverlay({
   videoUri,
   videoModel,
   defaultVideoPrompt,
+  allSessions,
   onGenerateVideo,
   onBack,
   onClose,
   generating,
-  onRestoreDay,
+  onRestoreSession,
 }: VideoOverlayProps) {
   const [prompt, setPrompt] = useState(defaultVideoPrompt)
   const [provider, setProvider] = useState<'google' | 'higgsfield'>('higgsfield')
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
 
   useEffect(() => {
     if (defaultVideoPrompt) setPrompt(defaultVideoPrompt)
   }, [defaultVideoPrompt])
-
-  useEffect(() => {
-    if (historyOpen) setHistoryDays(loadAllDays())
-  }, [historyOpen])
 
   const activeConcept = selectedConcepts[0]
 
@@ -90,15 +87,15 @@ export default function VideoOverlay({
                   minWidth: 320, maxHeight: 300, overflowY: 'auto',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
                 }}>
-                  {historyDays.length === 0 && (
+                  {allSessions.length === 0 && (
                     <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
                       _ sin historial
                     </div>
                   )}
-                  {historyDays.map(day => (
+                  {allSessions.map(session => (
                     <div
-                      key={day.date}
-                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      key={session.date}
+                      onClick={() => { onRestoreSession(session); setHistoryOpen(false) }}
                       style={{
                         padding: '8px 14px', cursor: 'pointer',
                         borderBottom: '1px solid #0a1a18',
@@ -108,9 +105,9 @@ export default function VideoOverlay({
                       onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{session.date}</span>
                       <span style={{ color: '#004d3d' }}>
-                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                        {session.concepts.length} ideas · {session.videos.length} vids
                       </span>
                     </div>
                   ))}
@@ -181,7 +178,6 @@ export default function VideoOverlay({
 
             {/* Generate button */}
             <div style={{ padding: 11, borderTop: '1px solid #0d3330' }}>
-              {/* Provider toggle */}
               <div style={{ display: 'flex', marginBottom: 9, gap: 4 }}>
                 {(['google', 'higgsfield'] as const).map(p => (
                   <button

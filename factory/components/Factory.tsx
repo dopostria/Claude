@@ -8,10 +8,11 @@ import ImagesOverlay from './overlays/ImagesOverlay'
 import VideoOverlay from './overlays/VideoOverlay'
 import type { FactoryState, Concept } from '@/lib/types'
 import {
-  loadDay, saveDay, triggerDownload,
+  saveImages, loadImages, triggerDownload,
   todayStr,
-  type PersistedDay, type PersistedVideo,
+  type PersistedImage, type PersistedVideo,
 } from '@/lib/persistence'
+import type { GitHubSession } from '@/lib/session-types'
 import QuickNav from './QuickNav'
 import ChatOverlay from './overlays/ChatOverlay'
 
@@ -25,7 +26,6 @@ function getRoomClass(s: string) {
   return s === 'working' ? 'is-working' : s === 'done' ? 'is-done' : s === 'error' ? 'is-error' : ''
 }
 
-// Compress image via Canvas so the request body stays under Vercel's 4.5 MB hard limit
 async function compressImageForVideo(base64: string, mime: string): Promise<{ base64: string; mime: string }> {
   return new Promise(resolve => {
     const img = new window.Image()
@@ -68,6 +68,7 @@ export default function Factory() {
   const [chatContext, setChatContext] = useState<string | undefined>(undefined)
   const [sessionVideos, setSessionVideos] = useState<PersistedVideo[]>([])
   const [isRestored, setIsRestored] = useState(false)
+  const [allSessions, setAllSessions] = useState<GitHubSession[]>([])
 
   useEffect(() => {
     fetch('/api/sessions').then(r => r.json())
@@ -75,58 +76,88 @@ export default function Factory() {
       .catch(() => {})
   }, [])
 
-  // Restore today's session from localStorage, then mark ready for syncing
+  // On mount: load GitHub history → restore today's session → load images from localStorage
   useEffect(() => {
-    const today = loadDay(todayStr())
-    if (today && today.concepts.length > 0) {
-      setState(s => ({
-        ...s,
-        concepts: today.concepts,
-        imagePrompts: today.imagePrompts,
-        selectedConceptIds: today.selectedConceptIds,
-        rooms: {
-          ...s.rooms,
-          ideas: 'done',
-          images: today.images.length > 0 ? 'done' : s.rooms.images,
-        },
-      }))
-      if (today.images.length > 0) {
-        setGeneratedImages(today.images.map(img => ({
-          id: img.id, conceptId: img.conceptId, tool: img.model,
-          imagePath: '', base64: img.base64, mime: img.mime,
-          prompt: img.prompt, timestamp: img.timestamp,
-        })))
-        if (today.selectedImageId) setSelectedImageId(today.selectedImageId)
-      }
-      if (today.videos.length > 0) {
-        setSessionVideos(today.videos)
-        const last = today.videos[today.videos.length - 1]
-        setVideoUri(last.uri)
-        setVideoModel(last.model)
-      }
-    }
-    setIsRestored(true)
+    fetch('/api/history')
+      .then(r => r.json())
+      .then(({ sessions }: { sessions: GitHubSession[] }) => {
+        const list = sessions ?? []
+        setAllSessions(list)
+        const today = list.find(s => s.date === todayStr())
+        if (today && today.concepts.length > 0) {
+          setState(s => ({
+            ...s,
+            concepts: today.concepts,
+            imagePrompts: today.imagePrompts,
+            videoPrompts: today.videoPrompts,
+            selectedConceptIds: today.selectedConceptIds,
+            rooms: { ...s.rooms, ideas: 'done' },
+          }))
+          if (today.videos.length > 0) {
+            setSessionVideos(today.videos)
+            const last = today.videos[today.videos.length - 1]
+            setVideoUri(last.uri)
+            setVideoModel(last.model)
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        const imgs = loadImages(todayStr())
+        if (imgs.length > 0) {
+          setGeneratedImages(imgs.map((img: PersistedImage) => ({
+            id: img.id, conceptId: img.conceptId, tool: img.model,
+            imagePath: '', base64: img.base64, mime: img.mime,
+            prompt: img.prompt, timestamp: img.timestamp,
+          })))
+          setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' } }))
+        }
+        setIsRestored(true)
+      })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Single reactive sync — runs whenever content changes, AFTER restoration
+  // Reactive sync: images → localStorage immediately; concepts/prompts/videos → GitHub debounced 2s
   useEffect(() => {
     if (!isRestored) return
     if (state.concepts.length === 0 && generatedImages.length === 0 && sessionVideos.length === 0) return
-    const day: PersistedDay = {
-      date: todayStr(),
-      concepts: state.concepts,
-      imagePrompts: state.imagePrompts,
-      selectedConceptIds: state.selectedConceptIds,
-      selectedImageId: selectedImageId,
-      images: generatedImages.map(img => ({
-        id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
-        prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
-      })),
-      videos: sessionVideos,
-    }
-    saveDay(day)
-  }, [isRestored, state.concepts, state.imagePrompts, state.selectedConceptIds, selectedImageId, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    saveImages(todayStr(), generatedImages.map(img => ({
+      id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
+      prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
+    })))
+
+    if (state.concepts.length === 0) return
+
+    const timer = setTimeout(() => {
+      const session: GitHubSession = {
+        date: todayStr(),
+        savedAt: new Date().toISOString(),
+        concepts: state.concepts,
+        selectedConceptIds: state.selectedConceptIds,
+        imagePrompts: state.imagePrompts,
+        videoPrompts: state.videoPrompts,
+        videos: sessionVideos,
+      }
+      fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session }),
+      })
+        .then(r => r.json())
+        .then((data: { ok?: boolean }) => {
+          if (data.ok) {
+            setAllSessions(prev => {
+              const idx = prev.findIndex(s => s.date === session.date)
+              if (idx >= 0) { const next = [...prev]; next[idx] = session; return next }
+              return [session, ...prev].sort((a, b) => b.date.localeCompare(a.date))
+            })
+          }
+        })
+        .catch(() => {})
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [isRestored, state.concepts, state.imagePrompts, state.videoPrompts, state.selectedConceptIds, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fireSignal = useCallback((from: string, to: string) => {
     setState(s => ({ ...s, signal: { from, to } }))
@@ -145,7 +176,6 @@ export default function Factory() {
     if (from === 'boss') { setBossLaunching(true); setTimeout(() => setBossLaunching(false), 200) }
   }, [])
 
-  // ── NODO 1 ──────────────────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
     if (generating) return
     setGenerating(true)
@@ -161,7 +191,7 @@ export default function Factory() {
         headers: ctx ? { 'Content-Type': 'application/json' } : {},
         body: ctx ? JSON.stringify({ additionalContext: ctx }) : undefined,
       })
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as { error?: string }).error || `HTTP ${res.status}`) }
       const { concepts }: { concepts: Concept[] } = await res.json()
       setState(s => ({ ...s, concepts, rooms: { ...s.rooms, boss: 'done', ideas: 'done' },
         activeOverlay: 'ideas',
@@ -171,7 +201,7 @@ export default function Factory() {
       setState(s => ({ ...s, rooms: { ...s.rooms, boss: 'error', ideas: 'error' },
         sessionLog: [...s.sessionLog, { time: now(), message: `Error: ${msg}`, type: 'error' }] }))
     } finally { setGenerating(false) }
-  }, [generating, fireSignal])
+  }, [generating, fireSignal, chatContext])
 
   const handleSelectConcept = useCallback((id: string) => {
     setState(s => {
@@ -180,7 +210,6 @@ export default function Factory() {
     })
   }, [])
 
-  // ── NODO 2 ──────────────────────────────────────────────────────────
   const handleConfirmSelection = useCallback(async () => {
     const ids = state.selectedConceptIds
     if (ids.length === 0 || processingPrompts) return
@@ -191,7 +220,7 @@ export default function Factory() {
       const res = await fetch('/api/sessions', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'select_concepts', concept_ids: ids, concepts: state.concepts }) })
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as { error?: string }).error || `HTTP ${res.status}`) }
       const { imagePrompts, videoPrompts }: { imagePrompts: Record<string, string>; videoPrompts: Record<string, string> } = await res.json()
       const mergedPrompts = { ...state.imagePrompts, ...imagePrompts }
       setState(s => ({ ...s, imagePrompts: mergedPrompts,
@@ -203,7 +232,7 @@ export default function Factory() {
       setState(s => ({ ...s, rooms: { ...s.rooms, ideas: 'error' },
         sessionLog: [...s.sessionLog, { time: now(), message: `Prompt error: ${msg}`, type: 'error' }] }))
     } finally { setProcessingPrompts(false) }
-  }, [state.selectedConceptIds, processingPrompts, state.concepts])
+  }, [state.selectedConceptIds, processingPrompts, state.concepts, state.imagePrompts])
 
   const handleOpenImages = useCallback((editedImagePrompts: Record<string, string>, editedVideoPrompts: Record<string, string>) => {
     setState(s => ({ ...s, imagePrompts: editedImagePrompts, videoPrompts: editedVideoPrompts,
@@ -212,7 +241,6 @@ export default function Factory() {
     fireSignal('ideas', 'images')
   }, [fireSignal])
 
-  // ── NODO 3 ──────────────────────────────────────────────────────────
   const handleGenerateImage = useCallback(async (conceptId: string, prompt: string, provider: 'gemini' | 'higgsfield' = 'gemini') => {
     if (generatingImage) return
     setGeneratingImage(true); setGeneratingFor(conceptId)
@@ -223,13 +251,11 @@ export default function Factory() {
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, conceptId, provider }) })
       if (!res.ok) {
         let em = `HTTP ${res.status}`
-        try { const e = await res.json(); em = e.error ?? em } catch { em = await res.text().catch(() => em) }
+        try { const e = await res.json(); em = (e as { error?: string }).error ?? em } catch { em = await res.text().catch(() => em) }
         throw new Error(em)
       }
-      const data = await res.json()
-      const native916 = data.native916 as boolean | undefined
-      const originalDimensions = data.originalDimensions as string | undefined
-      const aspectLabel = native916 ? '9:16 nativo' : `9:16 crop (orig ${originalDimensions ?? '?'})`
+      const data = await res.json() as { native916?: boolean; originalDimensions?: string; model?: string; imagePath?: string; base64: string; mime: string; timestamp: string }
+      const aspectLabel = data.native916 ? '9:16 nativo' : `9:16 crop (orig ${data.originalDimensions ?? '?'})`
       const newImage: GeneratedImage = {
         id: `${conceptId}-${Date.now()}`, conceptId, tool: data.model ?? 'gemini',
         imagePath: data.imagePath ?? '', base64: data.base64, mime: data.mime,
@@ -237,7 +263,6 @@ export default function Factory() {
       setGeneratedImages(prev => [...prev, newImage])
       setState(s => ({ ...s, rooms: { ...s.rooms, images: 'done' },
         sessionLog: [...s.sessionLog, { time: now(), message: `Imagen lista! ${data.model} · ${aspectLabel}`, type: 'success' }] }))
-      // auto-download so the file is always saved locally
       const ext = (data.mime ?? 'image/jpeg').includes('png') ? 'png' : 'jpg'
       triggerDownload(data.base64, data.mime, `cantsleept-${conceptId}-${Date.now()}.${ext}`)
     } catch (err) {
@@ -252,14 +277,12 @@ export default function Factory() {
     setState(s => ({ ...s, sessionLog: [...s.sessionLog, { time: now(), message: 'Imagen seleccionada!', type: 'success' }] }))
   }, [])
 
-  // ── NODO 4 ──────────────────────────────────────────────────────────
   const handleContinueToVideo = useCallback(() => {
     setState(s => ({ ...s, activeOverlay: 'video', rooms: { ...s.rooms, video: 'idle' },
       sessionLog: [...s.sessionLog, { time: now(), message: 'Abriendo MOTION SICK...', type: 'info' }] }))
     fireSignal('images', 'video')
   }, [fireSignal])
 
-  // ── NODO 5 ──────────────────────────────────────────────────────────
   const handleGenerateVideo = useCallback(async (prompt: string, provider: 'google' | 'higgsfield' = 'google') => {
     if (generatingVideo) return
     const selectedImg = generatedImages.find(img => img.id === selectedImageId)
@@ -267,7 +290,6 @@ export default function Factory() {
     setState(s => ({ ...s, rooms: { ...s.rooms, video: 'working' },
       sessionLog: [...s.sessionLog, { time: now(), message: `Generando video (${provider})...`, type: 'working' }] }))
     try {
-      // Compress start frame if >2.5 MB — Vercel hard-caps request bodies at 4.5 MB
       let imgBase64 = selectedImg?.base64
       let imgMime   = selectedImg?.mime ?? 'image/jpeg'
       if (imgBase64 && imgBase64.length > 2_500_000) {
@@ -279,10 +301,10 @@ export default function Factory() {
         body: JSON.stringify({ prompt, imageBase64: imgBase64, imageMime: imgMime, provider }) })
       if (!res.ok) {
         let em = `HTTP ${res.status}`
-        try { const e = await res.json(); em = e.error ?? em } catch { em = await res.text().catch(() => em) }
+        try { const e = await res.json(); em = (e as { error?: string }).error ?? em } catch { em = await res.text().catch(() => em) }
         throw new Error(em)
       }
-      const data = await res.json()
+      const data = await res.json() as { videoUri: string; model: string; timestamp: string }
       setVideoUri(data.videoUri); setVideoModel(data.model)
       setSessionVideos(prev => [...prev, { uri: data.videoUri, model: data.model, prompt, timestamp: data.timestamp }])
       setState(s => ({ ...s, rooms: { ...s.rooms, video: 'done' },
@@ -294,29 +316,28 @@ export default function Factory() {
     } finally { setGeneratingVideo(false) }
   }, [generatingVideo, generatedImages, selectedImageId])
 
-  const handleCloseOverlay      = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
+  const handleCloseOverlay = useCallback(() => setState(s => ({ ...s, activeOverlay: 'none' })), [])
 
-  const handleRestoreDay = useCallback((day: PersistedDay) => {
+  const handleRestoreSession = useCallback((session: GitHubSession) => {
     setState(s => ({
       ...s,
-      concepts: day.concepts,
-      imagePrompts: day.imagePrompts,
-      selectedConceptIds: day.selectedConceptIds,
-      rooms: { ...s.rooms, ideas: 'done', images: day.images.length > 0 ? 'done' : s.rooms.images },
+      concepts: session.concepts,
+      imagePrompts: session.imagePrompts,
+      videoPrompts: session.videoPrompts,
+      selectedConceptIds: session.selectedConceptIds,
+      rooms: { ...s.rooms, ideas: 'done', images: 'idle' },
     }))
-    setSessionVideos(day.videos)
-    if (day.images.length > 0) {
-      setGeneratedImages(day.images.map(img => ({
-        id: img.id, conceptId: img.conceptId, tool: img.model,
-        imagePath: '', base64: img.base64, mime: img.mime,
-        prompt: img.prompt, timestamp: img.timestamp,
-      })))
-    }
-    if (day.videos.length > 0) {
-      const last = day.videos[day.videos.length - 1]
+    setSessionVideos(session.videos)
+    setGeneratedImages([])
+    setSelectedImageId(null)
+    if (session.videos.length > 0) {
+      const last = session.videos[session.videos.length - 1]
       setVideoUri(last.uri); setVideoModel(last.model)
+    } else {
+      setVideoUri(null); setVideoModel(null)
     }
   }, [])
+
   const handleOpenIdeas         = useCallback(() => { if (state.concepts.length > 0) setState(s => ({ ...s, activeOverlay: 'ideas' })) }, [state.concepts.length])
   const handleOpenImagesOverlay = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'images' })) }, [state.selectedConceptIds.length])
   const handleOpenVideoOverlay  = useCallback(() => { if (state.selectedConceptIds.length > 0) setState(s => ({ ...s, activeOverlay: 'video' })) }, [state.selectedConceptIds.length])
@@ -334,7 +355,6 @@ export default function Factory() {
       {pillPath && <div className="pill-fly" style={{ offsetPath: `path('${pillPath}')` } as React.CSSProperties} />}
       {state.signal && <SignalLine signal={state.signal} />}
 
-      {/* HUD */}
       <div className="hud-bar">
         <span className="hud-label">✦ CANTSLEEPT CONTENT FACTORY ✦</span>
         <div className="hud-sep" />
@@ -351,18 +371,15 @@ export default function Factory() {
         <span className="hud-label">{new Date().toISOString().split('T')[0]}</span>
       </div>
 
-      {/* Main */}
       <div className="factory-body">
         <div className="dungeon-col">
           <div className="dungeon-stage">
             <div className="dungeon-inner">
               <div className="dungeon-bg" />
-
               <div id="room-boss"   className={`room-overlay room-boss   ${getRoomClass(state.rooms.boss)}`}   />
               <div id="room-ideas"  className={`room-overlay room-ideas  ${getRoomClass(state.rooms.ideas)}`}  />
               <div id="room-images" className={`room-overlay room-images ${getRoomClass(state.rooms.images)}`} />
               <div id="room-video"  className={`room-overlay room-video  ${getRoomClass(state.rooms.video)}`}  />
-
               <div
                 role="button" tabIndex={0} aria-label="Hablar con Dr. Adderall"
                 className={`sprite-boss${state.rooms.boss === 'working' ? ' is-working' : ''}`}
@@ -378,8 +395,6 @@ export default function Factory() {
               <div role="button" tabIndex={0} className={`sprite-video${state.rooms.video === 'working' ? ' is-working' : ''}`}
                 style={{ cursor: state.selectedConceptIds.length > 0 ? 'pointer' : 'default' }}
                 onClick={handleOpenVideoOverlay} onKeyDown={e => e.key === 'Enter' && handleOpenVideoOverlay()} />
-
-              {/* Button: wrapper div owns position, inner div fills it — zero movement on click */}
               <div className="btn-wrap-donotpush">
                 <div
                   role="button"
@@ -392,7 +407,6 @@ export default function Factory() {
               </div>
             </div>
           </div>
-
           <QuickNav
             rooms={state.rooms}
             hasConcepts={state.concepts.length > 0}
@@ -404,25 +418,25 @@ export default function Factory() {
             onOpenVideo={handleOpenVideoOverlay}
           />
         </div>
-
         <Sidebar log={state.sessionLog} />
       </div>
 
-      {/* Overlays — unchanged */}
       {state.activeOverlay === 'ideas' && state.concepts.length > 0 && (
         <IdeasOverlay concepts={state.concepts} selectedIds={state.selectedConceptIds}
           imagePrompts={state.imagePrompts} videoPrompts={state.videoPrompts}
+          allSessions={allSessions}
           onSelectConcept={handleSelectConcept} onConfirmSelection={handleConfirmSelection}
           onOpenImages={handleOpenImages} onClose={handleCloseOverlay} processingPrompts={processingPrompts}
-          onRestoreDay={handleRestoreDay} />
+          onRestoreSession={handleRestoreSession} />
       )}
       {state.activeOverlay === 'images' && selectedConcepts.length > 0 && (
         <ImagesOverlay selectedConcepts={selectedConcepts} imagePrompts={state.imagePrompts}
           generatedImages={generatedImages} selectedImageId={selectedImageId}
+          allSessions={allSessions}
           onGenerate={handleGenerateImage} onSelectImage={handleSelectImage}
           onContinueToVideo={handleContinueToVideo} onClose={handleCloseOverlay}
           generating={generatingImage} generatingFor={generatingFor}
-          onRestoreDay={handleRestoreDay} />
+          onRestoreSession={handleRestoreSession} />
       )}
       {drChatOpen && (
         <ChatOverlay
@@ -430,15 +444,15 @@ export default function Factory() {
           onGenerateWithContext={ctx => { setChatContext(ctx); setDrChatOpen(false) }}
         />
       )}
-
       {state.activeOverlay === 'video' && (
         <VideoOverlay selectedConcepts={selectedConcepts}
           selectedImage={generatedImages.find(img => img.id === selectedImageId) ?? null}
           videoUri={videoUri} videoModel={videoModel} defaultVideoPrompt={videoPromptForSelected}
+          allSessions={allSessions}
           onGenerateVideo={handleGenerateVideo}
           onBack={() => setState(s => ({ ...s, activeOverlay: 'images' }))}
           onClose={handleCloseOverlay} generating={generatingVideo}
-          onRestoreDay={handleRestoreDay} />
+          onRestoreSession={handleRestoreSession} />
       )}
     </div>
   )

@@ -1,4 +1,6 @@
-import type { Concept } from './types'
+// Images-only localStorage layer.
+// Concepts, prompts, and videos are stored in GitHub via /api/history.
+// Key: cantsleept_img_YYYY-MM-DD
 
 export interface PersistedImage {
   id: string
@@ -17,86 +19,36 @@ export interface PersistedVideo {
   timestamp: string
 }
 
-export interface PersistedDay {
-  date: string
-  concepts: Concept[]
-  imagePrompts: Record<string, string>
-  selectedConceptIds: string[]
-  selectedImageId?: string | null
-  images: PersistedImage[]
-  videos: PersistedVideo[]
-}
-
-function key(date: string) { return `cantsleept_${date}` }
-
-// Use LOCAL date — Bolivia is UTC-4; toISOString() gives "tomorrow" after 8 PM local
+// Use LOCAL date (Bolivia = UTC-4; toISOString() gives "tomorrow" after 8 PM local)
 export function todayStr(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function yesterdayStr(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+function imgKey(date: string) { return `cantsleept_img_${date}` }
 
-export function loadDay(date: string): PersistedDay | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem(key(date))
-    return raw ? (JSON.parse(raw) as PersistedDay) : null
-  } catch { return null }
-}
-
-export function saveDay(day: PersistedDay): void {
+export function saveImages(date: string, images: PersistedImage[]): void {
   if (typeof window === 'undefined') return
-  const k = key(day.date)
-  const attempt = (data: PersistedDay) => { localStorage.setItem(k, JSON.stringify(data)) }
+  const k = imgKey(date)
   try {
-    attempt(day)
+    localStorage.setItem(k, JSON.stringify(images))
   } catch {
-    // Quota exceeded: strip images from OTHER days first to free space, then retry today's full data
+    // Quota: remove other days' image keys first, then retry
     try {
       for (const sk of Object.keys(localStorage)) {
-        if (sk.startsWith('cantsleept_') && sk !== k) {
-          const raw = localStorage.getItem(sk)
-          if (raw) {
-            try {
-              const old = JSON.parse(raw) as PersistedDay
-              if (old.images?.length > 0) localStorage.setItem(sk, JSON.stringify({ ...old, images: [] }))
-            } catch { localStorage.removeItem(sk) }
-          }
-        }
+        if (sk.startsWith('cantsleept_img_') && sk !== k) localStorage.removeItem(sk)
       }
-      attempt(day)
-    } catch {
-      // Last resort: save today without images (concepts + prompts survive)
-      const stripped = { ...day, images: [] }
-      try { attempt(stripped) } catch { /* storage truly full */ }
-    }
+      localStorage.setItem(k, JSON.stringify(images))
+    } catch { /* truly full */ }
   }
 }
 
-export function loadAllDays(): PersistedDay[] {
+export function loadImages(date: string): PersistedImage[] {
   if (typeof window === 'undefined') return []
-  const days: PersistedDay[] = []
-  for (const k of Object.keys(localStorage)) {
-    if (!k.startsWith('cantsleept_')) continue
-    try {
-      const raw = localStorage.getItem(k)
-      if (raw) days.push(JSON.parse(raw) as PersistedDay)
-    } catch { /* skip corrupt */ }
-  }
-  return days.sort((a, b) => b.date.localeCompare(a.date))
-}
-
-export function patchToday(patch: Partial<Omit<PersistedDay, 'date'>>): PersistedDay {
-  const date = todayStr()
-  const base = loadDay(date) ?? { date, concepts: [], imagePrompts: {}, selectedConceptIds: [], images: [], videos: [] }
-  const updated: PersistedDay = { ...base, ...patch, date }
-  saveDay(updated)
-  return updated
+  try {
+    const raw = localStorage.getItem(imgKey(date))
+    return raw ? (JSON.parse(raw) as PersistedImage[]) : []
+  } catch { return [] }
 }
 
 export function triggerDownload(base64: string, mime: string, filename: string): void {

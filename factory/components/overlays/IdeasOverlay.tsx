@@ -2,19 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { Concept } from '@/lib/types'
-import { loadAllDays, type PersistedDay } from '@/lib/persistence'
+import type { GitHubSession } from '@/lib/session-types'
+import { todayStr } from '@/lib/persistence'
 
 interface IdeasOverlayProps {
   concepts: Concept[]
   selectedIds: string[]
   imagePrompts: Record<string, string>
   videoPrompts: Record<string, string>
+  allSessions: GitHubSession[]
   onSelectConcept: (id: string) => void
   onConfirmSelection: () => void
   onOpenImages: (imagePrompts: Record<string, string>, videoPrompts: Record<string, string>) => void
   onClose: () => void
   processingPrompts: boolean
-  onRestoreDay: (day: PersistedDay) => void
+  onRestoreSession: (session: GitHubSession) => void
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -34,18 +36,19 @@ export default function IdeasOverlay({
   selectedIds,
   imagePrompts,
   videoPrompts,
+  allSessions,
   onSelectConcept,
   onConfirmSelection,
   onOpenImages,
   onClose,
   processingPrompts,
-  onRestoreDay,
+  onRestoreSession,
 }: IdeasOverlayProps) {
   const [localImage, setLocalImage] = useState<Record<string, string>>(imagePrompts)
   const [localVideo, setLocalVideo] = useState<Record<string, string>>(videoPrompts)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
+  const [activeTab, setActiveTab] = useState<'IDEAS' | 'PROMPTS'>('IDEAS')
 
   const prevImageRef = useRef(imagePrompts)
   const prevVideoRef = useRef(videoPrompts)
@@ -65,11 +68,9 @@ export default function IdeasOverlay({
     }
   }, [videoPrompts])
 
-  useEffect(() => {
-    if (historyOpen) setHistoryDays(loadAllDays())
-  }, [historyOpen])
-
   const promptsReady = selectedIds.length > 0 && selectedIds.every(id => localImage[id] && localVideo[id])
+  const today = todayStr()
+  const pastSessions = allSessions.filter(s => s.date !== today)
 
   return (
     <div className="overlay-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -109,15 +110,15 @@ export default function IdeasOverlay({
                   minWidth: 320, maxHeight: 300, overflowY: 'auto',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
                 }}>
-                  {historyDays.length === 0 && (
+                  {allSessions.length === 0 && (
                     <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
                       _ sin historial
                     </div>
                   )}
-                  {historyDays.map(day => (
+                  {allSessions.map(session => (
                     <div
-                      key={day.date}
-                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      key={session.date}
+                      onClick={() => { onRestoreSession(session); setHistoryOpen(false) }}
                       style={{
                         padding: '8px 14px', cursor: 'pointer',
                         borderBottom: '1px solid #0a1a18',
@@ -127,9 +128,9 @@ export default function IdeasOverlay({
                       onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{session.date}</span>
                       <span style={{ color: '#004d3d' }}>
-                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                        {session.concepts.length} ideas · {session.videos.length} vids
                       </span>
                     </div>
                   ))}
@@ -137,18 +138,39 @@ export default function IdeasOverlay({
               )}
             </div>
 
-            <div>
-              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 3, marginBottom: 5 }}>
-                NODE_01 — 3AM THOUGHTS
-              </div>
-              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 11, color: '#00c4a0' }}>
-                {concepts.length} CONCEPTOS
-              </div>
+            {/* Tab switcher */}
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['IDEAS', 'PROMPTS'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    fontFamily: '"Orbitron", sans-serif', fontSize: 7,
+                    padding: '5px 12px', cursor: 'pointer',
+                    background: activeTab === tab ? '#071412' : 'transparent',
+                    border: `1px solid ${activeTab === tab ? '#00c4a0' : '#0d3330'}`,
+                    color: activeTab === tab ? '#00ffcc' : '#004d3d',
+                  }}
+                >
+                  [{tab}]
+                </button>
+              ))}
             </div>
+
+            {activeTab === 'IDEAS' && (
+              <div>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 3, marginBottom: 5 }}>
+                  NODE_01 — 3AM THOUGHTS
+                </div>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 11, color: '#00c4a0' }}>
+                  {concepts.length} CONCEPTOS
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {selectedIds.length > 0 && !promptsReady && (
+            {activeTab === 'IDEAS' && selectedIds.length > 0 && !promptsReady && (
               <button
                 className="btn-pixel"
                 onClick={onConfirmSelection}
@@ -168,7 +190,7 @@ export default function IdeasOverlay({
               </button>
             )}
 
-            {promptsReady && (
+            {activeTab === 'IDEAS' && promptsReady && (
               <button
                 className="btn-pixel"
                 onClick={() => onOpenImages(localImage, localVideo)}
@@ -193,187 +215,302 @@ export default function IdeasOverlay({
           </div>
         </div>
 
-        {/* Concepts grid */}
-        <div style={{
-          padding: '18px 22px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 14,
-        }}>
-          {concepts.map((concept, idx) => {
-            const isSelected  = selectedIds.includes(concept.id)
-            const hasPrompts  = !!(localImage[concept.id] && localVideo[concept.id])
-            const isExpanded  = expandedId === concept.id
+        {/* IDEAS TAB */}
+        {activeTab === 'IDEAS' && (
+          <>
+            <div style={{
+              padding: '18px 22px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 14,
+            }}>
+              {concepts.map((concept, idx) => {
+                const isSelected  = selectedIds.includes(concept.id)
+                const hasPrompts  = !!(localImage[concept.id] && localVideo[concept.id])
+                const isExpanded  = expandedId === concept.id
 
-            return (
-              <div
-                key={concept.id}
-                className={`concept-card ${isSelected ? 'selected' : ''}`}
-                style={{ position: 'relative' }}
-              >
-                {/* Card header */}
-                <div style={{
-                  padding: '11px 13px 9px',
-                  borderBottom: '1px solid #0d3330',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                }}>
-                  <div style={{ flex: 1 }}>
+                return (
+                  <div
+                    key={concept.id}
+                    className={`concept-card ${isSelected ? 'selected' : ''}`}
+                    style={{ position: 'relative' }}
+                  >
                     <div style={{
-                      fontFamily: '"Orbitron", sans-serif',
-                      fontSize: 5,
-                      color: '#0d3330',
-                      marginBottom: 5,
+                      padding: '11px 13px 9px',
+                      borderBottom: '1px solid #0d3330',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: 8,
                     }}>
-                      #{String(idx + 1).padStart(2, '0')}
-                      <span style={{ color: '#004d3d', marginLeft: 8 }}>{concept.archetype}</span>
-                    </div>
-                    <div style={{
-                      fontFamily: '"Orbitron", sans-serif',
-                      fontSize: 9,
-                      color: isSelected ? '#00ffcc' : '#fff',
-                      lineHeight: 1.5,
-                      marginBottom: 7,
-                    }}>
-                      {concept.title}
-                    </div>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                      {concept.tags.map(tag => (
-                        <span key={tag} style={{
+                      <div style={{ flex: 1 }}>
+                        <div style={{
                           fontFamily: '"Orbitron", sans-serif',
                           fontSize: 5,
-                          color: TAG_COLORS[tag] || '#fff',
-                          border: `1px solid ${TAG_COLORS[tag] || '#fff'}44`,
-                          padding: '2px 5px',
+                          color: '#0d3330',
+                          marginBottom: 5,
                         }}>
-                          {TAG_LABELS[tag] || tag}
-                        </span>
-                      ))}
+                          #{String(idx + 1).padStart(2, '0')}
+                          <span style={{ color: '#004d3d', marginLeft: 8 }}>{concept.archetype}</span>
+                        </div>
+                        <div style={{
+                          fontFamily: '"Orbitron", sans-serif',
+                          fontSize: 9,
+                          color: isSelected ? '#00ffcc' : '#fff',
+                          lineHeight: 1.5,
+                          marginBottom: 7,
+                        }}>
+                          {concept.title}
+                        </div>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          {concept.tags.map(tag => (
+                            <span key={tag} style={{
+                              fontFamily: '"Orbitron", sans-serif',
+                              fontSize: 5,
+                              color: TAG_COLORS[tag] || '#fff',
+                              border: `1px solid ${TAG_COLORS[tag] || '#fff'}44`,
+                              padding: '2px 5px',
+                            }}>
+                              {TAG_LABELS[tag] || tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <ScoreBadge qualityScore={concept.quality_score} />
+                    </div>
+
+                    <div style={{ padding: '11px 13px' }}>
+                      <div style={{ marginBottom: 9 }}>
+                        <div style={{
+                          fontFamily: '"Orbitron", sans-serif',
+                          fontSize: 5,
+                          color: '#004d3d',
+                          marginBottom: 5,
+                          letterSpacing: 2,
+                        }}>SETUP VISUAL</div>
+                        <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#00d4a8', lineHeight: 1.6 }}>
+                          {concept.setup}
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{
+                          fontFamily: '"Orbitron", sans-serif',
+                          fontSize: 5,
+                          color: '#ff6b3566',
+                          marginBottom: 5,
+                          letterSpacing: 2,
+                        }}>PUNCHLINE</div>
+                        <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#ff6b35', lineHeight: 1.6 }}>
+                          {concept.punchline}
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: 10 }}>
+                        <ScoreMini qualityScore={concept.quality_score} />
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+                        <button
+                          className="btn-pixel"
+                          onClick={() => onSelectConcept(concept.id)}
+                          style={{
+                            flex: 1,
+                            color: isSelected ? '#00ffcc' : '#004d3d',
+                            borderColor: isSelected ? '#00c4a0' : '#0d3330',
+                            fontSize: 6,
+                            padding: '7px 10px',
+                            boxShadow: isSelected ? '0 0 10px rgba(0,196,160,0.3)' : 'none',
+                          }}
+                        >
+                          {isSelected ? '✓ SELECTED' : '+ SELECT'}
+                        </button>
+
+                        {hasPrompts && (
+                          <button
+                            className="btn-pixel"
+                            onClick={() => setExpandedId(isExpanded ? null : concept.id)}
+                            style={{
+                              color: '#48cae4',
+                              borderColor: '#48cae444',
+                              fontSize: 6,
+                              padding: '7px 10px',
+                            }}
+                          >
+                            {isExpanded ? '▲ PROMPTS' : '▼ PROMPTS'}
+                          </button>
+                        )}
+                      </div>
+
+                      {isExpanded && hasPrompts && (
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <EditablePrompt
+                            label="IMAGE PROMPT"
+                            color="#00c4a0"
+                            value={localImage[concept.id] ?? ''}
+                            onChange={v => setLocalImage(prev => ({ ...prev, [concept.id]: v }))}
+                          />
+                          <EditablePrompt
+                            label="VIDEO PROMPT"
+                            color="#ff6b35"
+                            value={localVideo[concept.id] ?? ''}
+                            onChange={v => setLocalVideo(prev => ({ ...prev, [concept.id]: v }))}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <ScoreBadge qualityScore={concept.quality_score} />
+                )
+              })}
+            </div>
+
+            {promptsReady && (
+              <div style={{
+                padding: '12px 22px',
+                borderTop: '2px solid #0d3330',
+                background: '#050e0d',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                position: 'sticky',
+                bottom: 0,
+              }}>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00c4a0' }}>
+                  {selectedIds.length} CONCEPTO{selectedIds.length > 1 ? 'S' : ''} — PROMPTS LISTOS
                 </div>
+                <button
+                  className="btn-pixel"
+                  onClick={() => onOpenImages(localImage, localVideo)}
+                  style={{
+                    color: '#ff6b35',
+                    borderColor: '#ff6b35',
+                    fontSize: 8,
+                    padding: '10px 20px',
+                    boxShadow: '0 0 16px rgba(255,107,53,0.4)',
+                  }}
+                >
+                  ▶ ABRIR PIXEL DAMAGE
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
-                {/* Concept content */}
-                <div style={{ padding: '11px 13px' }}>
-                  <div style={{ marginBottom: 9 }}>
-                    <div style={{
-                      fontFamily: '"Orbitron", sans-serif',
-                      fontSize: 5,
-                      color: '#004d3d',
-                      marginBottom: 5,
-                      letterSpacing: 2,
-                    }}>SETUP VISUAL</div>
-                    <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#00d4a8', lineHeight: 1.6 }}>
-                      {concept.setup}
-                    </div>
-                  </div>
+        {/* PROMPTS TAB */}
+        {activeTab === 'PROMPTS' && (
+          <div style={{ padding: '18px 22px', overflowY: 'auto' }}>
+            {/* Current session */}
+            {concepts.some(c => localImage[c.id] || localVideo[c.id]) && (
+              <PromptSection
+                label="HOY"
+                labelColor="#00ffcc"
+                concepts={concepts}
+                imagePrompts={localImage}
+                videoPrompts={localVideo}
+              />
+            )}
 
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={{
-                      fontFamily: '"Orbitron", sans-serif',
-                      fontSize: 5,
-                      color: '#ff6b3566',
-                      marginBottom: 5,
-                      letterSpacing: 2,
-                    }}>PUNCHLINE</div>
-                    <div style={{ fontFamily: '"Share Tech Mono", monospace', fontSize: 13, color: '#ff6b35', lineHeight: 1.6 }}>
-                      {concept.punchline}
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: 10 }}>
-                    <ScoreMini qualityScore={concept.quality_score} />
-                  </div>
-
-                  {/* Action buttons */}
-                  <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-                    <button
-                      className="btn-pixel"
-                      onClick={() => onSelectConcept(concept.id)}
-                      style={{
-                        flex: 1,
-                        color: isSelected ? '#00ffcc' : '#004d3d',
-                        borderColor: isSelected ? '#00c4a0' : '#0d3330',
-                        fontSize: 6,
-                        padding: '7px 10px',
-                        boxShadow: isSelected ? '0 0 10px rgba(0,196,160,0.3)' : 'none',
-                      }}
-                    >
-                      {isSelected ? '✓ SELECTED' : '+ SELECT'}
-                    </button>
-
-                    {hasPrompts && (
-                      <button
-                        className="btn-pixel"
-                        onClick={() => setExpandedId(isExpanded ? null : concept.id)}
-                        style={{
-                          color: '#48cae4',
-                          borderColor: '#48cae444',
-                          fontSize: 6,
-                          padding: '7px 10px',
-                        }}
-                      >
-                        {isExpanded ? '▲ PROMPTS' : '▼ PROMPTS'}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Expanded editable prompts */}
-                  {isExpanded && hasPrompts && (
-                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <EditablePrompt
-                        label="IMAGE PROMPT"
-                        color="#00c4a0"
-                        value={localImage[concept.id] ?? ''}
-                        onChange={v => setLocalImage(prev => ({ ...prev, [concept.id]: v }))}
-                      />
-                      <EditablePrompt
-                        label="VIDEO PROMPT"
-                        color="#ff6b35"
-                        value={localVideo[concept.id] ?? ''}
-                        onChange={v => setLocalVideo(prev => ({ ...prev, [concept.id]: v }))}
-                      />
-                    </div>
-                  )}
+            {/* Past sessions */}
+            {pastSessions.length === 0 && !concepts.some(c => localImage[c.id] || localVideo[c.id]) && (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 8, color: '#0d3330', marginBottom: 10 }}>
+                  [ SIN PROMPTS ]
+                </div>
+                <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#0a1412' }}>
+                  Genera conceptos y prompts primero
                 </div>
               </div>
-            )
-          })}
-        </div>
+            )}
 
-        {/* Footer */}
-        {promptsReady && (
-          <div style={{
-            padding: '12px 22px',
-            borderTop: '2px solid #0d3330',
-            background: '#050e0d',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'sticky',
-            bottom: 0,
-          }}>
-            <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00c4a0' }}>
-              {selectedIds.length} CONCEPTO{selectedIds.length > 1 ? 'S' : ''} — PROMPTS LISTOS
-            </div>
-            <button
-              className="btn-pixel"
-              onClick={() => onOpenImages(localImage, localVideo)}
-              style={{
-                color: '#ff6b35',
-                borderColor: '#ff6b35',
-                fontSize: 8,
-                padding: '10px 20px',
-                boxShadow: '0 0 16px rgba(255,107,53,0.4)',
-              }}
-            >
-              ▶ ABRIR PIXEL DAMAGE
-            </button>
+            {pastSessions.map(session => (
+              session.concepts.some(c => session.imagePrompts[c.id] || session.videoPrompts[c.id]) && (
+                <PromptSection
+                  key={session.date}
+                  label={session.date}
+                  labelColor="#004d3d"
+                  concepts={session.concepts}
+                  imagePrompts={session.imagePrompts}
+                  videoPrompts={session.videoPrompts}
+                />
+              )
+            ))}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function PromptSection({
+  label, labelColor, concepts, imagePrompts, videoPrompts,
+}: {
+  label: string
+  labelColor: string
+  concepts: Concept[]
+  imagePrompts: Record<string, string>
+  videoPrompts: Record<string, string>
+}) {
+  const withPrompts = concepts.filter(c => imagePrompts[c.id] || videoPrompts[c.id])
+  if (withPrompts.length === 0) return null
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{
+        fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: labelColor,
+        letterSpacing: 3, marginBottom: 14, paddingBottom: 6,
+        borderBottom: `1px solid ${labelColor}33`,
+      }}>
+        ── {label} ──
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {withPrompts.map(concept => (
+          <div key={concept.id} style={{ border: '1px solid #0d3330', background: '#060f0e', padding: '11px 13px' }}>
+            <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 8, color: '#fff', marginBottom: 10 }}>
+              {concept.title}
+            </div>
+            {imagePrompts[concept.id] && (
+              <CopyRow label="IMG" color="#00c4a0" value={imagePrompts[concept.id]} />
+            )}
+            {videoPrompts[concept.id] && (
+              <CopyRow label="VID" color="#ff6b35" value={videoPrompts[concept.id]} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CopyRow({ label, color, value }: { label: string; color: string; value: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color, letterSpacing: 1 }}>{label} PROMPT</span>
+        <button
+          onClick={handleCopy}
+          style={{
+            fontFamily: '"Orbitron", sans-serif', fontSize: 5,
+            color: copied ? '#00ffcc' : '#004d3d',
+            background: 'none', border: `1px solid ${copied ? '#00c4a0' : '#0d3330'}`,
+            cursor: 'pointer', padding: '2px 8px',
+          }}
+        >
+          {copied ? '✓ COPIADO' : 'COPY'}
+        </button>
+      </div>
+      <div style={{
+        fontFamily: '"Share Tech Mono", monospace', fontSize: 11,
+        color: '#00d4a8', lineHeight: 1.5,
+        background: '#050e0d', border: `1px solid ${color}22`,
+        padding: '6px 8px',
+        wordBreak: 'break-word',
+      }}>
+        {value}
       </div>
     </div>
   )

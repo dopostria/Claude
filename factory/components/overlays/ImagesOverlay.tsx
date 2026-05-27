@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Concept } from '@/lib/types'
-import { loadAllDays, type PersistedDay } from '@/lib/persistence'
+import type { GitHubSession } from '@/lib/session-types'
 
 interface GeneratedImage {
   id: string
@@ -18,13 +18,14 @@ interface ImagesOverlayProps {
   imagePrompts: Record<string, string>
   generatedImages: GeneratedImage[]
   selectedImageId: string | null
+  allSessions: GitHubSession[]
   onGenerate: (conceptId: string, prompt: string, provider: 'gemini' | 'higgsfield') => void
   onSelectImage: (id: string) => void
   onContinueToVideo: () => void
   onClose: () => void
   generating: boolean
   generatingFor: string | null
-  onRestoreDay: (day: PersistedDay) => void
+  onRestoreSession: (session: GitHubSession) => void
 }
 
 const STYLES = [
@@ -56,24 +57,20 @@ export default function ImagesOverlay({
   imagePrompts,
   generatedImages,
   selectedImageId,
+  allSessions,
   onGenerate,
   onSelectImage,
   onContinueToVideo,
   onClose,
   generating,
   generatingFor,
-  onRestoreDay,
+  onRestoreSession,
 }: ImagesOverlayProps) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0].id)
   const [provider, setProvider] = useState<'gemini' | 'higgsfield'>('higgsfield')
   const [editedBase, setEditedBase] = useState<Record<string, string>>({})
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [historyDays, setHistoryDays] = useState<PersistedDay[]>([])
-
-  useEffect(() => {
-    if (historyOpen) setHistoryDays(loadAllDays())
-  }, [historyOpen])
 
   const activeConcept = selectedConcepts[activeIdx] ?? selectedConcepts[0]
   const rawBase = activeConcept ? imagePrompts[activeConcept.id] ?? '' : ''
@@ -115,15 +112,15 @@ export default function ImagesOverlay({
                   minWidth: 320, maxHeight: 300, overflowY: 'auto',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
                 }}>
-                  {historyDays.length === 0 && (
+                  {allSessions.length === 0 && (
                     <div style={{ padding: '10px 14px', fontFamily: '"Orbitron", sans-serif', fontSize: 7, color: '#004d3d' }}>
                       _ sin historial
                     </div>
                   )}
-                  {historyDays.map(day => (
+                  {allSessions.map(session => (
                     <div
-                      key={day.date}
-                      onClick={() => { onRestoreDay(day); setHistoryOpen(false) }}
+                      key={session.date}
+                      onClick={() => { onRestoreSession(session); setHistoryOpen(false) }}
                       style={{
                         padding: '8px 14px', cursor: 'pointer',
                         borderBottom: '1px solid #0a1a18',
@@ -133,9 +130,9 @@ export default function ImagesOverlay({
                       onMouseEnter={e => (e.currentTarget.style.background = '#071412')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{day.date}</span>
+                      <span style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 6, color: '#00ffcc', minWidth: 90 }}>{session.date}</span>
                       <span style={{ color: '#004d3d' }}>
-                        {day.concepts.length} ideas · {day.images.length} imgs · {day.videos.length} vids
+                        {session.concepts.length} ideas · {session.videos.length} vids
                       </span>
                     </div>
                   ))}
@@ -200,75 +197,59 @@ export default function ImagesOverlay({
           </div>
         </div>
 
-        <div style={{ display: 'flex', minHeight: 480 }}>
+        <div style={{ display: 'flex', minHeight: 540 }}>
+          {/* Left — style picker + generate */}
+          <div style={{ width: 200, minWidth: 200, borderRight: '2px solid #0d3330', background: '#050e0d', display: 'flex', flexDirection: 'column' }}>
 
-          {/* Left — style selector + editable prompt + generate */}
-          <div style={{ width: 250, minWidth: 250, borderRight: '2px solid #0d3330', background: '#050e0d', display: 'flex', flexDirection: 'column' }}>
+            {/* Base prompt editor */}
+            <div style={{ padding: '9px 13px', borderBottom: '1px solid #0d3330' }}>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>BASE PROMPT</div>
+              <textarea
+                value={basePrompt}
+                onChange={e => activeConcept && setEditedBase(prev => ({ ...prev, [activeConcept.id]: e.target.value }))}
+                rows={4}
+                placeholder="Descripción del concepto..."
+                style={{
+                  width: '100%', background: '#060f0e', border: '1px solid #0d3330',
+                  color: basePrompt ? '#00d4a8' : '#0d3330',
+                  fontFamily: '"Share Tech Mono", monospace', fontSize: 12, lineHeight: 1.5,
+                  padding: 7, resize: 'none', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+            </div>
 
-            <div style={{ padding: '11px 13px', borderBottom: '1px solid #0d3330' }}>
-              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 9 }}>ESTILO VISUAL</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {/* Style buttons */}
+            <div style={{ padding: '9px 13px', borderBottom: '1px solid #0d3330', flex: 1 }}>
+              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 8 }}>ESTILO</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {STYLES.map(s => (
                   <button
                     key={s.id}
                     onClick={() => setSelectedStyle(s.id)}
                     style={{
-                      fontFamily: '"Orbitron", sans-serif', fontSize: 6,
-                      padding: '6px 9px',
-                      background: selectedStyle === s.id ? `${s.color}15` : 'transparent',
-                      border: `2px solid ${selectedStyle === s.id ? s.color : '#0d3330'}`,
+                      fontFamily: '"Orbitron", sans-serif', fontSize: 6, padding: '7px 10px',
+                      background: selectedStyle === s.id ? '#071412' : 'transparent',
+                      border: `1px solid ${selectedStyle === s.id ? s.color : '#0d3330'}`,
                       color: selectedStyle === s.id ? s.color : '#0d3330',
                       cursor: 'pointer', textAlign: 'left',
-                      boxShadow: selectedStyle === s.id ? `0 0 8px ${s.color}33` : 'none',
                     }}
                   >
-                    {selectedStyle === s.id ? '▶ ' : '  '}{s.label}
+                    {s.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Editable base prompt */}
-            <div style={{ padding: '9px 13px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: 5, color: '#004d3d', letterSpacing: 2, marginBottom: 6 }}>
-                BASE PROMPT
-              </div>
-              <textarea
-                value={basePrompt}
-                onChange={e => activeConcept && setEditedBase(prev => ({ ...prev, [activeConcept.id]: e.target.value }))}
-                rows={5}
-                style={{
-                  flex: 1,
-                  background: '#060f0e',
-                  border: '1px solid #0d3330',
-                  color: '#00d4a8',
-                  fontFamily: '"Share Tech Mono", monospace',
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  padding: '6px 8px',
-                  resize: 'none',
-                  outline: 'none',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
-                placeholder="Prompt base aquí..."
-              />
-            </div>
-
-            <div style={{ padding: 12, borderTop: '1px solid #0d3330' }}>
-              {/* Provider toggle */}
-              <div style={{ display: 'flex', marginBottom: 9, gap: 4 }}>
-                {(['gemini', 'higgsfield'] as const).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setProvider(p)}
+            {/* Provider + Generate */}
+            <div style={{ padding: '9px 13px' }}>
+              <div style={{ display: 'flex', marginBottom: 8, gap: 4 }}>
+                {(['higgsfield', 'gemini'] as const).map(p => (
+                  <button key={p} onClick={() => setProvider(p)}
                     style={{
-                      flex: 1,
-                      fontFamily: '"Orbitron", sans-serif', fontSize: 5,
-                      padding: '5px 0',
+                      flex: 1, fontFamily: '"Orbitron", sans-serif', fontSize: 5, padding: '5px 0',
                       background: provider === p ? '#07201e' : 'transparent',
-                      border: `1px solid ${provider === p ? '#00c4a0' : '#0d3330'}`,
-                      color: provider === p ? '#00ffcc' : '#0d3330',
+                      border: `1px solid ${provider === p ? '#ff6b35' : '#0d3330'}`,
+                      color: provider === p ? '#ff6b35' : '#0d3330',
                       cursor: 'pointer',
                     }}
                   >
