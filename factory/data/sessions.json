@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T19:20:45.006Z",
+      "savedAt": "2026-05-27T19:20:49.558Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -257,7 +257,6 @@
         }
       ],
       "selectedConceptIds": [
-        "concept_02",
         "concept_05",
         "concept_07",
         "concept_03"
