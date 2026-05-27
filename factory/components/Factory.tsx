@@ -25,6 +25,23 @@ function getRoomClass(s: string) {
   return s === 'working' ? 'is-working' : s === 'done' ? 'is-done' : s === 'error' ? 'is-error' : ''
 }
 
+// Compress image via Canvas so the request body stays under Vercel's 4.5 MB hard limit
+async function compressImageForVideo(base64: string, mime: string): Promise<{ base64: string; mime: string }> {
+  return new Promise(resolve => {
+    const img = new window.Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const scale = Math.min(1, Math.sqrt(2_000_000 / base64.length))
+      canvas.width  = Math.max(1, Math.round(img.width  * scale))
+      canvas.height = Math.max(1, Math.round(img.height * scale))
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve({ base64: canvas.toDataURL('image/jpeg', 0.82).split(',')[1], mime: 'image/jpeg' })
+    }
+    img.onerror = () => resolve({ base64, mime })
+    img.src = 'data:' + mime + ';base64,' + base64
+  })
+}
+
 const INITIAL_STATE: FactoryState = {
   rooms: { boss: 'idle', ideas: 'idle', images: 'idle', video: 'idle' },
   activeOverlay: 'none', session: null, sessionLog: [], concepts: [],
@@ -204,7 +221,11 @@ export default function Factory() {
     try {
       const res = await fetch('/api/generate-image', { method: 'POST',
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, conceptId, provider }) })
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
+      if (!res.ok) {
+        let em = `HTTP ${res.status}`
+        try { const e = await res.json(); em = e.error ?? em } catch { em = await res.text().catch(() => em) }
+        throw new Error(em)
+      }
       const data = await res.json()
       const native916 = data.native916 as boolean | undefined
       const originalDimensions = data.originalDimensions as string | undefined
@@ -246,10 +267,21 @@ export default function Factory() {
     setState(s => ({ ...s, rooms: { ...s.rooms, video: 'working' },
       sessionLog: [...s.sessionLog, { time: now(), message: `Generando video (${provider})...`, type: 'working' }] }))
     try {
+      // Compress start frame if >2.5 MB — Vercel hard-caps request bodies at 4.5 MB
+      let imgBase64 = selectedImg?.base64
+      let imgMime   = selectedImg?.mime ?? 'image/jpeg'
+      if (imgBase64 && imgBase64.length > 2_500_000) {
+        const r = await compressImageForVideo(imgBase64, imgMime)
+        imgBase64 = r.base64; imgMime = r.mime
+      }
       const res = await fetch('/api/generate-video', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, imageBase64: selectedImg?.base64, imageMime: selectedImg?.mime, provider }) })
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`) }
+        body: JSON.stringify({ prompt, imageBase64: imgBase64, imageMime: imgMime, provider }) })
+      if (!res.ok) {
+        let em = `HTTP ${res.status}`
+        try { const e = await res.json(); em = e.error ?? em } catch { em = await res.text().catch(() => em) }
+        throw new Error(em)
+      }
       const data = await res.json()
       setVideoUri(data.videoUri); setVideoModel(data.model)
       setSessionVideos(prev => [...prev, { uri: data.videoUri, model: data.model, prompt, timestamp: data.timestamp }])

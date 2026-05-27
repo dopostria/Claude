@@ -29,8 +29,7 @@ export interface PersistedDay {
 
 function key(date: string) { return `cantsleept_${date}` }
 
-// Use LOCAL date (not UTC) — Bolivia is UTC-4; toISOString() gives
-// "tomorrow" after 8 PM local time, causing save/load key mismatches.
+// Use LOCAL date — Bolivia is UTC-4; toISOString() gives "tomorrow" after 8 PM local
 export function todayStr(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -53,14 +52,11 @@ export function loadDay(date: string): PersistedDay | null {
 export function saveDay(day: PersistedDay): void {
   if (typeof window === 'undefined') return
   const k = key(day.date)
-  const attempt = (data: PersistedDay) => {
-    localStorage.setItem(k, JSON.stringify(data))
-  }
+  const attempt = (data: PersistedDay) => { localStorage.setItem(k, JSON.stringify(data)) }
   try {
     attempt(day)
   } catch {
-    // Quota exceeded: strip images from OTHER days first to free space,
-    // then retry saving today's full data (including today's images).
+    // Quota exceeded: strip images from OTHER days first to free space, then retry today's full data
     try {
       for (const sk of Object.keys(localStorage)) {
         if (sk.startsWith('cantsleept_') && sk !== k) {
@@ -68,19 +64,16 @@ export function saveDay(day: PersistedDay): void {
           if (raw) {
             try {
               const old = JSON.parse(raw) as PersistedDay
-              if (old.images?.length > 0) {
-                // Keep metadata (concepts/prompts/selection), strip images only
-                localStorage.setItem(sk, JSON.stringify({ ...old, images: [] }))
-              }
+              if (old.images?.length > 0) localStorage.setItem(sk, JSON.stringify({ ...old, images: [] }))
             } catch { localStorage.removeItem(sk) }
           }
         }
       }
-      attempt(day) // retry after freeing space
+      attempt(day)
     } catch {
       // Last resort: save today without images (concepts + prompts survive)
       const stripped = { ...day, images: [] }
-      try { attempt(stripped) } catch { /* storage truly full — give up */ }
+      try { attempt(stripped) } catch { /* storage truly full */ }
     }
   }
 }
@@ -93,16 +86,14 @@ export function loadAllDays(): PersistedDay[] {
     try {
       const raw = localStorage.getItem(k)
       if (raw) days.push(JSON.parse(raw) as PersistedDay)
-    } catch { /* skip corrupt entry */ }
+    } catch { /* skip corrupt */ }
   }
   return days.sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export function patchToday(patch: Partial<Omit<PersistedDay, 'date'>>): PersistedDay {
   const date = todayStr()
-  const base = loadDay(date) ?? {
-    date, concepts: [], imagePrompts: {}, selectedConceptIds: [], images: [], videos: [],
-  }
+  const base = loadDay(date) ?? { date, concepts: [], imagePrompts: {}, selectedConceptIds: [], images: [], videos: [] }
   const updated: PersistedDay = { ...base, ...patch, date }
   saveDay(updated)
   return updated
