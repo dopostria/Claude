@@ -344,13 +344,14 @@ export default function Factory() {
     try {
       let imgBase64 = selectedImg?.base64
       let imgMime   = selectedImg?.mime ?? 'image/jpeg'
+      const imgUrl  = selectedImg?.url   // CDN URL for Higgsfield images (no base64 stored)
       if (imgBase64 && imgBase64.length > 2_500_000) {
         const r = await compressImageForVideo(imgBase64, imgMime)
         imgBase64 = r.base64; imgMime = r.mime
       }
       const res = await fetch('/api/generate-video', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, imageBase64: imgBase64, imageMime: imgMime, provider }) })
+        body: JSON.stringify({ prompt, imageBase64: imgBase64 || undefined, imageMime: imgMime, imageUrl: imgUrl, provider }) })
       if (!res.ok) {
         let em = `HTTP ${res.status}`
         try { const e = await res.json(); em = (e as { error?: string }).error ?? em } catch { em = await res.text().catch(() => em) }

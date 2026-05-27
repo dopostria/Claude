@@ -178,12 +178,42 @@ async function generateWithHiggsfield(
 // Route
 // ---------------------------------------------------------------------------
 
+// Fetch an image from a URL and return base64 + mime type
+async function fetchImageAsBase64(url: string): Promise<{ base64: string; mime: string } | undefined> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) {
+      console.warn(`[generate-video] fetchImageAsBase64 ${res.status} for ${url.slice(0, 80)}`)
+      return undefined
+    }
+    const buf = await res.arrayBuffer()
+    const mime = res.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
+    return { base64: Buffer.from(buf).toString('base64'), mime }
+  } catch (err) {
+    console.warn('[generate-video] fetchImageAsBase64 error:', err)
+    return undefined
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, imageBase64, imageMime, provider = 'google' } = await req.json() as {
-      prompt: string; imageBase64?: string; imageMime?: string; provider?: 'higgsfield' | 'google'
+    const { prompt, imageBase64: rawBase64, imageMime: rawMime, imageUrl, provider = 'google' } = await req.json() as {
+      prompt: string
+      imageBase64?: string
+      imageMime?: string
+      imageUrl?: string       // CDN URL for Higgsfield-hosted images (no base64 stored)
+      provider?: 'higgsfield' | 'google'
     }
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
+
+    // Resolve image — prefer supplied base64, fall back to fetching CDN URL
+    let imageBase64 = rawBase64
+    let imageMime   = rawMime
+    if ((!imageBase64 || imageBase64.length === 0) && imageUrl) {
+      console.log(`[generate-video] No base64 — fetching start frame from CDN: ${imageUrl.slice(0, 80)}`)
+      const fetched = await fetchImageAsBase64(imageUrl)
+      if (fetched) { imageBase64 = fetched.base64; imageMime = fetched.mime }
+    }
 
     let result: { videoUri: string; model: string }
     if (provider === 'higgsfield') {

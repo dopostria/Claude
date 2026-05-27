@@ -1,3 +1,4 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "ignoreCommand": "git diff HEAD~1 --name-only | grep -qvE 'sessions\\.json$' || exit 1"
 }
