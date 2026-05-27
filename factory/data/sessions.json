@@ -2,18 +2,19 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T17:10:19.509Z",
+      "savedAt": "2026-05-27T19:16:58.576Z",
       "concepts": [
         {
           "id": "concept_01",
-          "title": "Thanos en la Cola",
+          "title": "Ambulancia de pie, waway",
           "archetype": "A9",
-          "setup": "Cola del banco estatal boliviano. Thanos sentado en plástico naranja con número de turno 47. La pantalla dice ATENDIENDO 12. Traje completo. Guantelete con las seis gemas. Una gema parpadea.",
+          "setup": "Fotografía de prensa estilo portada del New York Times, blanco y negro, tipografía institucional seria. Dos paramédicos bolivianos uniformados cargando una camilla en brazos, subiendo una cuesta del altiplano. Detrás, la ambulancia estacionada perfectamente, luces apagadas, sin ningún problema mecánico aparente.",
           "punchline_format": "P1",
-          "punchline": "subtítulo: 'ni con el tiempo gem'",
+          "punchline": "subtítulo al pie, tipografía Times New Roman: 'CORREDOR HUMANITARIO ACTIVO'",
           "tags": [
             "BOLIVIA",
-            "POP_CULTURE"
+            "POLÍTICA",
+            "TREND_BLOQUEOS"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
@@ -22,22 +23,23 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "El poder cósmico máximo es inútil ante el único sistema que lo vence: el turno del banco boliviano.",
+          "why_it_works": "El protocolo institucional —portada seria, tipografía de prensa— absorbe la imagen más absurda del país en este momento; el subtítulo la acepta como si todo estuviera correcto.",
           "humor_engine": "H3, H4",
           "humor_score": "5/5",
-          "character": "thanos",
-          "setting": "cola del banco estatal boliviano"
+          "character": "paramédicos bolivianos",
+          "setting": "cuesta del altiplano, ambulancia de fondo"
         },
         {
           "id": "concept_02",
-          "title": "El Funeral del Dólar",
-          "archetype": "A7",
-          "setup": "Funeral de estado. Ataúd cubierto con la wiphala. Guardia de honor. Autoridades en primera fila con cara seria. En la urna mortuoria grabada: 'BS. 6.96'.",
-          "punchline_format": "P2",
-          "punchline": "El ministro al micrófono: 'Era joven.'",
+          "title": "Shiva en lista de espera",
+          "archetype": "A3",
+          "setup": "Sala de espera de hospital público boliviano. Sillas plásticas naranjas, número de turno digital en la pared: ATENDIENDO 12. Sentada entre pacientes humanos con cédulas de identidad en mano, una jaguar grande, vendada en varios puntos del cuerpo, sosteniendo su número de turno: 347.",
+          "punchline_format": "P5",
+          "punchline": "ninguno — el número 347 vs ATENDIENDO 12 en la pantalla digital lo cierra todo.",
           "tags": [
             "BOLIVIA",
-            "INCOMODIDAD_POLITICA"
+            "COTIDIANO",
+            "TREND_SHIVA"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
@@ -46,46 +48,49 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "La solemnidad del protocolo choca contra la verdad que todos conocen pero que nadie del gobierno pronuncia en voz alta.",
-          "humor_engine": "H1, H2",
+          "why_it_works": "La jaguar baleada viral en el mismo sistema de salud que no puede recibir medicamentos ni pacientes humanos — nadie en la sala nota nada raro, nadie reacciona a la jaguar.",
+          "humor_engine": "H5, H4",
           "humor_score": "5/5",
-          "character": "ministro boliviano genérico",
-          "setting": "funeral de estado"
+          "character": "shiva la jaguar",
+          "setting": "sala de espera de hospital público boliviano"
         },
         {
           "id": "concept_03",
-          "title": "Pikachu en Confesión",
+          "title": "El Perdonazo de Pikachu",
           "archetype": "A4",
-          "setup": "Confesionario de iglesia. Pikachu adentro, cabina del penitente. En el suelo, visible bajo la puerta: una botella de singani, billetes, y lo que parece ser una bolsa sellada. El cura al otro lado espera.",
+          "setup": "Ventanilla de Impuestos Nacionales estilo boliviano — vidrio rayado, sello oficial, letrero plastificado. Pikachu al otro lado, con cara resignada pero seria, entregando un formulario. El funcionario estampa un sello enorme: CONDONADO.",
           "punchline_format": "P2",
-          "punchline": "'Era para uso personal, padre.'",
+          "punchline": "'Deuda del 2017, señor Pikachu. Queda saldada.' Pikachu asiente. Afuera, la fila llega hasta la calle.",
           "tags": [
-            "RELIGION",
-            "POP_CULTURE"
+            "BOLIVIA",
+            "ECONOMÍA",
+            "POLÍTICA",
+            "TREND_PERDONAZO"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
             "F2_punchline_clear": true,
             "F3_contrast_not_cruel": true,
-            "F4_works_silent": false,
+            "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "La inocencia del personaje contrasta con la escena completamente comprometedora que sus pies delatan — y la frase la entrega deadpan.",
-          "humor_engine": "H8, H1",
+          "why_it_works": "El protocolo burocrático es absolutamente impecable; el beneficiario de la condonación tributaria más absurda del año es Pikachu, y el funcionario no lo nota.",
+          "humor_engine": "H1, H3",
           "humor_score": "5/5",
           "character": "pikachu",
-          "setting": "confesionario"
+          "setting": "ventanilla de impuestos nacionales"
         },
         {
           "id": "concept_04",
-          "title": "Homer en Tranca",
-          "archetype": "A1",
-          "setup": "Tranca policial en la carretera altiplánica. Policía boliviano con libreta parado junto al auto. Al volante: Homer Simpson, camisa blanca, ojos saltones. Sobre el asiento del copiloto, una rosquilla.",
-          "punchline_format": "P2",
-          "punchline": "Policía: '¿SOAT?' Homer: '¿El qué?'  Policía escribe. Homer agarra la rosquilla.",
+          "title": "50 toneladas, delivery gratis",
+          "archetype": "A6",
+          "setup": "Pantalla de app de delivery — estilo Pedidos Ya, colores brillantes, interfaz polished. En la lista de restaurantes cercanos aparece: CIFABOL FARMACÉUTICA ⭐4.9 · 2.3km · Envío gratis. Categorías disponibles: Oxígeno Medicinal, Paracetamol, Suero IV. Estado del pedido: EN CAMINO. Barra de progreso al 3%.",
+          "punchline_format": "P1",
+          "punchline": "estimado de entrega: 'más de 72 horas'",
           "tags": [
             "BOLIVIA",
-            "POP_CULTURE"
+            "ECONOMÍA",
+            "TREND_MEDICAMENTOS"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
@@ -94,46 +99,48 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "El policía ignora completamente que Homer Simpson existe — solo le interesa el papel. Homer ignora completamente la tranca. Nadie nota a nadie.",
-          "humor_engine": "H5, H4",
+          "why_it_works": "El formato más optimista y moderno posible —una app de delivery con 4.9 estrellas— para la crisis farmacéutica más grave del país; el tiempo de entrega lo cierra todo sin necesitar explicación.",
+          "humor_engine": "H3, H4",
           "humor_score": "5/5",
-          "character": "homer simpson",
-          "setting": "tranca policial altiplánica"
+          "character": "app de delivery boliviana",
+          "setting": "interfaz de app de delivery"
         },
         {
           "id": "concept_05",
-          "title": "El Tanque Sin Gasolina",
-          "archetype": "A6",
-          "setup": "Tanque militar parado en el centro de La Paz. Intento de golpe de estado. El general de pie sobre la escotilla, micrófono en mano, discurso preparado. Un soldado le pasa una nota.",
-          "punchline_format": "P2",
-          "punchline": "El general baja el micrófono: 'No hay gasolina.'",
+          "title": "El Decreto de las 3am",
+          "archetype": "A7",
+          "setup": "Sala de crisis de gobierno — mesa oval, banderas bolivianas, asesores con carpetas. En la pantalla principal: mapa del país con 67 puntos rojos parpadeantes. El presidente en la cabecera, cara completamente plana, firma un documento. Se lo pasan al ministro. El ministro lo dobla y lo pone en el cajón.",
+          "punchline_format": "P1",
+          "punchline": "texto en pantalla oficial: 'LEY 1341 ABROGADA — VIGENCIA INMEDIATA'",
           "tags": [
             "BOLIVIA",
-            "INCOMODIDAD_POLITICA"
+            "POLÍTICA",
+            "TREND_LEY_EXCEPCIÓN"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
             "F2_punchline_clear": true,
             "F3_contrast_not_cruel": true,
-            "F4_works_silent": false,
+            "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "La crisis más épica del año reducida al mismo problema que tiene cualquier boliviano un jueves a las 7pm — la especificidad es el golpe.",
-          "humor_engine": "H4, H7",
+          "why_it_works": "El gobierno elimina su única herramienta de emergencia con toda la seriedad de un decreto de alto nivel, en el momento exacto en que más la necesitaría — la reacción completamente plana lo hace más oscuro.",
+          "humor_engine": "H7, H4",
           "humor_score": "5/5",
-          "character": "general boliviano genérico",
-          "setting": "centro de la paz, golpe fallido"
+          "character": "presidente boliviano genérico",
+          "setting": "sala de crisis de gobierno"
         },
         {
           "id": "concept_06",
-          "title": "Buzz Lightyear, Migraciones",
-          "archetype": "A3",
-          "setup": "Ventanilla de Migraciones Bolivia. Buzz Lightyear parado frente al funcionario con su traje espacial completo. Funcionario revisa documentos con cara de trámite normal. En el sello: STAR COMMAND no figura en el sistema.",
-          "punchline_format": "P1",
-          "punchline": "subtítulo: 'segunda ventanilla, señor'",
+          "title": "Thanos en el bloqueo 67",
+          "archetype": "A1",
+          "setup": "Carretera bloqueada del altiplano boliviano — piedras en la vía, buses frenados, gente sentada en el asfalto resignada. Thanos, con el Guantelete del Infinito completo, hace fila detrás de un micro de colores. Lleva 4 horas ahí. Tiene cara de resignación total.",
+          "punchline_format": "P2",
+          "punchline": "Bloqueador desde el costado: '¿Tiene COA vigente?' Thanos busca en el bolsillo del casco.",
           "tags": [
             "BOLIVIA",
-            "POP_CULTURE"
+            "COTIDIANO",
+            "TREND_BLOQUEOS"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
@@ -142,45 +149,20 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "La burocracia boliviana no distingue héroes galácticos — el protocolo es el mismo para todos y Buzz lo acepta.",
-          "humor_engine": "H3, H4",
+          "why_it_works": "El ser que chasqueó los dedos y borró la mitad del universo no puede resolver un bloqueo boliviano — y el bloqueador solo le pregunta por documentos; el poder absoluto es completamente irrelevante aquí.",
+          "humor_engine": "H1, H7",
           "humor_score": "5/5",
-          "character": "buzz lightyear",
-          "setting": "migraciones bolivia"
+          "character": "thanos",
+          "setting": "bloqueo de carretera altiplano boliviano"
         },
         {
           "id": "concept_07",
-          "title": "Señora del Mercado, CEO",
-          "archetype": "A2",
-          "setup": "Sala de juntas corporativa, mesa oval, suits. En la cabecera: señora del mercado con delantal, sombrero, cajón de frutas al lado. Proyector con KPIs encendido. Todos los ejecutivos con bloc de notas.",
+          "title": "Buzz Lightyear, uso personal",
+          "archetype": "A4",
+          "setup": "Sala de interrogatorio policial. Foco cenital. Buzz Lightyear sentado en la silla, alas desplegadas, traje intacto. Sobre la mesa, varias bolsas selladas con etiquetas de evidencia. Buzz mira al frente con cara absolutamente seria.",
           "punchline_format": "P2",
-          "punchline": "'Ahora no joven, estoy viendo los números.'",
+          "punchline": "Detective: '¿Puede explicar las bolsas, señor Lightyear?' Buzz: 'Al infinito y más allá era para uso personal.'",
           "tags": [
-            "BOLIVIA",
-            "DESIGUALDAD_CLASE"
-          ],
-          "quality_score": {
-            "F1_scroll_stop": true,
-            "F2_punchline_clear": true,
-            "F3_contrast_not_cruel": true,
-            "F4_works_silent": false,
-            "total": "4/4"
-          },
-          "why_it_works": "La frase es un rechazo total entregado con total autoridad — y tiene razón, está ocupada.",
-          "humor_engine": "H1, H4",
-          "humor_score": "5/5",
-          "character": "señora del mercado",
-          "setting": "sala de juntas corporativa"
-        },
-        {
-          "id": "concept_08",
-          "title": "Stitch en Teleférico",
-          "archetype": "A10",
-          "setup": "Teleférico de La Paz, góndola en movimiento, vista de la ciudad abajo. Stitch sentado junto a pasajeros bolivianos comunes. Todos mirando el celular o la ventana. Stitch también mira el celular. Nadie lo mira.",
-          "punchline_format": "P5",
-          "punchline": "ninguno — Stitch tiene auriculares puestos y el pie sobre el asiento de enfrente como cualquier pasajero. Nadie voltea.",
-          "tags": [
-            "BOLIVIA",
             "POP_CULTURE"
           ],
           "quality_score": {
@@ -190,21 +172,24 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "El crossover no es el chiste — que nadie lo registre ES el chiste. La góndola tiene sus propios problemas.",
-          "humor_engine": "H5, H6",
+          "why_it_works": "El inocente más grandilocuente de la ficción reducido a la frase de defensa más usada en Bolivia; el contraste entre la frase épica y el contexto policial es total.",
+          "humor_engine": "H1, H2, H8",
           "humor_score": "5/5",
-          "character": "stitch",
-          "setting": "teleférico de la paz"
+          "character": "buzz lightyear",
+          "setting": "sala de interrogatorio policial"
         },
         {
-          "id": "concept_09",
-          "title": "Subasta del Cuñapé",
+          "id": "concept_08",
+          "title": "Santa Shiva, ruega por nosotros",
           "archetype": "A5",
-          "setup": "Sala de subasta estilo Christie's. Iluminación de museo, paletas numeradas, silencio de galería. En el pedestal bajo foco: un cuñapé en bandeja de plata con placa de identificación. El rematador levanta el mazo.",
+          "setup": "Estampita religiosa boliviana estilo mercado de las brujas — fondo dorado, aureola, tipografía de santo patrono. En el centro: Shiva la jaguar, vendada, con expresión serena, rodeada de flores y rayos de luz. Abajo, en letra de santo: SANTA SHIVA DE HUAJCHILLA — Patrona de los Bloqueados.",
           "punchline_format": "P1",
-          "punchline": "subtítulo: 'LOTE 14 — RECIÉN SACADO, TIBIO'",
+          "punchline": "texto en la parte inferior de la estampita: 'intercesora de ambulancias y medicamentos — novena disponible en La Cancha'",
           "tags": [
-            "BOLIVIA"
+            "BOLIVIA",
+            "COTIDIANO",
+            "TREND_SHIVA",
+            "TREND_BLOQUEOS"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
@@ -213,35 +198,62 @@
             "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "El detalle 'tibio' en tipografía de Christie's es el único descriptor que importa y es completamente boliviano.",
-          "humor_engine": "H3, H4",
+          "why_it_works": "Bolivia convierte en santo patrono a lo que más le duele en ese momento — la jaguar viral recibe el tratamiento de fe popular que el estado no puede dar; el sincretismo como respuesta institucional legítima.",
+          "humor_engine": "H3, H4, H7",
           "humor_score": "5/5",
-          "character": "rematador de christie's",
-          "setting": "sala de subasta estilo christie's"
+          "character": "shiva la jaguar",
+          "setting": "estampita religiosa boliviana"
         },
         {
-          "id": "concept_10",
-          "title": "Cholita, Red Carpet",
-          "archetype": "A8",
-          "setup": "Red carpet de premiación internacional. Flashes, fotógrafos, periodistas con micrófono. Cholita paceña con pollera de gala, sombrero bombín, caminando con total soltura. Periodista se acerca con micrófono.",
+          "id": "concept_09",
+          "title": "Ronald en la tranca, H8",
+          "archetype": "A2",
+          "setup": "Tranca policial boliviana de madrugada. Ronald McDonald en uniforme completo — payaso, peluca roja, zapatos enormes — sentado en una silla plegable como bloqueador. Detrás de él, la carretera cortada. Una fila de camiones frigoríficos espera. Ronald tiene termo de café y mira el horizonte.",
           "punchline_format": "P2",
-          "punchline": "Periodista: '¿Quién te viste esta noche?' Cholita: 'Mi ciela, yo siempre me visto así.'",
+          "punchline": "Conductor desde la cabina: '¿Hasta cuándo?' Ronald: 'Hasta que el gobierno cumpla.' Toma un sorbo. No mira al conductor.",
           "tags": [
             "BOLIVIA",
-            "DESIGUALDAD_CLASE"
+            "POLÍTICA",
+            "COTIDIANO",
+            "TREND_BLOQUEOS",
+            "H8"
           ],
           "quality_score": {
             "F1_scroll_stop": true,
             "F2_punchline_clear": true,
             "F3_contrast_not_cruel": true,
-            "F4_works_silent": false,
+            "F4_works_silent": true,
             "total": "4/4"
           },
-          "why_it_works": "La pregunta asume que hay un diseñador detrás — la respuesta la destruye sin esfuerzo ni hostilidad.",
-          "humor_engine": "H1, H4",
+          "why_it_works": "El payaso más corporativo del mundo ejerce poder real de bloqueo sobre infraestructura nacional; la respuesta es completamente seria, nadie la cuestiona, y la cadena de suministro de alimentos depende de su humor.",
+          "humor_engine": "H8, H1",
           "humor_score": "5/5",
-          "character": "cholita paceña",
-          "setting": "red carpet de premiación internacional"
+          "character": "ronald mcdonald",
+          "setting": "tranca policial boliviana de madrugada"
+        },
+        {
+          "id": "concept_10",
+          "title": "Abuela en brazos, Michelin",
+          "archetype": "A10",
+          "setup": "Cocina de restaurante de alta gastronomía — acero inoxidable, gorro de chef, presentación perfecta. Chef con tres estrellas Michelin, guantes blancos, platea el plato final con pinzas. En la mesa de servicio, perfectamente emplatada sobre reducción de maracuyá: una salteña de La Cancha, con su etiqueta original todavía pegada. 'Julio con caldo.'",
+          "punchline_format": "P1",
+          "punchline": "placa en la base del plato, tipografía serif fina: 'maridaje sugerido: api sin azúcar o singani del año'",
+          "tags": [
+            "BOLIVIA",
+            "COTIDIANO"
+          ],
+          "quality_score": {
+            "F1_scroll_stop": true,
+            "F2_punchline_clear": true,
+            "F3_contrast_not_cruel": true,
+            "F4_works_silent": true,
+            "total": "4/4"
+          },
+          "why_it_works": "El objeto más boliviano y cotidiano posible recibe el tratamiento visual más esnob del mundo gastronómico — ambos mundos coexisten sin inmutarse; la etiqueta original todavía pegada es el detalle que lo rompe todo.",
+          "humor_engine": "H3, H4, H6",
+          "humor_score": "5/5",
+          "character": "chef michelin",
+          "setting": "cocina de restaurante de alta gastronomía"
         }
       ],
       "selectedConceptIds": [
