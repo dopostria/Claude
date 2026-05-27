@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T19:23:37.475Z",
+      "savedAt": "2026-05-27T19:25:42.589Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -277,6 +277,12 @@
           "model": "higgsfield/grok_video",
           "prompt": "The general's raised fist slowly lowers as he reads the crumpled note, microphone drooping away from his lips. His jaw closes, medals clink softly against his chest as his shoulders deflate. The crowd in ponchos exchanges glances, a bowler hat tips sideways in the wind — the tank sits completely, humiliatingly still.",
           "timestamp": "2026-05-27T16:52:31.230Z"
+        },
+        {
+          "uri": "https://d8j0ntlcm91z4.cloudfront.net/user_35laGSENab44UzYFF0f5XIk5ozF/hf_20260527_192443_df5befb3-7865-4bd2-bc0a-66653096b78d.mp4",
+          "model": "higgsfield/grok_video",
+          "prompt": "The bureaucrat's thick arm swings down in slow motion, slamming the oversized CONDONADO stamp onto the form with a thunderous thud. Ink splashes outward in red droplets as the yellow creature's pointed ears flatten then spring back upright. The long queue outside shuffles forward one step, a hundred pairs of eyes straining toward the window.",
+          "timestamp": "2026-05-27T19:25:41.219Z"
         }
       ]
     }
