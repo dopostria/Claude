@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withHiggsfieldToken } from '@/lib/higgsfield-auth'
 
+// Vercel: allow up to 300s (Pro plan max). Hobby is capped at 60s by Vercel regardless.
+export const maxDuration = 300
+
 const GOOGLE_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
 
@@ -152,7 +155,7 @@ async function generateWithHiggsfield(
   if (!jobId) throw new Error(`Higgsfield: no job ID — raw: ${JSON.stringify(createRaw).slice(0, 200)}`)
   console.log(`[generate-video] grok_video job: ${jobId} | start_frame: ${startFrame?.id ?? 'none'}`)
 
-  const deadline = Date.now() + 600_000
+  const deadline = Date.now() + 270_000  // 270s — fits inside Vercel's 300s maxDuration
   while (Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 8_000))
     const pollRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs/${jobId}`, {
@@ -171,7 +174,7 @@ async function generateWithHiggsfield(
       throw new Error(`Higgsfield job ${s.status}: ${JSON.stringify(s.error ?? '')}`)
     }
   }
-  throw new Error('Higgsfield video timed out after 10 minutes')
+  throw new Error('Higgsfield video timed out after 4.5 minutes')
 }
 
 // ---------------------------------------------------------------------------

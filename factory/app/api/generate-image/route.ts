@@ -3,6 +3,9 @@ import { GoogleGenAI } from '@google/genai'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import sharp from 'sharp'
+
+// Vercel: allow up to 300s (Pro plan max). Higgsfield image jobs can take up to 3 min.
+export const maxDuration = 300
 import { withHiggsfieldToken } from '@/lib/higgsfield-auth'
 
 const TMP_DIR = '/tmp/cantsleept-images'
