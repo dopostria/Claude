@@ -215,29 +215,11 @@ async function persistToVercel(
       }
     }
 
-    // Step 3: Trigger a Vercel redeploy so next cold starts use the new env vars
-    // Uses the current deployment as the source — same code, new env vars baked in.
-    const redeployRes = await fetch(`${VERCEL_API}/v13/deployments`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        deploymentId,
-        name: 'cantsleept-factory',
-        target: 'production',
-      }),
-    })
-
-    if (redeployRes.ok) {
-      const { id: newDeployId } = await redeployRes.json() as { id?: string }
-      console.log(`[higgsfield-auth] ✓ Vercel redeploy triggered (${newDeployId ?? 'queued'}) — new tokens active in ~60s`)
-    } else {
-      const body = await redeployRes.text().catch(() => '')
-      console.warn(`[higgsfield-auth] Redeploy request failed (${redeployRes.status}): ${body.slice(0, 150)}`)
-      console.log('[higgsfield-auth] Tokens were written to Vercel env vars. Redeploy manually to activate them.')
-    }
+    // NOTE: we intentionally do NOT trigger a Vercel redeploy here.
+    // Redeploying on every token refresh burns the daily deployment quota.
+    // The in-memory cache covers the current container; the env var update
+    // covers future cold starts once Vercel propagates the change (~30s).
+    console.log('[higgsfield-auth] Tokens written to Vercel env vars — active on next cold start.')
   } catch (err) {
     console.warn('[higgsfield-auth] Vercel persistence error (non-fatal):', err)
   }
