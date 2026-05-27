@@ -2,7 +2,7 @@
   "sessions": [
     {
       "date": "2026-05-27",
-      "savedAt": "2026-05-27T19:16:58.576Z",
+      "savedAt": "2026-05-27T19:20:45.006Z",
       "concepts": [
         {
           "id": "concept_01",
@@ -259,7 +259,8 @@
       "selectedConceptIds": [
         "concept_02",
         "concept_05",
-        "concept_07"
+        "concept_07",
+        "concept_03"
       ],
       "imagePrompts": {
         "concept_02": "Cinematic photorealistic style, 9:16 vertical portrait, 8K ultra-detail. State funeral interior, grand Bolivian government hall draped in shadow and ceremony. Center frame: a dark mahogany coffin covered with a multicolored indigenous flag in vivid geometric patterns (#ff0040, #00ff88, #ffdd00, #0088ff), resting on an elevated catafalque with ornate brass handles. Engraved gold plaque on the coffin reads 'BS. 6.96' in bold serif font. Honor guard of four soldiers in formal dress uniform stand rigid at each corner, white gloves, expressionless faces. Front row of wooden pews: a line of suited government officials with stiff, exaggeratedly solemn faces — thick sweat beads visible on foreheads despite composed expressions. At the pulpit microphone: a heavyset middle-aged man in an expensive dark suit, silver tie, gripping the podium with both hands, mouth open mid-speech. A single speech bubble in crisp bold text: 'ERA JOVEN.' Dramatic single overhead spotlight casts hard shadows across the coffin. Background of massive stone columns draped in black mourning cloth. Neon color leak from stained glass windows casting #0088ff and #ff0040 across the marble floor. Cinematic depth of field, 35mm lens compression, photorealistic textures.",
