@@ -79,6 +79,7 @@ export default function Factory() {
           imagePath: '', base64: img.base64, mime: img.mime,
           prompt: img.prompt, timestamp: img.timestamp,
         })))
+        if (today.selectedImageId) setSelectedImageId(today.selectedImageId)
       }
       if (today.videos.length > 0) {
         setSessionVideos(today.videos)
@@ -99,6 +100,7 @@ export default function Factory() {
       concepts: state.concepts,
       imagePrompts: state.imagePrompts,
       selectedConceptIds: state.selectedConceptIds,
+      selectedImageId: selectedImageId,
       images: generatedImages.map(img => ({
         id: img.id, conceptId: img.conceptId, base64: img.base64, mime: img.mime,
         prompt: img.prompt, model: img.tool, timestamp: img.timestamp,
@@ -106,7 +108,7 @@ export default function Factory() {
       videos: sessionVideos,
     }
     saveDay(day)
-  }, [isRestored, state.concepts, state.imagePrompts, state.selectedConceptIds, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isRestored, state.concepts, state.imagePrompts, state.selectedConceptIds, selectedImageId, generatedImages, sessionVideos]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
   const fireSignal = useCallback((from: string, to: string) => {
