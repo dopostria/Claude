@@ -5,7 +5,7 @@ const GOOGLE_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 const HIGGSFIELD_BASE = 'https://fnf.higgsfield.ai'
 
 // ---------------------------------------------------------------------------
-// Google Veo (AI Studio direct)
+// Google Veo
 // ---------------------------------------------------------------------------
 
 async function pollGoogleOperation(operationName: string, apiKey: string, maxAttempts = 40): Promise<string> {
@@ -21,11 +21,7 @@ async function pollGoogleOperation(operationName: string, apiKey: string, maxAtt
       const uri = data.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri
       if (uri) return uri
       const raiReasons: string[] = data.response?.generateVideoResponse?.raiMediaFilteredReasons ?? []
-      if (raiReasons.length > 0) {
-        throw new Error(
-          `Prompt bloqueado por Google: ${raiReasons[0]}.\n\nEdita el prompt y elimina referencias a marcas, celebridades o contenido de terceros.`
-        )
-      }
+      if (raiReasons.length > 0) throw new Error(`Prompt bloqueado por Google: ${raiReasons[0]}. Edita el prompt y elimina referencias a marcas, celebridades o contenido de terceros.`)
       throw new Error(`Veo done but no URI. Response: ${JSON.stringify(data.response).slice(0, 300)}`)
     }
   }
@@ -42,44 +38,35 @@ async function generateWithGoogle(
   if (imageBase64 && imageMime) {
     instance.image = { bytesBase64Encoded: imageBase64, mimeType: imageMime }
   }
-
-  const body = {
-    instances: [instance],
-    parameters: { sampleCount: 1, durationSeconds: 8, aspectRatio: '9:16' },
-  }
-
-  const res = await fetch(
-    `${GOOGLE_BASE}/models/veo-3.1-generate-preview:predictLongRunning`,
-    {
-      method: 'POST',
-      headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }
-  )
-
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Veo ${res.status}: ${err.slice(0, 200)}`)
-  }
-
+  const res = await fetch(`${GOOGLE_BASE}/models/veo-3.1-generate-preview:predictLongRunning`, {
+    method: 'POST',
+    headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ instances: [instance], parameters: { sampleCount: 1, durationSeconds: 8, aspectRatio: '9:16' } }),
+  })
+  if (!res.ok) throw new Error(`Veo ${res.status}: ${(await res.text()).slice(0, 200)}`)
   const operation = await res.json()
   if (!operation.name) throw new Error('Veo: no operation name')
-
   const videoUri = await pollGoogleOperation(operation.name, apiKey)
   return { videoUri, model: 'veo-3.1-generate-preview' }
 }
 
 // ---------------------------------------------------------------------------
-// Higgsfield — upload image, confirm, then grok_video with start frame
+// Higgsfield — correct upload flow (discovered via CLI inspection)
+//
+// POST /agents/uploads?type=image  → { id, url (CloudFront), upload_url (S3 presigned) }
+// PUT  upload_url                  → upload bytes
+// POST /agents/uploads/{id}/confirm?type=image → validates upload
+// Job params.medias = [{ data: { id, url, type:"media_input" }, role:"start_image" }]
 // ---------------------------------------------------------------------------
 
 async function uploadStartFrame(
   apiToken: string,
-  imgBuf: Blob,
+  imageBase64: string,
   mime: string
-): Promise<string | undefined> {
-  // Step 1: request presigned upload slot
-  const initRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads`, {
+): Promise<{ id: string; url: string } | undefined> {
+
+  // Step 1 — request upload slot (type query param is required)
+  const initRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads?type=image`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ filename: 'start_frame.jpg', content_type: mime }),
@@ -88,24 +75,19 @@ async function uploadStartFrame(
     console.warn(`[generate-video] upload init ${initRes.status}: ${(await initRes.text()).slice(0, 200)}`)
     return undefined
   }
-
-  const initData = await initRes.json() as {
-    id?: string; upload_id?: string; media_id?: string
-    url?: string; upload_url?: string
-  }
-  console.log('[generate-video] upload init:', JSON.stringify(initData).slice(0, 300))
-
-  const uploadUrl = initData.url ?? initData.upload_url
-  const rawId     = initData.id ?? initData.upload_id ?? initData.media_id
-  if (!uploadUrl || !rawId) {
-    console.warn('[generate-video] upload init missing url or id:', JSON.stringify(initData).slice(0, 200))
+  const init = await initRes.json() as { id?: string; url?: string; upload_url?: string }
+  const { id, url: cloudFrontUrl, upload_url: uploadUrl } = init
+  if (!id || !uploadUrl || !cloudFrontUrl) {
+    console.warn('[generate-video] upload init missing fields:', JSON.stringify(init).slice(0, 200))
     return undefined
   }
+  console.log(`[generate-video] upload slot: id=${id}`)
 
-  // Step 2: PUT image bytes to presigned URL
+  // Step 2 — PUT image bytes to presigned S3 URL
+  const imgBlob = new Blob([Buffer.from(imageBase64, 'base64')], { type: mime })
   const putRes = await fetch(uploadUrl, {
     method: 'PUT',
-    body: imgBuf,
+    body: imgBlob,
     headers: { 'Content-Type': mime },
   })
   if (!putRes.ok) {
@@ -113,30 +95,19 @@ async function uploadStartFrame(
     return undefined
   }
 
-  // Step 3: confirm the upload (required before media can be used in a job)
-  // Try both known confirm endpoint patterns
-  for (const confirmUrl of [
-    `${HIGGSFIELD_BASE}/agents/uploads/${rawId}/confirm`,
-    `${HIGGSFIELD_BASE}/agents/uploads/confirm`,
-  ]) {
-    const cRes = await fetch(confirmUrl, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ upload_id: rawId, media_id: rawId, type: 'image' }),
-    })
-    const cText = await cRes.text().catch(() => '')
-    console.log(`[generate-video] confirm ${confirmUrl} -> ${cRes.status}: ${cText.slice(0, 200)}`)
-    if (cRes.ok) {
-      try {
-        const cData = JSON.parse(cText) as { id?: string; media_id?: string }
-        return cData.id ?? cData.media_id ?? rawId
-      } catch { return rawId }
-    }
+  // Step 3 — confirm (Higgsfield validates the upload before media can be used in a job)
+  const confirmRes = await fetch(`${HIGGSFIELD_BASE}/agents/uploads/${id}/confirm?type=image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  })
+  if (!confirmRes.ok) {
+    console.warn(`[generate-video] confirm ${confirmRes.status}: ${(await confirmRes.text()).slice(0, 200)}`)
+    return undefined
   }
 
-  // Confirm endpoint unknown — use rawId optimistically and let Higgsfield handle it
-  console.warn('[generate-video] confirm failed — using rawId without confirm')
-  return rawId
+  console.log(`[generate-video] start frame confirmed: ${id}`)
+  return { id, url: cloudFrontUrl }
 }
 
 async function generateWithHiggsfield(
@@ -145,71 +116,62 @@ async function generateWithHiggsfield(
   imageBase64?: string,
   imageMime?: string
 ): Promise<{ videoUri: string; model: string }> {
-  let mediaId: string | undefined
+  let startFrame: { id: string; url: string } | undefined
 
   if (imageBase64) {
     try {
-      const mime   = imageMime ?? 'image/jpeg'
-      const imgBuf = new Blob([Buffer.from(imageBase64, 'base64')], { type: mime })
-      mediaId = await uploadStartFrame(apiToken, imgBuf, mime)
-      console.log('[generate-video] start frame mediaId:', mediaId ?? 'none')
+      startFrame = await uploadStartFrame(apiToken, imageBase64, imageMime ?? 'image/jpeg')
     } catch (e) {
-      console.warn('[generate-video] start frame upload error:', e)
+      console.warn('[generate-video] start frame upload threw:', e)
     }
   }
 
-  // Job body: pass mediaId both in params.start_image and in medias[] (belt + suspenders)
-  const params: Record<string, unknown> = { prompt, aspect_ratio: '9:16', duration: 3 }
-  if (mediaId) params.start_image = mediaId
+  // Build job params — medias must be inside params (not top-level)
+  const params: Record<string, unknown> = {
+    prompt,
+    aspect_ratio: '9:16',
+    duration: 5,
+  }
+  if (startFrame) {
+    params.medias = [{ data: { id: startFrame.id, url: startFrame.url, type: 'media_input' }, role: 'start_image' }]
+  }
 
-  const jobBody: Record<string, unknown> = { job_set_type: 'grok_video', params }
-  if (mediaId) jobBody.medias = [{ value: mediaId, role: 'start_image' }]
-
-  console.log('[generate-video] Higgsfield job body:', JSON.stringify(jobBody).slice(0, 400))
+  const jobBody = { job_set_type: 'grok_video', params }
+  console.log('[generate-video] job body:', JSON.stringify(jobBody).slice(0, 400))
 
   const createRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(jobBody),
   })
-  if (!createRes.ok) {
-    const body = await createRes.text().catch(() => '')
-    throw new Error(`Higgsfield video create failed ${createRes.status}: ${body.slice(0, 200)}`)
-  }
+  if (!createRes.ok) throw new Error(`Higgsfield video create ${createRes.status}: ${(await createRes.text()).slice(0, 200)}`)
 
   const createRaw = await createRes.json()
   const firstItem = Array.isArray(createRaw) ? createRaw[0] : createRaw
   const jobId: string | undefined = typeof firstItem === 'string' ? firstItem : (firstItem?.id ?? firstItem?.job_id)
-  if (!jobId) throw new Error(`Higgsfield: no video job ID — raw: ${JSON.stringify(createRaw).slice(0, 200)}`)
-  console.log(`[generate-video] Higgsfield video job created: ${jobId}`)
+  if (!jobId) throw new Error(`Higgsfield: no job ID — raw: ${JSON.stringify(createRaw).slice(0, 200)}`)
+  console.log(`[generate-video] grok_video job: ${jobId} | start_frame: ${startFrame?.id ?? 'none'}`)
 
-  const TIMEOUT  = 600_000
-  const INTERVAL = 8_000
-  const deadline = Date.now() + TIMEOUT
-
+  const deadline = Date.now() + 600_000
   while (Date.now() < deadline) {
-    await new Promise(r => setTimeout(r, INTERVAL))
+    await new Promise(r => setTimeout(r, 8_000))
     const pollRes = await fetch(`${HIGGSFIELD_BASE}/agents/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${apiToken}` },
     })
     if (!pollRes.ok) continue
-
-    const pollRaw = await pollRes.json()
-    const status = (Array.isArray(pollRaw) ? pollRaw[0] : pollRaw) as {
-      status?: string; result_url?: string; min_result_url?: string; error?: unknown
-    }
-    console.log(`[generate-video] Higgsfield job ${jobId} status: ${status.status}`)
-
-    if (['completed', 'done', 'succeeded'].includes(status.status ?? '')) {
-      const videoUrl = status.result_url ?? status.min_result_url
-      if (!videoUrl) throw new Error(`Higgsfield: no video URL — keys: ${Object.keys(status as object).join(', ')}`)
+    const raw = await pollRes.json()
+    const s = (Array.isArray(raw) ? raw[0] : raw) as { status?: string; result_url?: string; min_result_url?: string; error?: unknown }
+    console.log(`[generate-video] job ${jobId}: ${s.status}`)
+    if (['completed', 'done', 'succeeded'].includes(s.status ?? '')) {
+      const videoUrl = s.result_url ?? s.min_result_url
+      if (!videoUrl) throw new Error(`Higgsfield: no video URL — keys: ${Object.keys(s as object).join(', ')}`)
       return { videoUri: videoUrl, model: 'higgsfield/grok_video' }
     }
-    if (['failed', 'error', 'cancelled'].includes(status.status ?? '')) {
-      throw new Error(`Higgsfield video job ${status.status}: ${JSON.stringify(status.error ?? '')}`)
+    if (['failed', 'error', 'cancelled'].includes(s.status ?? '')) {
+      throw new Error(`Higgsfield job ${s.status}: ${JSON.stringify(s.error ?? '')}`)
     }
   }
-  throw new Error('Higgsfield video: job timed out after 10 minutes')
+  throw new Error('Higgsfield video timed out after 10 minutes')
 }
 
 // ---------------------------------------------------------------------------
@@ -219,16 +181,11 @@ async function generateWithHiggsfield(
 export async function POST(req: NextRequest) {
   try {
     const { prompt, imageBase64, imageMime, provider = 'google' } = await req.json() as {
-      prompt: string
-      imageBase64?: string
-      imageMime?: string
-      provider?: 'higgsfield' | 'google'
+      prompt: string; imageBase64?: string; imageMime?: string; provider?: 'higgsfield' | 'google'
     }
-
     if (!prompt) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
     let result: { videoUri: string; model: string }
-
     if (provider === 'higgsfield') {
       result = await withHiggsfieldToken(token =>
         generateWithHiggsfield(prompt, token, imageBase64, imageMime)
@@ -238,7 +195,6 @@ export async function POST(req: NextRequest) {
       if (!apiKey) return NextResponse.json({ error: 'GEMINI_API_KEY not set' }, { status: 500 })
       result = await generateWithGoogle(prompt, apiKey, imageBase64, imageMime)
     }
-
     return NextResponse.json({ success: true, ...result, timestamp: new Date().toISOString() })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
